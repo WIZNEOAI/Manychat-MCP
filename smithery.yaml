@@ -1,0 +1,38 @@
+startCommand:
+  type: http
+  configSchema:
+    type: object
+    required:
+      - baseUrl
+    properties:
+      baseUrl:
+        type: string
+        title: ManyChat MCP Base URL
+        description: Public HTTPS base URL where the server is deployed.
+      useOAuth:
+        type: boolean
+        default: true
+        title: Use OAuth
+        description: Use MCP OAuth bearer tokens instead of direct API key header.
+      manychatApiKey:
+        type: string
+        title: ManyChat API Key
+        description: Required only when useOAuth is false.
+  commandFunction: |
+    (config) => {
+      const url = `${config.baseUrl.replace(/\/+$/, "")}/mcp`;
+      if (config.useOAuth !== false) {
+        return { url };
+      }
+
+      if (!config.manychatApiKey) {
+        throw new Error("manychatApiKey is required when useOAuth is false");
+      }
+
+      return {
+        url,
+        headers: {
+          "X-ManyChat-API-Key": config.manychatApiKey
+        }
+      };
+    }

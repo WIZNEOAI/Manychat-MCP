@@ -4,8 +4,10 @@ import {
   getClient,
   createAuthorizationCode,
   exchangeCodeForToken,
+  refreshAccessToken,
   revokeToken,
 } from "./oauth.js";
+import { log } from "../lib/logger.js";
 
 export function createOAuthRouter(serverBaseUrl: string): Router {
   const router = Router();
@@ -24,14 +26,15 @@ export function createOAuthRouter(serverBaseUrl: string): Router {
       authorization_endpoint: `${serverBaseUrl}/authorize`,
       token_endpoint: `${serverBaseUrl}/token`,
       registration_endpoint: `${serverBaseUrl}/register`,
+      revocation_endpoint: `${serverBaseUrl}/revoke`,
       response_types_supported: ["code"],
-      grant_types_supported: ["authorization_code"],
+      grant_types_supported: ["authorization_code", "refresh_token"],
       token_endpoint_auth_methods_supported: ["none"],
       code_challenge_methods_supported: ["S256"],
     });
   });
 
-  router.post("/register", (req, res) => {
+  router.post("/register", async (req, res) => {
     const { client_name, redirect_uris } = req.body ?? {};
     if (!client_name || !Array.isArray(redirect_uris) || redirect_uris.length === 0) {
       res.status(400).json({
@@ -40,7 +43,23 @@ export function createOAuthRouter(serverBaseUrl: string): Router {
       });
       return;
     }
-    const client = registerClient(client_name, redirect_uris);
+    const validUris = redirect_uris.every((uri) => {
+      try {
+        const parsed = new URL(uri);
+        return parsed.protocol === "https:" || parsed.protocol === "http:";
+      } catch {
+        return false;
+      }
+    });
+    if (!validUris) {
+      res.status(400).json({
+        error: "invalid_redirect_uri",
+        error_description: "All redirect_uris must be absolute HTTP(S) URLs",
+      });
+      return;
+    }
+
+    const client = await registerClient(client_name, redirect_uris);
     res.status(201).json({
       client_id: client.clientId,
       client_name: client.clientName,
@@ -48,7 +67,7 @@ export function createOAuthRouter(serverBaseUrl: string): Router {
     });
   });
 
-  router.get("/authorize", (req, res) => {
+  router.get("/authorize", async (req, res) => {
     const {
       client_id,
       redirect_uri,
@@ -74,7 +93,7 @@ export function createOAuthRouter(serverBaseUrl: string): Router {
       return;
     }
 
-    const client = getClient(client_id);
+    const client = await getClient(client_id);
     if (!client) {
       res.status(400).json({
         error: "invalid_client",
@@ -95,7 +114,7 @@ export function createOAuthRouter(serverBaseUrl: string): Router {
     res.send(renderAuthPage(client_id, redirect_uri, code_challenge, code_challenge_method, state));
   });
 
-  router.post("/authorize", (req, res) => {
+  router.post("/authorize", async (req, res) => {
     const {
       client_id,
       redirect_uri,
@@ -105,26 +124,42 @@ export function createOAuthRouter(serverBaseUrl: string): Router {
       api_key,
     } = req.body ?? {};
 
-    if (!api_key) {
+    if (typeof api_key !== "string" || api_key.trim().length < 8) {
       res.status(400).json({
         error: "invalid_request",
-        error_description: "api_key is required",
+        error_description: "api_key is required and must be a valid key string",
       });
       return;
     }
 
-    const client = getClient(client_id);
+    const client = await getClient(client_id);
     if (!client) {
       res.status(400).json({ error: "invalid_client" });
       return;
     }
 
-    const code = createAuthorizationCode(
+    if (!client.redirectUris.includes(redirect_uri)) {
+      res.status(400).json({
+        error: "invalid_request",
+        error_description: "redirect_uri not registered",
+      });
+      return;
+    }
+
+    if (!code_challenge || code_challenge_method !== "S256") {
+      res.status(400).json({
+        error: "invalid_request",
+        error_description: "PKCE with S256 is required",
+      });
+      return;
+    }
+
+    const code = await createAuthorizationCode(
       client_id,
       code_challenge,
-      code_challenge_method,
+      code_challenge_method as "S256",
       redirect_uri,
-      api_key,
+      api_key.trim(),
     );
 
     const url = new URL(redirect_uri);
@@ -133,38 +168,81 @@ export function createOAuthRouter(serverBaseUrl: string): Router {
     res.redirect(302, url.toString());
   });
 
-  router.post("/token", (req, res) => {
+  router.post("/token", async (req, res) => {
     const {
       grant_type,
       code,
       client_id,
       code_verifier,
       redirect_uri,
+      refresh_token,
     } = req.body ?? {};
 
-    if (grant_type !== "authorization_code") {
-      res.status(400).json({
-        error: "unsupported_grant_type",
-        error_description: "Only authorization_code is supported",
-      });
+    if (grant_type === "authorization_code") {
+      if (!code || !client_id || !code_verifier || !redirect_uri) {
+        res.status(400).json({
+          error: "invalid_request",
+          error_description:
+            "code, client_id, code_verifier, and redirect_uri are required",
+        });
+        return;
+      }
+
+      const result = await exchangeCodeForToken(code, client_id, code_verifier, redirect_uri);
+      if (!result) {
+        res.status(400).json({
+          error: "invalid_grant",
+          error_description: "Invalid or expired authorization code",
+        });
+        return;
+      }
+
+      res.json(result);
       return;
     }
 
-    const result = exchangeCodeForToken(code, client_id, code_verifier, redirect_uri);
-    if (!result) {
-      res.status(400).json({
-        error: "invalid_grant",
-        error_description: "Invalid or expired authorization code",
-      });
+    if (grant_type === "refresh_token") {
+      if (!refresh_token || !client_id) {
+        res.status(400).json({
+          error: "invalid_request",
+          error_description: "refresh_token and client_id are required",
+        });
+        return;
+      }
+
+      const result = await refreshAccessToken(refresh_token, client_id);
+      if (!result) {
+        res.status(400).json({
+          error: "invalid_grant",
+          error_description: "Invalid or expired refresh token",
+        });
+        return;
+      }
+
+      res.json(result);
       return;
     }
 
-    res.json(result);
+    res.status(400).json({
+      error: "unsupported_grant_type",
+      error_description: "Supported grant_types are authorization_code and refresh_token",
+    });
   });
 
-  router.post("/revoke", (req, res) => {
-    const { token } = req.body ?? {};
-    if (token) revokeToken(token);
+  router.post("/revoke", async (req, res) => {
+    const { token, token_type_hint } = req.body ?? {};
+    if (typeof token !== "string" || token.length === 0) {
+      res.status(400).json({
+        error: "invalid_request",
+        error_description: "token is required",
+      });
+      return;
+    }
+
+    const revoked = await revokeToken(token, token_type_hint);
+    if (!revoked) {
+      log.warn("oauth_revoke_miss", { hint: token_type_hint });
+    }
     res.status(200).json({ status: "ok" });
   });
 

@@ -156,6 +156,9 @@ const RATE_LIMITS_DOCS = `# ManyChat API Rate Limits
 
 All limits are per bot account (not per key).
 
+Source: ManyChat Dev API docs and Help Center.
+Verified: 2026-03-09.
+
 | Category | Limit |
 |----------|-------|
 | Page reads (getInfo, getTags, getCustomFields, getBotFields, getGrowthTools, getOtnTopics) | 100 RPS |

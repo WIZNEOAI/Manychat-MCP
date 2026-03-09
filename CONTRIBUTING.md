@@ -45,6 +45,15 @@ src/
 3. Ensure `npm run lint` and `npm run build` pass.
 4. Open a PR with a description of what and why.
 
+## Skills in this repo
+
+This repo includes `skills/manychat-mcp-ops` for agent operations.
+
+- Keep `SKILL.md` concise and procedural
+- Put detailed guidance in `references/`
+- Put deterministic checks in `scripts/`
+- Validate scripts by running them locally before opening PRs
+
 ## Code Style
 
 - TypeScript strict mode.

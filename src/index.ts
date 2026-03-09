@@ -44,11 +44,11 @@ async function startHttp() {
 
   const sessions: Record<string, StreamableHTTPServerTransport> = {};
 
-  function resolveApiKey(req: express.Request): string | undefined {
+  async function resolveApiKey(req: express.Request): Promise<string | undefined> {
     const authHeader = req.headers.authorization;
     if (authHeader?.startsWith("Bearer ")) {
       const token = authHeader.slice(7);
-      const key = resolveApiKeyFromToken(token);
+      const key = await resolveApiKeyFromToken(token);
       if (key) return key;
     }
 
@@ -65,7 +65,7 @@ async function startHttp() {
     if (sessionId && sessions[sessionId]) {
       transport = sessions[sessionId];
     } else if (!sessionId && isInitializeRequest(req.body)) {
-      const apiKey = resolveApiKey(req);
+      const apiKey = await resolveApiKey(req);
 
       transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: () => randomUUID(),
