@@ -1,23 +1,40 @@
 # Security Policy
 
-## Reporting a Vulnerability
+## Reporting a vulnerability
 
-If you discover a security vulnerability, please report it responsibly:
+1. Do not open a public issue
+2. Email `security@gnosix.com`
+3. Expected acknowledgment: within 48 hours
 
-1. **Do NOT** open a public GitHub issue.
-2. Email security@gnosix.com with details.
-3. We will acknowledge within 48 hours and work on a fix.
+## Authentication boundaries
 
-## API Key Handling
+This project separates:
 
-- API keys are never logged (redacted in structured logs).
-- In OAuth mode, keys are stored in-memory only (lost on restart).
-- Keys are transmitted over HTTPS in production.
-- The `/authorize` page uses POST to prevent keys from appearing in URLs or server logs.
+- **ManyChat auth**: user-supplied ManyChat API key
+- **MCP auth**: OAuth 2.0 bearer token used by MCP clients
 
-## Recommended Deployment
+OAuth bearer tokens are mapped to ManyChat API keys through the configured OAuth store.
 
-- Always use HTTPS in production (Railway provides this by default).
-- Set `NODE_ENV=production`.
-- Use the OAuth flow for multi-user deployments instead of a shared API key.
-- Regularly rotate your ManyChat API keys.
+## Key and token handling
+
+- Secrets and tokens are redacted in structured logs
+- OAuth bearer tokens are stored in configured backend:
+  - `memory` for development only
+  - `redis` for production
+- Production mode (`NODE_ENV=production`) requires Redis-backed OAuth store
+- Authorization codes are one-time use and short-lived
+- Access and refresh tokens are TTL-bound and revocable
+
+## Transport and deployment requirements
+
+- Use HTTPS in production
+- Restrict access to Redis using network and credential controls
+- Rotate ManyChat API keys periodically
+- Do not use shared global ManyChat keys for multi-user SaaS scenarios
+
+## Operational checks
+
+- Verify `/.well-known/oauth-protected-resource`
+- Verify `/.well-known/oauth-authorization-server`
+- Verify `/health`
+- Run OAuth flow smoke tests after deploy and after rollback

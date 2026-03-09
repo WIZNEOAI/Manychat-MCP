@@ -1,6 +1,6 @@
 import { log } from "../lib/logger.js";
 
-const BASE_URL = "https://api.manychat.com/fb";
+const BASE_URL = process.env.MANYCHAT_API_BASE_URL ?? "https://api.manychat.com/fb";
 
 const RETRY_CODES = new Set([429, 500, 502, 503, 504]);
 const MAX_RETRIES = 3;
