@@ -1,10 +1,11 @@
 {
-  "name": "manychat-mcp",
+  "name": "manychat",
   "version": "0.1.0",
-  "description": "Open-source MCP Server for ManyChat — let AI agents manage your ManyChat account",
+  "description": "CLI-first ManyChat toolkit for agents and operators, with optional MCP compatibility",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
+    "manychat": "dist/index.js",
     "manychat-mcp": "dist/index.js"
   },
   "scripts": {
@@ -17,6 +18,7 @@
   },
   "keywords": [
     "mcp",
+    "cli",
     "manychat",
     "ai",
     "chatbot",

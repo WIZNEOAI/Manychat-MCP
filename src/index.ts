@@ -1,133 +1,34 @@
 #!/usr/bin/env node
 
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
-import express from "express";
-import { randomUUID } from "node:crypto";
-import { createServer } from "./server.js";
+import { runCli } from "./cli/app.js";
 import { log } from "./lib/logger.js";
-import { createOAuthRouter } from "./auth/oauth-routes.js";
-import { resolveApiKeyFromToken } from "./auth/oauth.js";
+import { startLegacyMcpServer } from "./mcp/serve.js";
 
-const TRANSPORT = process.env.MCP_TRANSPORT ?? "stdio";
-const PORT = Number(process.env.PORT) || 3000;
+async function main() {
+  const args = process.argv.slice(2);
 
-async function startStdio() {
-  const server = createServer();
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-  log.info("ManyChat MCP Server running on stdio");
-}
-
-async function startHttp() {
-  const app = express();
-  app.use(express.json());
-
-  app.use((req, _res, next) => {
-    const requestId = randomUUID().slice(0, 8);
-    log.info("request", {
-      requestId,
-      method: req.method,
-      path: req.path,
-    });
-    next();
-  });
-
-  app.get("/health", (_req, res) => {
-    res.json({ status: "ok", server: "manychat-mcp", version: "0.1.0" });
-  });
-
-  const baseUrl = process.env.BASE_URL ?? `http://localhost:${PORT}`;
-  app.use(express.urlencoded({ extended: true }));
-  app.use(createOAuthRouter(baseUrl));
-
-  const sessions: Record<string, StreamableHTTPServerTransport> = {};
-
-  async function resolveApiKey(req: express.Request): Promise<string | undefined> {
-    const authHeader = req.headers.authorization;
-    if (authHeader?.startsWith("Bearer ")) {
-      const token = authHeader.slice(7);
-      const key = await resolveApiKeyFromToken(token);
-      if (key) return key;
-    }
-
-    const headerKey = req.headers["x-manychat-api-key"] as string | undefined;
-    if (headerKey) return headerKey;
-
-    return undefined;
+  if (args[0] === "mcp" && args[1] === "serve") {
+    await startLegacyMcpServer(args.slice(2));
+    return;
   }
 
-  app.post("/mcp", async (req, res) => {
-    const sessionId = req.headers["mcp-session-id"] as string | undefined;
-    let transport: StreamableHTTPServerTransport;
+  if (args.length === 0 && process.env.MCP_TRANSPORT) {
+    await startLegacyMcpServer([]);
+    return;
+  }
 
-    if (sessionId && sessions[sessionId]) {
-      transport = sessions[sessionId];
-    } else if (!sessionId && isInitializeRequest(req.body)) {
-      const apiKey = await resolveApiKey(req);
-
-      transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: () => randomUUID(),
-        onsessioninitialized: (sid) => {
-          sessions[sid] = transport;
-        },
-      });
-
-      transport.onclose = () => {
-        const sid = transport.sessionId;
-        if (sid) delete sessions[sid];
-      };
-
-      const server = createServer(apiKey);
-      await server.connect(transport);
-    } else {
-      res.status(400).json({
-        jsonrpc: "2.0",
-        error: { code: -32000, message: "No valid session. Send an initialize request first." },
-        id: null,
-      });
-      return;
-    }
-
-    await transport.handleRequest(req, res, req.body);
-  });
-
-  app.get("/mcp", async (req, res) => {
-    const sessionId = req.headers["mcp-session-id"] as string | undefined;
-    if (!sessionId || !sessions[sessionId]) {
-      res.status(400).json({ error: "Invalid or missing session" });
-      return;
-    }
-    await sessions[sessionId].handleRequest(req, res);
-  });
-
-  app.delete("/mcp", async (req, res) => {
-    const sessionId = req.headers["mcp-session-id"] as string | undefined;
-    if (!sessionId || !sessions[sessionId]) {
-      res.status(400).json({ error: "Invalid or missing session" });
-      return;
-    }
-    await sessions[sessionId].handleRequest(req, res);
-  });
-
-  app.listen(PORT, () => {
-    log.info("ManyChat MCP Server running", {
-      url: `http://0.0.0.0:${PORT}`,
-      mcpEndpoint: "POST /mcp",
-      healthCheck: "GET /health",
-    });
-  });
+  const io = { stdout: [] as string[], stderr: [] as string[] };
+  const exitCode = await runCli(args, io);
+  if (io.stdout.length > 0) {
+    process.stdout.write(`${io.stdout.join("")}\n`);
+  }
+  if (io.stderr.length > 0) {
+    process.stderr.write(`${io.stderr.join("")}\n`);
+  }
+  process.exit(exitCode);
 }
 
-if (TRANSPORT === "http") {
-  startHttp().catch((err) => {
-    log.error("Failed to start HTTP server", { error: String(err) });
-    process.exit(1);
-  });
-} else {
-  startStdio().catch((err) => {
-    log.error("Failed to start stdio server", { error: String(err) });
-    process.exit(1);
-  });
-}
+main().catch((err) => {
+  log.error("Failed to start ManyChat CLI", { error: String(err) });
+  process.exit(1);
+});
