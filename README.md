@@ -24,7 +24,7 @@ The core product identity is still:
 | CLI | source of truth for execution and automation | primary |
 | MCP local (`stdio`) | local compatibility for MCP clients | supported |
 | MCP remote (`HTTP`) | self-hosted remote access layer | supported |
-| Web frontend (`apps/web`) | landing, docs shell, dashboard shell | scaffolded |
+| Web frontend (`apps/web`) | landing, docs, dashboard (Clerk + Convex in progress) | scaffolded + auth |
 | Hosted SaaS | control plane, tokens, billing, docs UX | planned |
 
 ## The auth model in one minute
@@ -198,6 +198,21 @@ Lint:
 npm run web:lint
 ```
 
+### Hosted dashboard dev (Clerk + Convex)
+
+The dashboard at `/dashboard` is **protected by Clerk**. Convex stores `users` and
+`workspaces` after sign-in. Copy `apps/web/.env.example` → `apps/web/.env.local`, add
+Clerk keys and `NEXT_PUBLIC_CONVEX_URL`, then:
+
+1. In [Clerk](https://dashboard.clerk.com): create a JWT template named **`convex`**
+   (Convex integration preset).
+2. In [Convex](https://dashboard.convex.dev): set **`CLERK_JWT_ISSUER_DOMAIN`** to your
+   Clerk Frontend API / issuer host, deploy `convex/auth.config.ts`, and run
+   `npm run convex:dev` from the repo (runs Convex against `apps/web/convex/`).
+
+See [`docs/product/action-plan-convex-clerk-stripe.md`](docs/product/action-plan-convex-clerk-stripe.md)
+for Stripe and production deployment (Vercel + Railway).
+
 ## CLI surface
 
 Core commands:
@@ -307,6 +322,12 @@ npm test
 npm run build
 npm run web:lint
 npm run web:build
+```
+
+For Convex backend dev (from repo root):
+
+```bash
+npm run convex:dev
 ```
 
 ## License
