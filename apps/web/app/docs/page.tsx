@@ -39,7 +39,7 @@ export default function DocsPage() {
             rel="noreferrer"
             className="font-medium text-emerald-700 underline-offset-4 hover:underline dark:text-emerald-300"
           >
-            github.com/gnosix/manychat-mcp
+            {REPO_TREE_BASE.replace(/^https:\/\//, "")}
           </a>
         </p>
       </header>
