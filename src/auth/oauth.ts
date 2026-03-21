@@ -28,7 +28,7 @@ const ttlConfig: OAuthTtlConfig = {
   refreshTokenTtlSec: parseTtl("OAUTH_REFRESH_TOKEN_TTL_SEC", 60 * 60 * 24 * 30),
 };
 
-let oauthStore: OAuthStore = createOAuthStoreFromEnv();
+let oauthStore: OAuthStore | null = null;
 
 function parseTtl(name: string, fallback: number): number {
   const raw = process.env[name];
@@ -54,7 +54,7 @@ async function appendAuditEvent(
   clientId?: string,
   details?: Record<string, unknown>,
 ): Promise<void> {
-  await oauthStore.appendAuditEvent({
+  await getOAuthStore().appendAuditEvent({
     id: randomUUID(),
     event,
     clientId,
@@ -67,10 +67,18 @@ export function setOAuthStoreForTesting(store: OAuthStore): void {
   oauthStore = store;
 }
 
+function getOAuthStore(): OAuthStore {
+  if (!oauthStore) {
+    oauthStore = createOAuthStoreFromEnv();
+  }
+
+  return oauthStore;
+}
+
 export async function resolveApiKeyFromToken(
   bearerToken: string,
 ): Promise<string | null> {
-  const entry = await oauthStore.getAccessToken(bearerToken);
+  const entry = await getOAuthStore().getAccessToken(bearerToken);
   return entry?.apiKey ?? null;
 }
 
@@ -78,7 +86,7 @@ export async function registerClient(
   clientName: string,
   redirectUris: string[],
 ): Promise<RegisteredClient> {
-  const client = await oauthStore.registerClient(clientName, redirectUris);
+  const client = await getOAuthStore().registerClient(clientName, redirectUris);
   await appendAuditEvent("oauth_client_registered", client.clientId, {
     redirectUrisCount: redirectUris.length,
   });
@@ -87,7 +95,7 @@ export async function registerClient(
 }
 
 export async function getClient(clientId: string): Promise<RegisteredClient | null> {
-  return oauthStore.getClient(clientId);
+  return getOAuthStore().getClient(clientId);
 }
 
 export async function createAuthorizationCode(
@@ -109,7 +117,7 @@ export async function createAuthorizationCode(
     expiresAt: expiresAtFromNow(ttlConfig.authCodeTtlSec),
   };
 
-  await oauthStore.saveAuthorizationCode(payload);
+  await getOAuthStore().saveAuthorizationCode(payload);
   await appendAuditEvent("oauth_code_created", clientId, {
     codeTtlSec: ttlConfig.authCodeTtlSec,
   });
@@ -156,7 +164,7 @@ export async function exchangeCodeForToken(
   codeVerifier: string,
   redirectUri: string,
 ): Promise<OAuthTokenResponse | null> {
-  const entry = await oauthStore.takeAuthorizationCode(code);
+  const entry = await getOAuthStore().takeAuthorizationCode(code);
   if (!entry) {
     await appendAuditEvent("oauth_code_exchange_failed", clientId, { reason: "missing_code" });
     return null;
@@ -175,8 +183,9 @@ export async function exchangeCodeForToken(
   const access = buildAccessTokenRecord(clientId, entry.apiKey);
   const refresh = buildRefreshTokenRecord(clientId, entry.apiKey);
 
-  await oauthStore.saveAccessToken(access);
-  await oauthStore.saveRefreshToken(refresh);
+  const store = getOAuthStore();
+  await store.saveAccessToken(access);
+  await store.saveRefreshToken(refresh);
   await appendAuditEvent("oauth_token_issued", clientId, {
     accessExpiresAt: access.expiresAt,
     refreshExpiresAt: refresh.expiresAt,
@@ -189,7 +198,8 @@ export async function refreshAccessToken(
   refreshToken: string,
   clientId: string,
 ): Promise<OAuthTokenResponse | null> {
-  const refresh = await oauthStore.takeRefreshToken(refreshToken);
+  const store = getOAuthStore();
+  const refresh = await store.takeRefreshToken(refreshToken);
   if (!refresh || refresh.clientId !== clientId) {
     await appendAuditEvent("oauth_refresh_failed", clientId, { reason: "invalid_refresh_token" });
     return null;
@@ -197,8 +207,8 @@ export async function refreshAccessToken(
 
   const access = buildAccessTokenRecord(clientId, refresh.apiKey);
   const nextRefresh = buildRefreshTokenRecord(clientId, refresh.apiKey);
-  await oauthStore.saveAccessToken(access);
-  await oauthStore.saveRefreshToken(nextRefresh);
+  await store.saveAccessToken(access);
+  await store.saveRefreshToken(nextRefresh);
   await appendAuditEvent("oauth_refresh_succeeded", clientId, {
     accessExpiresAt: access.expiresAt,
   });
@@ -207,21 +217,22 @@ export async function refreshAccessToken(
 
 export async function revokeToken(token: string, hint?: string): Promise<boolean> {
   if (hint === "refresh_token") {
-    const revokedRefresh = await oauthStore.revokeRefreshToken(token);
+    const revokedRefresh = await getOAuthStore().revokeRefreshToken(token);
     if (revokedRefresh) await appendAuditEvent("oauth_refresh_revoked");
     return revokedRefresh;
   }
 
   if (hint === "access_token") {
-    const revokedAccess = await oauthStore.revokeAccessToken(token);
+    const revokedAccess = await getOAuthStore().revokeAccessToken(token);
     if (revokedAccess) await appendAuditEvent("oauth_access_revoked");
     return revokedAccess;
   }
 
   // Default behavior: attempt both to tolerate clients that omit token_type_hint.
+  const store = getOAuthStore();
   const [revokedAccess, revokedRefresh] = await Promise.all([
-    oauthStore.revokeAccessToken(token),
-    oauthStore.revokeRefreshToken(token),
+    store.revokeAccessToken(token),
+    store.revokeRefreshToken(token),
   ]);
   if (revokedAccess || revokedRefresh) {
     await appendAuditEvent("oauth_token_revoked", undefined, { hint: "none" });
