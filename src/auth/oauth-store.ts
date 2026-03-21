@@ -68,6 +68,36 @@ function isExpired(expiresAt: number): boolean {
   return expiresAt <= Date.now();
 }
 
+export function resolveOAuthStoreMode(
+  env: NodeJS.ProcessEnv = process.env,
+): "memory" | "redis" {
+  const mode = (env.OAUTH_STORE ?? "memory").toLowerCase();
+
+  if (mode === "memory" || mode === "redis") {
+    return mode;
+  }
+
+  throw new Error("OAUTH_STORE must be either 'memory' or 'redis'.");
+}
+
+export function assertDurableOAuthStoreConfig(
+  env: NodeJS.ProcessEnv = process.env,
+): void {
+  const mode = resolveOAuthStoreMode(env);
+
+  if (mode !== "redis") {
+    throw new Error(
+      "Production OAuth over HTTP requires OAUTH_STORE=redis so authorization codes and tokens survive restarts.",
+    );
+  }
+
+  if (!env.REDIS_URL) {
+    throw new Error(
+      "REDIS_URL is required when OAUTH_STORE=redis for production OAuth over HTTP.",
+    );
+  }
+}
+
 export class MemoryOAuthStore implements OAuthStore {
   private readonly clients = new Map<string, RegisteredClient>();
   private readonly authCodes = new Map<string, AuthorizationCode>();
@@ -275,12 +305,14 @@ export class RedisOAuthStore implements OAuthStore {
   }
 }
 
-export function createOAuthStoreFromEnv(): OAuthStore {
-  const mode = (process.env.OAUTH_STORE ?? "memory").toLowerCase();
-  const isProd = process.env.NODE_ENV === "production";
+export function createOAuthStoreFromEnv(
+  env: NodeJS.ProcessEnv = process.env,
+): OAuthStore {
+  const mode = resolveOAuthStoreMode(env);
+  const isProd = env.NODE_ENV === "production";
 
   if (mode === "redis") {
-    const redisUrl = process.env.REDIS_URL;
+    const redisUrl = env.REDIS_URL;
     if (!redisUrl) {
       throw new Error("REDIS_URL is required when OAUTH_STORE=redis.");
     }
@@ -288,7 +320,9 @@ export function createOAuthStoreFromEnv(): OAuthStore {
   }
 
   if (isProd) {
-    throw new Error("Production requires OAUTH_STORE=redis and REDIS_URL.");
+    throw new Error(
+      "Production OAuth requires OAUTH_STORE=redis and REDIS_URL. Set MCP_REMOTE_AUTH=oauth only with durable Redis-backed state.",
+    );
   }
 
   log.warn("oauth_memory_store_enabled", {

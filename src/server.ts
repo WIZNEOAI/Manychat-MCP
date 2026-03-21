@@ -8,13 +8,14 @@ import { registerMessagingTools } from "./tools/messaging.js";
 import { registerPageTools } from "./tools/page.js";
 import { registerResources } from "./resources/index.js";
 import { registerPrompts } from "./prompts/index.js";
+import { MANYCHAT_PRODUCT } from "./product.js";
 
 export function createServer(apiKey?: string): McpServer {
   const client = new ManyChatClient(apiKey);
 
   const server = new McpServer({
-    name: "manychat-mcp",
-    version: "0.1.0",
+    name: MANYCHAT_PRODUCT.name,
+    version: MANYCHAT_PRODUCT.version,
   });
 
   registerSubscriberTools(server, client);
