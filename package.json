@@ -17,6 +17,8 @@
     "web:build": "npm --prefix apps/web run build",
     "web:start": "npm --prefix apps/web run start",
     "web:lint": "npm --prefix apps/web run lint",
+    "convex:dev": "npm --prefix apps/web run convex:dev",
+    "convex:deploy": "npm --prefix apps/web run convex:deploy",
     "dev": "tsx src/index.ts",
     "lint": "tsc --noEmit",
     "test": "vitest run",
