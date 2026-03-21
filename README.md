@@ -296,6 +296,8 @@ The open-source story should stay excellent even before the SaaS exists.
   [`docs/product/pricing-tiers.md`](docs/product/pricing-tiers.md)
 - Web scaffold roadmap:
   [`docs/product/phase-1-web-scaffold.md`](docs/product/phase-1-web-scaffold.md)
+- **Hosted stack plan (Convex + Clerk + Stripe, Vercel + Railway):**
+  [`docs/product/action-plan-convex-clerk-stripe.md`](docs/product/action-plan-convex-clerk-stripe.md)
 
 ## Development
 
