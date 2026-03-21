@@ -3,7 +3,7 @@ builder = "dockerfile"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "node dist/index.js"
+startCommand = "npm run start:mcp:http"
 healthcheckPath = "/health"
 healthcheckTimeout = 30
 restartPolicyType = "always"
