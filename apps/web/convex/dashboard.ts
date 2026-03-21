@@ -29,6 +29,7 @@ export const viewer = query({
         _id: w._id,
         name: w.name,
         plan: w.plan,
+        stripeCustomerId: w.stripeCustomerId,
       })),
     };
   },

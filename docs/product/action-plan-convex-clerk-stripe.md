@@ -93,9 +93,10 @@ for the public open-source repo.
 
 ## Phase 1 — Clerk + Convex in `apps/web`
 
-**Repo status:** `apps/web` now includes Convex (`users`, `workspaces`), Clerk
-middleware on `/dashboard`, `ConvexProviderWithClerk`, and `.env.example`. Stripe and
-billing are **not** wired yet—continue with Phase 3 when ready.
+**Repo status:** `apps/web` includes Convex (`users`, `workspaces`), Clerk middleware,
+`ConvexProviderWithClerk`, and **Stripe** via `@convex-dev/stripe` (`convex.config.ts`,
+`http.ts` webhook route, checkout + portal actions, workspace `plan` sync on subscription
+events). Configure Convex env vars and Stripe webhooks per `apps/web/README.md`.
 
 Official references:
 

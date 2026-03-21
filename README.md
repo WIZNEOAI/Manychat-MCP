@@ -210,8 +210,10 @@ Clerk keys and `NEXT_PUBLIC_CONVEX_URL`, then:
    Clerk Frontend API / issuer host, deploy `convex/auth.config.ts`, and run
    `npm run convex:dev` from the repo (runs Convex against `apps/web/convex/`).
 
-See [`docs/product/action-plan-convex-clerk-stripe.md`](docs/product/action-plan-convex-clerk-stripe.md)
-for Stripe and production deployment (Vercel + Railway).
+Stripe Pro checkout and webhooks run in **Convex** (`@convex-dev/stripe`); set
+`STRIPE_*` and `PUBLIC_APP_URL` in the Convex dashboard. See `apps/web/README.md` and
+[`docs/product/action-plan-convex-clerk-stripe.md`](docs/product/action-plan-convex-clerk-stripe.md)
+for Vercel + Railway deployment notes.
 
 ## CLI surface
 
