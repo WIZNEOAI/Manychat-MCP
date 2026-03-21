@@ -127,6 +127,7 @@ Treat this as compatibility behavior, not the primary product flow.
 - Legacy endpoint-to-MCP mapping: `docs/manychat-endpoint-matrix.md`
 - MCP-to-CLI migration map: `docs/context/mcp-migration-map.md`
 - Skills bundle for operational agents: `skills/manychat-mcp-ops`
+- Open-source + SaaS product blueprint: `docs/open-source-saas-blueprint.md`
 
 ## Safety notes
 
