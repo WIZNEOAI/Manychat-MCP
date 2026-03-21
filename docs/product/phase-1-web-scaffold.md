@@ -109,6 +109,20 @@ Those belong to the hosted control-plane phases, not to the initial web shell.
 - dashboard page is explicitly marked as future work
 - root runtime still builds and tests normally
 
+## Progress since the initial scaffold
+
+The web shell now aims to feel **product-shaped** while staying backend-free:
+
+- landing narrative for CLI vs local MCP vs remote MCP, self-host vs hosted, and
+  the two-credential model
+- docs shell with sidebar anchors and links to GitHub source files
+- dashboard shell with **concrete sections** (workspaces, members, accounts,
+  vault, MCP tokens, usage) aligned with
+  [`control-plane-contracts.md`](./control-plane-contracts.md)
+
+Long-form docs remain in `docs/`; the site links out rather than duplicating
+markdown rendering in Phase 1.
+
 ## What should come immediately after the scaffold
 
 Once the web shell exists, the next useful increments are:
@@ -118,3 +132,6 @@ Once the web shell exists, the next useful increments are:
 3. hosted waitlist or private beta CTA
 4. dashboard placeholder for future ManyChat key vault + MCP token issuance
 5. explicit pricing/tier presentation tied to workspace/account/concurrency limits
+
+Items 1, 4, and 5 are partially addressed in the evolving `apps/web` UI; items 2–3
+remain optional next steps.

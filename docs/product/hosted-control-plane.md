@@ -144,3 +144,13 @@ It is the packaging layer for:
 - showing client-specific connection snippets
 - enforcing pricing tiers and concurrency
 - making the hosted product easier than raw self-hosting
+
+## Implementation pointers
+
+For **entity list, REST-style route sketch, plan dimensions, and dashboard UI
+states** (loading / empty / ready / error), see
+[`control-plane-contracts.md`](./control-plane-contracts.md).
+
+For **how this repo can grow** toward `apps/api` and an optional dedicated MCP
+deploy without a big-bang migration, see
+[`repository-evolution.md`](./repository-evolution.md).
