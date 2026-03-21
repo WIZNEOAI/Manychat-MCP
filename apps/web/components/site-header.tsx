@@ -1,3 +1,6 @@
+"use client";
+
+import { SignInButton, useAuth, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { REPO_TREE_BASE } from "@/lib/repo";
 
@@ -7,7 +10,12 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard" },
 ] as const;
 
+const authButtonClass =
+  "rounded-full px-3 py-1.5 text-sm font-medium transition hover:bg-black/5 hover:text-black dark:hover:bg-white/10 dark:hover:text-white";
+
 export function SiteHeader() {
+  const { isSignedIn, isLoaded } = useAuth();
+
   return (
     <header className="sticky top-0 z-20 border-b border-black/10 bg-white/90 backdrop-blur-md dark:border-white/10 dark:bg-black/80">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 py-4">
@@ -35,6 +43,21 @@ export function SiteHeader() {
           >
             GitHub
           </a>
+          {!isLoaded ? (
+            <span className="px-3 py-1.5 text-xs muted">…</span>
+          ) : isSignedIn ? (
+            <UserButton
+              appearance={{
+                elements: { avatarBox: "h-8 w-8" },
+              }}
+            />
+          ) : (
+            <SignInButton mode="modal">
+              <button type="button" className={`${authButtonClass} text-black/80 dark:text-white/80`}>
+                Sign in
+              </button>
+            </SignInButton>
+          )}
         </nav>
       </div>
     </header>

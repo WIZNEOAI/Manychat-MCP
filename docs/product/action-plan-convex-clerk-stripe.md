@@ -93,6 +93,10 @@ for the public open-source repo.
 
 ## Phase 1 — Clerk + Convex in `apps/web`
 
+**Repo status:** `apps/web` now includes Convex (`users`, `workspaces`), Clerk
+middleware on `/dashboard`, `ConvexProviderWithClerk`, and `.env.example`. Stripe and
+billing are **not** wired yet—continue with Phase 3 when ready.
+
 Official references:
 
 - Convex + Clerk: [Convex Clerk auth](https://docs.convex.dev/auth/clerk)
