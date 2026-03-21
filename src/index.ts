@@ -12,11 +12,6 @@ async function main() {
     return;
   }
 
-  if (args.length === 0 && process.env.MCP_TRANSPORT) {
-    await startLegacyMcpServer([]);
-    return;
-  }
-
   const io = { stdout: [] as string[], stderr: [] as string[] };
   const exitCode = await runCli(args, io);
   if (io.stdout.length > 0) {
