@@ -24,7 +24,8 @@ The core product identity is still:
 | CLI | source of truth for execution and automation | primary |
 | MCP local (`stdio`) | local compatibility for MCP clients | supported |
 | MCP remote (`HTTP`) | self-hosted remote access layer | supported |
-| Hosted SaaS | future control plane, tokens, billing, docs UX | not in Phase 0 |
+| Web frontend (`apps/web`) | landing, docs shell, dashboard shell | scaffolded |
+| Hosted SaaS | control plane, tokens, billing, docs UX | planned |
 
 ## The auth model in one minute
 
@@ -170,6 +171,28 @@ Phase 0 removes the ambiguous "maybe CLI, maybe HTTP MCP" production behavior.
 - Claude Code / Cursor / Codex / Claude Desktop:
   [`docs/connect/mcp-clients.md`](docs/connect/mcp-clients.md)
 
+## Frontend scaffold
+
+Phase 0 now includes a minimal Next.js frontend at `apps/web`.
+
+Current scope:
+
+- landing page
+- docs shell
+- dashboard placeholder
+
+Run it from the repo root:
+
+```bash
+npm run web:dev
+```
+
+Build it:
+
+```bash
+npm run web:build
+```
+
 ## CLI surface
 
 Core commands:
@@ -220,7 +243,7 @@ That means:
 
 - CLI remains the source of truth
 - MCP reuses the same execution layer
-- frontend and hosted control plane come later
+- frontend shell exists now, full hosted control plane comes later
 
 ## Self-host now, SaaS later
 
@@ -258,7 +281,11 @@ The open-source story should stay excellent even before the SaaS exists.
 - MCP migration map: [`docs/context/mcp-migration-map.md`](docs/context/mcp-migration-map.md)
 - Open-source + SaaS blueprint:
   [`docs/open-source-saas-blueprint.md`](docs/open-source-saas-blueprint.md)
-- Phase 1 frontend scaffold plan:
+- Hosted control-plane model:
+  [`docs/product/hosted-control-plane.md`](docs/product/hosted-control-plane.md)
+- Pricing tiers:
+  [`docs/product/pricing-tiers.md`](docs/product/pricing-tiers.md)
+- Web scaffold roadmap:
   [`docs/product/phase-1-web-scaffold.md`](docs/product/phase-1-web-scaffold.md)
 
 ## Development
