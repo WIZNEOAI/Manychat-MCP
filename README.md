@@ -171,26 +171,31 @@ Phase 0 removes the ambiguous "maybe CLI, maybe HTTP MCP" production behavior.
 - Claude Code / Cursor / Codex / Claude Desktop:
   [`docs/connect/mcp-clients.md`](docs/connect/mcp-clients.md)
 
-## Frontend scaffold
+## Web frontend (`apps/web`)
 
-Phase 0 now includes a minimal Next.js frontend at `apps/web`.
+Next.js + TypeScript + Tailwind at `apps/web` is the **product shell**: credible landing
+copy, a docs map with GitHub links, and a **dashboard preview** aligned with the hosted
+control-plane contracts (workspaces, vault, MCP tokens, usage).
 
-Current scope:
+It does not replace the CLI or bundle the ManyChat runtime. Long-form documentation
+stays in `docs/`; the site links out until markdown rendering is worth the complexity.
 
-- landing page
-- docs shell
-- dashboard placeholder
-
-Run it from the repo root:
+Run from the repo root:
 
 ```bash
 npm run web:dev
 ```
 
-Build it:
+Build:
 
 ```bash
 npm run web:build
+```
+
+Lint:
+
+```bash
+npm run web:lint
 ```
 
 ## CLI surface
@@ -283,6 +288,10 @@ The open-source story should stay excellent even before the SaaS exists.
   [`docs/open-source-saas-blueprint.md`](docs/open-source-saas-blueprint.md)
 - Hosted control-plane model:
   [`docs/product/hosted-control-plane.md`](docs/product/hosted-control-plane.md)
+- Control-plane API/UI contracts (for implementation):
+  [`docs/product/control-plane-contracts.md`](docs/product/control-plane-contracts.md)
+- Repo evolution (`apps/web` → future `apps/api` / MCP service):
+  [`docs/product/repository-evolution.md`](docs/product/repository-evolution.md)
 - Pricing tiers:
   [`docs/product/pricing-tiers.md`](docs/product/pricing-tiers.md)
 - Web scaffold roadmap:
@@ -294,6 +303,8 @@ The open-source story should stay excellent even before the SaaS exists.
 npm run lint
 npm test
 npm run build
+npm run web:lint
+npm run web:build
 ```
 
 ## License
