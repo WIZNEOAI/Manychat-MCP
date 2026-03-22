@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(npm test*)",
+      "Bash(npx tsc*)",
+      "Bash(npx vitest*)",
+      "Bash(node -e *)",
+      "Bash(ls /c/Users/ogome/.cursor/mcp*.json)",
+      "Bash(ls /c/Users/ogome/AppData/Roaming/Cursor/User/globalStorage/cursor*/mcp*.json)",
+      "Bash(find C:/Users/ogome/Desktop/Manychat/tests -type f -name *.ts -o -name *.js)",
+      "Bash(find C:/Users/ogome/Desktop/Manychat -maxdepth 1 -type f -name *.json -o -name *.yaml -o -name *.yml)",
+      "Bash(find C:/Users/ogome/Desktop/Manychat/apps/web -type f -name *.ts -o -name *.tsx)"
+    ]
+  }
+}

@@ -1,0 +1,122 @@
+# ManyChat CLI + MCP — Claude Code Context
+
+## Project Identity
+
+CLI-first ManyChat toolkit for agents and operators. Wraps the ManyChat Account Public API with a CLI, an MCP server (local stdio + remote HTTP), and a web control plane.
+
+- **Binaries**: `manychat`, `manychat-mcp` → both point to `dist/index.js`
+- **Version**: 0.1.0 (defined in `src/product.ts`)
+- **License**: MIT
+- **Repo**: github.com/WIZNEOAI/manychat-mcp
+
+## Commands
+
+```bash
+# Lint (TypeScript noEmit)
+node -e "require('child_process').execSync('npx tsc --noEmit', {stdio:'inherit'})"
+
+# Build
+node -e "require('child_process').execSync('npx tsc', {stdio:'inherit'})"
+
+# Test (all 4 files, 15 tests must pass)
+node -e "require('child_process').execSync('npx vitest run', {stdio:'inherit'})"
+
+# Web app
+npm --prefix apps/web run dev        # Next.js dev server
+npm --prefix apps/web run build      # production build
+npm --prefix apps/web run lint       # eslint
+npm --prefix apps/web run convex:dev # convex dev server
+```
+
+> **Windows note**: `npx` must be invoked via `node -e` wrapper due to Git Bash path resolution.
+
+## Architecture
+
+```
+src/
+├── index.ts              # CLI entry (shebang), routes "mcp serve" to HTTP
+├── server.ts             # MCP server factory: 7 tools + 6 prompts + 8 resources
+├── product.ts            # Version constant
+├── cli/app.ts            # CLI router (1,254 lines): doctor|page|tags|fields|flows|subscribers|send|raw
+├── auth/
+│   ├── manychat-client.ts  # REST client, 3 retries, exponential backoff on 429/5xx
+│   ├── oauth.ts            # OAuth 2.0 + PKCE (SHA256)
+│   ├── oauth-routes.ts     # Express: .well-known, /register, /authorize, /token, /revoke
+│   └── oauth-store.ts      # MemoryOAuthStore + RedisOAuthStore
+├── mcp/
+│   ├── serve.ts            # Express HTTP server, session mgmt, dual auth (header/OAuth)
+│   ├── http-entry.ts       # Production HTTP entry
+│   └── sse.ts              # SSE transport
+├── tools/                  # MCP tool groups
+│   ├── subscribers.ts      # get, find, create, update
+│   ├── tags.ts             # list, create, add/remove
+│   ├── custom-fields.ts    # list, create, set (text/number/date/datetime/boolean)
+│   ├── flows.ts            # list (with folders), send
+│   ├── messaging.ts        # send content (Dynamic Content v2), send text
+│   └── page.ts             # page info, bot fields, growth tools, OTN topics, health
+├── resources/index.ts      # 8 MCP resources: page-info, tags, custom-fields, bot-fields, flows, otn-topics, subscriber-schema, api-limits
+├── prompts/index.ts        # 6 agent prompts: onboard_subscriber, recover_lead, send_campaign, analyze_subscriber, segment_audience, diagnose_automation
+├── types/manychat.ts       # TS interfaces: Page, Subscriber, Tag, CustomField, Flow, etc.
+└── lib/logger.ts           # Structured JSON logging, secret redaction
+
+tests/
+├── cli.test.ts             # 5 tests: CLI commands with mocked API
+├── manychat-client.test.ts # 3 tests: retry on 429, error handling
+├── mcp-http-config.test.ts # 4 tests: HTTP config, localhost, prod OAuth, Railway
+└── oauth.test.ts           # 3 tests: full OAuth flow (register→authorize→token→refresh→revoke)
+
+apps/web/                   # Next.js 16 + React 19 + Tailwind 4
+├── middleware.ts           # Clerk auth, protects /dashboard
+└── convex/                 # Convex backend
+    ├── schema.ts           # users (clerkUserId index), workspaces (ownerUserId, plan enum, stripeCustomerId)
+    ├── users.ts, dashboard.ts, billing.ts, stripeActions.ts, http.ts
+    └── auth.config.ts
+
+docs/context/               # Product specs (read order in AGENTS.md)
+skills/                     # Codex skills (manychat-mcp-ops)
+```
+
+## Key Conventions
+
+- **ESM-only** — `"type": "module"`, `NodeNext` module resolution
+- **Strict TypeScript** — `strict: true`, target ES2022
+- **stdout = machine-readable JSON** — diagnostics go to stderr only
+- **API Key auth** is the default and only supported CLI path
+- **Read-before-write, verify-after-write** for all mutating commands
+- **CLI exit codes**: 0 success, 2 usage, 3 config, 4 API error, 5 rate limit
+
+## Environment Variables
+
+| Variable | Purpose | Default |
+|----------|---------|---------|
+| `MANYCHAT_API_KEY` | API authentication | required |
+| `MCP_TRANSPORT` | stdio or http | stdio |
+| `MCP_REMOTE_AUTH` | manychat_header or oauth | manychat_header |
+| `MCP_BASE_URL` | HTTP server base URL | — |
+| `PORT` | HTTP server port | 3000 |
+| `OAUTH_STORE` | memory or redis | memory |
+| `REDIS_URL` | Redis connection | — |
+| `LOG_LEVEL` | debug/info/warn/error | info |
+| `RAILWAY_PUBLIC_DOMAIN` | Railway deployment URL | — |
+
+## Deployment
+
+- **Dockerfile**: multi-stage (Node 22-alpine), exposes :3000
+- **Railway**: build via Dockerfile, start `npm run start:mcp:http`, health GET /health (30s timeout)
+- **Smithery**: schema with baseUrl, useOAuth, manychatApiKey
+
+## Testing Patterns
+
+- Tests use `vitest` with mocked HTTP responses (no real API calls)
+- ManyChatClient tests verify retry logic and error classification
+- OAuth tests cover full PKCE flow lifecycle
+- CLI tests mock API and verify stdout JSON output
+- **All 4 test files (15 tests) must pass before any commit**
+
+## What NOT to do
+
+- Don't assume messages can be sent outside ManyChat channel policy windows
+- Don't use OAuth/Redis paths for new features — those are legacy compatibility
+- Don't modify `apps/web` without reading `apps/web/AGENTS.md` first (Next.js 16 breaking changes)
+- Don't add dependencies without checking both root and apps/web package.json
+- Don't log secrets — `lib/logger.ts` has redaction, use it
