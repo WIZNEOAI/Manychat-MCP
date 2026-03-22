@@ -215,6 +215,11 @@ Stripe Pro checkout and webhooks run in **Convex** (`@convex-dev/stripe`); set
 [`docs/product/action-plan-convex-clerk-stripe.md`](docs/product/action-plan-convex-clerk-stripe.md)
 for Vercel + Railway deployment notes.
 
+**Linear (Gnosix):** environment and rollout checklist for this repo — project
+[ManyChat MCP](https://linear.app/gnosix/project/manychat-mcp-cefb205b8da0), meta issue
+[GNO-36](https://linear.app/gnosix/issue/GNO-36/manychat-mcp-meta-entornos-convex-clerk-stripe-cli-y-cursor-cloud),
+[variables reference doc](https://linear.app/gnosix/document/manychat-mcp-variables-de-entorno-y-arranque-e721643766a7).
+
 ## CLI surface
 
 Core commands:
