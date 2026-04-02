@@ -1,11 +1,14 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ManyChatClient } from "../auth/manychat-client.js";
+import { isToolAllowed, type ToolRegistrationOptions } from "../hosted/capabilities.js";
 
 export function registerMessagingTools(
   server: McpServer,
   client: ManyChatClient,
+  options: ToolRegistrationOptions = {},
 ) {
+  if (isToolAllowed("send_content", options)) {
   server.tool(
     "send_content",
     "Send rich content (text, image, cards, etc.) to a subscriber using ManyChat's Dynamic Content format. Requires 24h interaction window or a message_tag.",
@@ -40,7 +43,9 @@ export function registerMessagingTools(
       };
     },
   );
+  }
 
+  if (isToolAllowed("send_text_message", options)) {
   server.tool(
     "send_text_message",
     "Send a simple text message to a subscriber (convenience wrapper over sendContent)",
@@ -72,4 +77,5 @@ export function registerMessagingTools(
       };
     },
   );
+  }
 }

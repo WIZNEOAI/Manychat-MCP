@@ -47,6 +47,10 @@ MANYCHAT_API_KEY=mc_...
 MANYCHAT_MCP_TOKEN=your-issued-bearer-token
 ```
 
+For the hosted SaaS path, `MANYCHAT_MCP_TOKEN` is the main client credential.
+The ManyChat API key stays in the hosted vault and is never pasted into Claude,
+Cursor, or Codex.
+
 ## Claude Code
 
 Official docs support remote HTTP MCP servers and custom headers.
@@ -64,6 +68,8 @@ claude mcp add --transport http manychat "$MANYCHAT_MCP_URL" \
 claude mcp add --transport http manychat "$MANYCHAT_MCP_URL" \
   --header "Authorization: Bearer $MANYCHAT_MCP_TOKEN"
 ```
+
+This is the recommended hosted setup.
 
 ### OAuth mode
 
@@ -137,6 +143,7 @@ Notes:
 
 - for Cloud Agents, store secrets in Cursor-managed secret fields when possible
 - restart Cursor after editing the config file
+- hosted product tokens map to a workspace and enforce bundle + quota limits server-side
 
 ## Codex
 
@@ -156,6 +163,15 @@ env_http_headers = { "X-ManyChat-API-Key" = "MANYCHAT_API_KEY" }
 [mcp_servers.manychat]
 url = "https://mcp.example.com/mcp"
 bearer_token_env_var = "MANYCHAT_MCP_TOKEN"
+```
+
+If your Codex version supports a literal bearer token field instead, the hosted
+dashboard also emits:
+
+```toml
+[mcp_servers.manychat]
+url = "https://mcp.example.com/mcp"
+bearer_token = "mcp_live_..."
 ```
 
 ### Static headers example
@@ -183,7 +199,10 @@ That means:
 
 ### Recommended Phase 0 path for Claude Desktop
 
-Use **OAuth mode** on the server:
+Use **OAuth mode** on the server for remote connector UX, or use a hosted bearer
+token flow if your Claude environment can attach custom headers.
+
+OAuth server mode:
 
 ```env
 MCP_REMOTE_AUTH=oauth
@@ -197,6 +216,13 @@ Why:
 - Claude Desktop remote connectors support authless and OAuth-based remote servers
 - the desktop remote flow is not the place to depend on custom header injection
 - OAuth is the most compatible path for hosted-style remote access
+
+Hosted note:
+
+- if your Claude environment supports a raw remote HTTP connector with bearer headers,
+  you can also use the hosted MCP token directly
+- otherwise, keep Claude Desktop on OAuth and use hosted bearer tokens for Claude Code,
+  Cursor, and Codex
 
 ### Local fallback for Claude Desktop
 
@@ -224,9 +250,9 @@ auth layer.
 
 | Client | Recommended Phase 0 mode |
 | --- | --- |
-| Claude Code | header mode or OAuth |
-| Cursor | header mode or bearer token |
-| Codex | header mode or bearer token |
+| Claude Code | header mode, hosted bearer token, or OAuth |
+| Cursor | header mode or hosted bearer token |
+| Codex | header mode or hosted bearer token |
 | Claude Desktop | OAuth for remote, stdio for local |
 
 ## Production reminders
@@ -235,3 +261,4 @@ auth layer.
 - keep Railway/VPS single-replica in Phase 0
 - do not treat OAuth as the core product identity
 - ManyChat API key remains the upstream execution credential
+- for hosted mode, prefer MCP bearer tokens over sharing raw ManyChat keys with clients

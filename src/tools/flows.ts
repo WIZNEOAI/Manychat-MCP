@@ -2,8 +2,14 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ManyChatClient } from "../auth/manychat-client.js";
 import type { Flow, Folder } from "../types/manychat.js";
+import { isToolAllowed, type ToolRegistrationOptions } from "../hosted/capabilities.js";
 
-export function registerFlowTools(server: McpServer, client: ManyChatClient) {
+export function registerFlowTools(
+  server: McpServer,
+  client: ManyChatClient,
+  options: ToolRegistrationOptions = {},
+) {
+  if (isToolAllowed("list_flows", options)) {
   server.tool(
     "list_flows",
     "List all automation flows in the ManyChat account (includes folder structure)",
@@ -17,7 +23,9 @@ export function registerFlowTools(server: McpServer, client: ManyChatClient) {
       };
     },
   );
+  }
 
+  if (isToolAllowed("send_flow", options)) {
   server.tool(
     "send_flow",
     "Send/trigger an automation flow to a specific subscriber",
@@ -41,4 +49,5 @@ export function registerFlowTools(server: McpServer, client: ManyChatClient) {
       };
     },
   );
+  }
 }
