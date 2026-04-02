@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 
 const bundleValidator = v.union(
@@ -33,14 +34,16 @@ const planLimits = {
   },
 } as const;
 
+type HostedCtx = QueryCtx | MutationCtx;
+
 async function requireWorkspaceOwner(
-  ctx: any,
+  ctx: HostedCtx,
   workspaceId: Id<"workspaces">,
   clerkUserId: string,
 ): Promise<{ workspace: Doc<"workspaces">; user: Doc<"users"> }> {
   const user = await ctx.db
     .query("users")
-    .withIndex("by_clerk_user", (q: any) => q.eq("clerkUserId", clerkUserId))
+    .withIndex("by_clerk_user", (q) => q.eq("clerkUserId", clerkUserId))
     .unique();
   if (!user) {
     throw new Error("User not found");
@@ -54,20 +57,28 @@ async function requireWorkspaceOwner(
   return { workspace, user };
 }
 
-async function ensureAccountCap(ctx: any, workspaceId: Id<"workspaces">, plan: keyof typeof planLimits) {
+async function ensureAccountCap(
+  ctx: HostedCtx,
+  workspaceId: Id<"workspaces">,
+  plan: keyof typeof planLimits,
+) {
   const existing = await ctx.db
     .query("manychatAccounts")
-    .withIndex("by_workspace", (q: any) => q.eq("workspaceId", workspaceId))
+    .withIndex("by_workspace", (q) => q.eq("workspaceId", workspaceId))
     .collect();
   if (existing.length >= planLimits[plan].maxAccounts) {
     throw new Error(`Plan limit reached for connected ManyChat accounts (${planLimits[plan].maxAccounts}).`);
   }
 }
 
-async function ensureTokenCap(ctx: any, workspaceId: Id<"workspaces">, plan: keyof typeof planLimits) {
+async function ensureTokenCap(
+  ctx: HostedCtx,
+  workspaceId: Id<"workspaces">,
+  plan: keyof typeof planLimits,
+) {
   const active = await ctx.db
     .query("mcpTokens")
-    .withIndex("by_workspace", (q: any) => q.eq("workspaceId", workspaceId))
+    .withIndex("by_workspace", (q) => q.eq("workspaceId", workspaceId))
     .collect();
   const activeCount = active.filter((token: Doc<"mcpTokens">) => token.revokedAt === null).length;
   if (activeCount >= planLimits[plan].maxTokens) {

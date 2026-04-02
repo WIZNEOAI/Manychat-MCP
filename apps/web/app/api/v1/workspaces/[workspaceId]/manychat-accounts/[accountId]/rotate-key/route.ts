@@ -4,7 +4,11 @@ import { requireClerkUser, unauthorized } from "@/lib/server/auth";
 import { getServerConvexClient } from "@/lib/server/convex";
 import { encryptVaultValue } from "@/lib/server/hosted";
 
-export async function POST(request: NextRequest, context: any) {
+type RouteContext = {
+  params: Promise<{ workspaceId: string; accountId: string }>;
+};
+
+export async function POST(request: NextRequest, context: RouteContext) {
   try {
     const clerkUserId = await requireClerkUser();
     const { workspaceId, accountId } = await context.params;

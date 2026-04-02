@@ -4,7 +4,11 @@ import { requireClerkUser, unauthorized } from "@/lib/server/auth";
 import { getServerConvexClient } from "@/lib/server/convex";
 import { createHostedTokenSecret, hashHostedToken, parseHostedTokenPrefix } from "@/lib/server/hosted";
 
-export async function GET(_request: NextRequest, context: any) {
+type RouteContext = {
+  params: Promise<{ workspaceId: string }>;
+};
+
+export async function GET(_request: NextRequest, context: RouteContext) {
   try {
     const clerkUserId = await requireClerkUser();
     const { workspaceId } = await context.params;
@@ -22,7 +26,7 @@ export async function GET(_request: NextRequest, context: any) {
   }
 }
 
-export async function POST(request: NextRequest, context: any) {
+export async function POST(request: NextRequest, context: RouteContext) {
   try {
     const clerkUserId = await requireClerkUser();
     const { workspaceId } = await context.params;

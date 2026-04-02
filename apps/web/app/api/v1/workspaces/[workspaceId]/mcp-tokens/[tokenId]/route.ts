@@ -3,7 +3,11 @@ import { api } from "@/convex/_generated/api";
 import { requireClerkUser, unauthorized } from "@/lib/server/auth";
 import { getServerConvexClient } from "@/lib/server/convex";
 
-export async function DELETE(_request: NextRequest, context: any) {
+type RouteContext = {
+  params: Promise<{ workspaceId: string; tokenId: string }>;
+};
+
+export async function DELETE(_request: NextRequest, context: RouteContext) {
   try {
     const clerkUserId = await requireClerkUser();
     const { workspaceId, tokenId } = await context.params;

@@ -7,6 +7,26 @@ import { api } from "@/convex/_generated/api";
 import { pricingTiers } from "@/lib/site-data";
 
 type Bundle = "read_only" | "operator" | "messaging_safe" | "admin";
+type WorkspaceToken = {
+  _id: string;
+  name: string;
+  prefix: string;
+  bundle: Bundle;
+  revokedAt: number | null;
+  createdAt: number;
+};
+type WorkspaceAccount = {
+  _id: string;
+  displayName: string;
+  isDefault: boolean;
+  lastRotatedAt: number;
+};
+type WorkspaceAuditEvent = {
+  _id: string;
+  action: string;
+  metadataJson?: string;
+  createdAt: number;
+};
 
 const MCP_URL = process.env.NEXT_PUBLIC_MCP_HTTP_URL ?? "https://mcp.example.com/mcp";
 
@@ -146,7 +166,12 @@ export function DashboardClient() {
                 <p className="font-semibold">Limits</p>
                 <p className="mt-2 text-xs muted">
                   {primaryWorkspace.accounts.length}/{primaryWorkspace.limits.maxAccounts} accounts ·{" "}
-                  {primaryWorkspace.tokens.filter((token: any) => token.revokedAt === null).length}/
+                  {
+                    primaryWorkspace.tokens.filter(
+                      (token: WorkspaceToken) => token.revokedAt === null,
+                    ).length
+                  }
+                  /
                   {primaryWorkspace.limits.maxTokens} active tokens
                 </p>
                 <p className="mt-1 text-xs muted">
@@ -320,7 +345,7 @@ export function DashboardClient() {
                     No ManyChat accounts connected yet.
                   </p>
                 ) : (
-                  primaryWorkspace.accounts.map((account: any) => (
+                  primaryWorkspace.accounts.map((account: WorkspaceAccount) => (
                     <div key={account._id} className="rounded-2xl border border-black/8 p-4 dark:border-white/10">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
@@ -467,7 +492,7 @@ export function DashboardClient() {
                     No MCP tokens issued yet.
                   </p>
                 ) : (
-                  primaryWorkspace.tokens.map((token: any) => (
+                  primaryWorkspace.tokens.map((token: WorkspaceToken) => (
                     <div key={token._id} className="rounded-2xl border border-black/8 p-4 dark:border-white/10">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
@@ -523,7 +548,7 @@ export function DashboardClient() {
                   No audit events yet.
                 </p>
               ) : (
-                primaryWorkspace.audit.map((event: any) => (
+                primaryWorkspace.audit.map((event: WorkspaceAuditEvent) => (
                   <div key={event._id} className="rounded-2xl border border-black/8 p-4 dark:border-white/10">
                     <div className="flex items-start justify-between gap-4">
                       <div>
