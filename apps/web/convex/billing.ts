@@ -36,7 +36,7 @@ export const linkStripeCustomer = internalMutation({
 export const setWorkspacePlanFromStripe = internalMutation({
   args: {
     workspaceIdString: v.string(),
-    plan: v.union(v.literal("free"), v.literal("pro")),
+    plan: v.union(v.literal("free"), v.literal("supporter"), v.literal("pro")),
     stripeCustomerId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {

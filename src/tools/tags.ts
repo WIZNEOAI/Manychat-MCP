@@ -2,8 +2,14 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ManyChatClient } from "../auth/manychat-client.js";
 import type { Tag } from "../types/manychat.js";
+import { isToolAllowed, type ToolRegistrationOptions } from "../hosted/capabilities.js";
 
-export function registerTagTools(server: McpServer, client: ManyChatClient) {
+export function registerTagTools(
+  server: McpServer,
+  client: ManyChatClient,
+  options: ToolRegistrationOptions = {},
+) {
+  if (isToolAllowed("list_tags", options)) {
   server.tool(
     "list_tags",
     "List all tags available in the ManyChat account",
@@ -15,7 +21,9 @@ export function registerTagTools(server: McpServer, client: ManyChatClient) {
       };
     },
   );
+  }
 
+  if (isToolAllowed("create_tag", options)) {
   server.tool(
     "create_tag",
     "Create a new tag in the ManyChat account",
@@ -27,7 +35,9 @@ export function registerTagTools(server: McpServer, client: ManyChatClient) {
       };
     },
   );
+  }
 
+  if (isToolAllowed("add_tag_to_subscriber", options)) {
   server.tool(
     "add_tag_to_subscriber",
     "Add a tag to a subscriber by tag ID",
@@ -44,7 +54,9 @@ export function registerTagTools(server: McpServer, client: ManyChatClient) {
       };
     },
   );
+  }
 
+  if (isToolAllowed("add_tag_to_subscriber_by_name", options)) {
   server.tool(
     "add_tag_to_subscriber_by_name",
     "Add a tag to a subscriber by tag name (creates tag if it doesn't exist)",
@@ -67,7 +79,9 @@ export function registerTagTools(server: McpServer, client: ManyChatClient) {
       };
     },
   );
+  }
 
+  if (isToolAllowed("remove_tag_from_subscriber", options)) {
   server.tool(
     "remove_tag_from_subscriber",
     "Remove a tag from a subscriber by tag ID",
@@ -87,7 +101,9 @@ export function registerTagTools(server: McpServer, client: ManyChatClient) {
       };
     },
   );
+  }
 
+  if (isToolAllowed("remove_tag_from_subscriber_by_name", options)) {
   server.tool(
     "remove_tag_from_subscriber_by_name",
     "Remove a tag from a subscriber by tag name",
@@ -110,4 +126,5 @@ export function registerTagTools(server: McpServer, client: ManyChatClient) {
       };
     },
   );
+  }
 }

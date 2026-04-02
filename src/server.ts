@@ -9,21 +9,28 @@ import { registerPageTools } from "./tools/page.js";
 import { registerResources } from "./resources/index.js";
 import { registerPrompts } from "./prompts/index.js";
 import { MANYCHAT_PRODUCT } from "./product.js";
+import { createToolAllowance } from "./hosted/capabilities.js";
+import type { CapabilityBundle } from "./hosted/types.js";
 
-export function createServer(apiKey?: string): McpServer {
+interface CreateServerOptions {
+  capabilityBundle?: CapabilityBundle;
+}
+
+export function createServer(apiKey?: string, options: CreateServerOptions = {}): McpServer {
   const client = new ManyChatClient(apiKey);
+  const isToolAllowed = createToolAllowance(options.capabilityBundle ?? "admin");
 
   const server = new McpServer({
     name: MANYCHAT_PRODUCT.name,
     version: MANYCHAT_PRODUCT.version,
   });
 
-  registerSubscriberTools(server, client);
-  registerTagTools(server, client);
-  registerCustomFieldTools(server, client);
-  registerFlowTools(server, client);
-  registerMessagingTools(server, client);
-  registerPageTools(server, client);
+  registerSubscriberTools(server, client, { isToolAllowed });
+  registerTagTools(server, client, { isToolAllowed });
+  registerCustomFieldTools(server, client, { isToolAllowed });
+  registerFlowTools(server, client, { isToolAllowed });
+  registerMessagingTools(server, client, { isToolAllowed });
+  registerPageTools(server, client, { isToolAllowed });
   registerResources(server, client);
   registerPrompts(server);
 

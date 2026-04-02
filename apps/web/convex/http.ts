@@ -11,7 +11,8 @@ async function syncWorkspacePlanFromSubscription(
     return;
   }
   const status = sub.status;
-  const plan = status === "active" || status === "trialing" ? ("pro" as const) : ("free" as const);
+  const plan =
+    status === "active" || status === "trialing" ? ("supporter" as const) : ("free" as const);
   let customerId: string | undefined;
   if (typeof sub.customer === "string") {
     customerId = sub.customer;

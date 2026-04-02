@@ -9,6 +9,11 @@ import { createOAuthRouter } from "../auth/oauth-routes.js";
 import { resolveApiKeyFromToken } from "../auth/oauth.js";
 import { assertDurableOAuthStoreConfig } from "../auth/oauth-store.js";
 import { MANYCHAT_PRODUCT } from "../product.js";
+import {
+  HostedControlPlaneClient,
+  HostedControlPlaneError,
+} from "../hosted/control-plane-client.js";
+import type { HostedResolvedSession } from "../hosted/types.js";
 
 export async function startLegacyMcpServer(args: string[] = []) {
   const transportFlag = getFlagValue(args, "--transport");
@@ -35,7 +40,7 @@ async function startStdio() {
   log.info("ManyChat MCP compatibility server running on stdio");
 }
 
-type HttpMcpAuthMode = "manychat_header" | "oauth";
+type HttpMcpAuthMode = "manychat_header" | "oauth" | "hosted_token";
 type McpTransport = "stdio" | "http";
 
 interface HttpRuntimeConfig {
@@ -59,6 +64,19 @@ export function resolveHttpRuntimeConfig(
     if (!isHttpsUrl(baseUrl)) {
       throw new Error(
         "Production OAuth over HTTP requires an HTTPS public base URL. Set MCP_BASE_URL (preferred), BASE_URL, or Railway's public domain.",
+      );
+    }
+  }
+
+  if (authMode === "hosted_token" && nodeEnv === "production") {
+    if (!env.HOSTED_CONTROL_PLANE_URL?.trim()) {
+      throw new Error(
+        "HOSTED_CONTROL_PLANE_URL is required when MCP_REMOTE_AUTH=hosted_token in production.",
+      );
+    }
+    if (!env.HOSTED_CONTROL_PLANE_SECRET?.trim()) {
+      throw new Error(
+        "HOSTED_CONTROL_PLANE_SECRET is required when MCP_REMOTE_AUTH=hosted_token in production.",
       );
     }
   }
@@ -102,11 +120,31 @@ async function startHttp(config: HttpRuntimeConfig) {
     app.use(createOAuthRouter(config.baseUrl));
   }
 
-  const sessions: Record<string, StreamableHTTPServerTransport> = {};
+  const sessions: Record<
+    string,
+    {
+      transport: StreamableHTTPServerTransport;
+      hostedSession?: HostedResolvedSession;
+    }
+  > = {};
+  const workspaceSessionCounts = new Map<string, number>();
+  const hostedControlPlaneClient =
+    config.authMode === "hosted_token" && process.env.HOSTED_CONTROL_PLANE_URL && process.env.HOSTED_CONTROL_PLANE_SECRET
+      ? new HostedControlPlaneClient({
+          baseUrl: normalizeUrl(process.env.HOSTED_CONTROL_PLANE_URL),
+          sharedSecret: process.env.HOSTED_CONTROL_PLANE_SECRET,
+        })
+      : null;
 
   async function resolveExecutionApiKey(
     req: express.Request,
-  ): Promise<{ apiKey?: string; source?: string; error?: string }> {
+  ): Promise<{
+    apiKey?: string;
+    source?: string;
+    error?: string;
+    statusCode?: number;
+    hostedSession?: HostedResolvedSession;
+  }> {
     const headerKey = headerValue(req.headers["x-manychat-api-key"]);
     if (headerKey) {
       return { apiKey: headerKey, source: "x-manychat-api-key" };
@@ -138,6 +176,42 @@ async function startHttp(config: HttpRuntimeConfig) {
       };
     }
 
+    if (config.authMode === "hosted_token") {
+      const authHeader = headerValue(req.headers.authorization);
+      if (!authHeader?.startsWith("Bearer ")) {
+        return {
+          error:
+            "Missing hosted MCP token. Provide Authorization: Bearer <mcp_token>.",
+        };
+      }
+
+      if (!hostedControlPlaneClient) {
+        return {
+          error:
+            "Hosted control plane is not configured. Set HOSTED_CONTROL_PLANE_URL and HOSTED_CONTROL_PLANE_SECRET.",
+        };
+      }
+
+      const token = authHeader.slice(7).trim();
+      try {
+        const hostedSession = await hostedControlPlaneClient.resolveSession(token);
+        return {
+          apiKey: hostedSession.apiKey,
+          source: "hosted_product_token",
+          hostedSession,
+        };
+      } catch (error) {
+        return {
+          error:
+            error instanceof Error
+              ? error.message
+              : "Invalid hosted MCP bearer token.",
+          statusCode:
+            error instanceof HostedControlPlaneError ? error.status : 401,
+        };
+      }
+    }
+
     return {
       error:
         "Missing execution credential. Provide X-ManyChat-API-Key on the initialize request or configure MANYCHAT_API_KEY on the server.",
@@ -145,32 +219,69 @@ async function startHttp(config: HttpRuntimeConfig) {
   }
 
   app.post("/mcp", async (req, res) => {
+    let hostedSession: HostedResolvedSession | undefined;
+    let reservedHostedSlot = false;
     try {
       const sessionId = headerValue(req.headers["mcp-session-id"]);
       let transport: StreamableHTTPServerTransport;
+      let initializedThisRequest = false;
 
       if (sessionId && sessions[sessionId]) {
-        transport = sessions[sessionId];
+        transport = sessions[sessionId].transport;
+        hostedSession = sessions[sessionId].hostedSession;
       } else if (!sessionId && isInitializeRequest(req.body)) {
         const credential = await resolveExecutionApiKey(req);
         if (!credential.apiKey) {
-          writeJsonRpcError(res, 401, requestIdFromBody(req.body), credential.error!);
+          writeJsonRpcError(
+            res,
+            credential.statusCode ?? 401,
+            requestIdFromBody(req.body),
+            credential.error!,
+          );
           return;
+        }
+        hostedSession = credential.hostedSession;
+        initializedThisRequest = true;
+
+        if (hostedSession) {
+          const active = workspaceSessionCounts.get(hostedSession.workspaceId) ?? 0;
+          if (active >= hostedSession.limits.maxConcurrentSessions) {
+            writeJsonRpcError(
+              res,
+              429,
+              requestIdFromBody(req.body),
+              `Workspace session cap reached (${hostedSession.limits.maxConcurrentSessions}).`,
+            );
+            return;
+          }
+          workspaceSessionCounts.set(hostedSession.workspaceId, active + 1);
+          reservedHostedSlot = true;
         }
 
         transport = new StreamableHTTPServerTransport({
           sessionIdGenerator: () => randomUUID(),
           onsessioninitialized: (sid) => {
-            sessions[sid] = transport;
+            sessions[sid] = { transport, hostedSession };
           },
         });
 
         transport.onclose = () => {
           const sid = transport.sessionId;
           if (sid) delete sessions[sid];
+          if (hostedSession) {
+            releaseWorkspaceSlot(workspaceSessionCounts, hostedSession.workspaceId);
+            void hostedControlPlaneClient?.recordEvent({
+              type: "session_end",
+              tokenId: hostedSession.tokenId,
+              workspaceId: hostedSession.workspaceId,
+              accountId: hostedSession.accountId,
+            });
+          }
         };
 
-        const server = createServer(credential.apiKey);
+        const server = createServer(credential.apiKey, {
+          capabilityBundle: hostedSession?.capabilityBundle ?? "admin",
+        });
         await server.connect(transport);
       } else {
         writeJsonRpcError(
@@ -182,13 +293,61 @@ async function startHttp(config: HttpRuntimeConfig) {
         return;
       }
 
+      if (hostedSession && hostedControlPlaneClient) {
+        try {
+          await hostedControlPlaneClient.authorizeRequest({
+            workspaceId: hostedSession.workspaceId,
+            tokenId: hostedSession.tokenId,
+            accountId: hostedSession.accountId,
+          });
+        } catch (error) {
+          const statusCode =
+            error instanceof HostedControlPlaneError ? error.status : 401;
+          writeJsonRpcError(
+            res,
+            statusCode,
+            requestIdFromBody(req.body),
+            error instanceof Error
+              ? error.message
+              : "Hosted request authorization failed.",
+          );
+          return;
+        }
+      }
+
       await transport.handleRequest(req, res, req.body);
+
+      if (hostedSession) {
+        if (initializedThisRequest) {
+          await hostedControlPlaneClient?.recordEvent({
+            type: "session_start",
+            tokenId: hostedSession.tokenId,
+            workspaceId: hostedSession.workspaceId,
+            accountId: hostedSession.accountId,
+            metadata: {
+              capabilityBundle: hostedSession.capabilityBundle,
+              accountName: hostedSession.accountName,
+            },
+          });
+        }
+      }
     } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message.includes("Workspace session cap reached")
+      ) {
+        log.warn("hosted_session_cap_reached", {
+          error: error.message,
+        });
+      }
       log.error("mcp_http_request_failed", {
         path: req.path,
         method: req.method,
         error: error instanceof Error ? error.message : String(error),
       });
+      if (reservedHostedSlot && hostedSession) {
+        releaseWorkspaceSlot(workspaceSessionCounts, hostedSession.workspaceId);
+      }
       writeJsonRpcError(
         res,
         500,
@@ -204,7 +363,7 @@ async function startHttp(config: HttpRuntimeConfig) {
       res.status(400).json({ error: "Invalid or missing session" });
       return;
     }
-    await sessions[sessionId].handleRequest(req, res);
+    await sessions[sessionId].transport.handleRequest(req, res);
   });
 
   app.delete("/mcp", async (req, res) => {
@@ -213,7 +372,7 @@ async function startHttp(config: HttpRuntimeConfig) {
       res.status(400).json({ error: "Invalid or missing session" });
       return;
     }
-    await sessions[sessionId].handleRequest(req, res);
+    await sessions[sessionId].transport.handleRequest(req, res);
   });
 
   if (config.nodeEnv === "production") {
@@ -276,7 +435,11 @@ function resolveAuthMode(rawValue: string | undefined): HttpMcpAuthMode {
     return "oauth";
   }
 
-  throw new Error("MCP_REMOTE_AUTH must be 'manychat_header' or 'oauth'.");
+  if (normalized === "hosted_token" || normalized === "hosted-token" || normalized === "hosted") {
+    return "hosted_token";
+  }
+
+  throw new Error("MCP_REMOTE_AUTH must be 'manychat_header', 'oauth', or 'hosted_token'.");
 }
 
 function resolveBaseUrl(
@@ -338,6 +501,15 @@ function headerValue(rawHeader: string | string[] | undefined): string | undefin
 
   const trimmed = rawHeader.trim();
   return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function releaseWorkspaceSlot(counts: Map<string, number>, workspaceId: string): void {
+  const current = counts.get(workspaceId) ?? 0;
+  if (current <= 1) {
+    counts.delete(workspaceId);
+    return;
+  }
+  counts.set(workspaceId, current - 1);
 }
 
 function requestIdFromBody(body: unknown): unknown {

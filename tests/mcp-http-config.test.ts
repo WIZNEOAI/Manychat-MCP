@@ -53,4 +53,30 @@ describe("resolveHttpRuntimeConfig", () => {
       nodeEnv: "production",
     });
   });
+
+  it("requires hosted control plane env in production hosted_token mode", () => {
+    expect(() =>
+      resolveHttpRuntimeConfig({
+        NODE_ENV: "production",
+        MCP_REMOTE_AUTH: "hosted_token",
+        MCP_BASE_URL: "https://manychat.example.com",
+      }),
+    ).toThrow("HOSTED_CONTROL_PLANE_URL");
+  });
+
+  it("accepts production hosted_token mode with control plane settings", () => {
+    const config = resolveHttpRuntimeConfig({
+      NODE_ENV: "production",
+      MCP_REMOTE_AUTH: "hosted_token",
+      MCP_BASE_URL: "https://manychat.example.com",
+      HOSTED_CONTROL_PLANE_URL: "https://app.example.com",
+      HOSTED_CONTROL_PLANE_SECRET: "shared-secret",
+    });
+
+    expect(config).toMatchObject({
+      authMode: "hosted_token",
+      baseUrl: "https://manychat.example.com",
+      nodeEnv: "production",
+    });
+  });
 });

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { HomeAuthCard } from "@/components/home-auth-card";
 import {
   credentialLanes,
   dashboardRoadmap,
@@ -49,7 +50,7 @@ export default function Home() {
                 href="/dashboard"
                 className="inline-flex items-center justify-center rounded-full border border-black/15 px-5 py-3 text-sm font-semibold transition hover:bg-black/5 dark:border-white/15 dark:hover:bg-white/10"
               >
-                Control plane preview
+                Open dashboard
               </Link>
               <a
                 href={REPO_TREE_BASE}
@@ -80,6 +81,37 @@ export default function Home() {
             </p>
           </div>
         </div>
+      </section>
+
+      <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+        <article className="card p-8 md:p-10">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] muted">
+            Hosted onboarding
+          </p>
+          <h2 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">
+            Sign in once, then keep AI clients off your raw ManyChat key.
+          </h2>
+          <p className="mt-4 max-w-3xl text-lg leading-8 muted">
+            The hosted path is built for operators who want a clean control plane:
+            Clerk for account access, Convex for workspace state, Stripe for the
+            Supporter plan, and Railway for the remote MCP gateway. The MCP client
+            only gets a workspace token while the ManyChat key stays encrypted on
+            the server side.
+          </p>
+          <div className="mt-6 grid gap-3 text-sm leading-6 muted">
+            <div className="rounded-2xl border border-black/8 px-4 py-4 dark:border-white/10">
+              1. Create an account with Clerk.
+            </div>
+            <div className="rounded-2xl border border-black/8 px-4 py-4 dark:border-white/10">
+              2. Land in the dashboard and bootstrap your personal workspace in Convex.
+            </div>
+            <div className="rounded-2xl border border-black/8 px-4 py-4 dark:border-white/10">
+              3. Save your ManyChat API key once, then issue hosted MCP bearer tokens for agents.
+            </div>
+          </div>
+        </article>
+
+        <HomeAuthCard />
       </section>
 
       <section className="grid gap-8 lg:grid-cols-3">

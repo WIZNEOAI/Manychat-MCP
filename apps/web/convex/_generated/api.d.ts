@@ -13,12 +13,14 @@ import type {
 } from "convex/server";
 import type * as billing from "../billing.js";
 import type * as dashboard from "../dashboard.js";
+import type * as hosted from "../hosted.js";
 import type * as stripeActions from "../stripeActions.js";
 import type * as users from "../users.js";
 
 declare const fullApi: ApiFromModules<{
   billing: typeof billing;
   dashboard: typeof dashboard;
+  hosted: typeof hosted;
   stripeActions: typeof stripeActions;
   users: typeof users;
 }>;

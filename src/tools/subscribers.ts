@@ -2,11 +2,14 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ManyChatClient } from "../auth/manychat-client.js";
 import type { Subscriber } from "../types/manychat.js";
+import { isToolAllowed, type ToolRegistrationOptions } from "../hosted/capabilities.js";
 
 export function registerSubscriberTools(
   server: McpServer,
   client: ManyChatClient,
+  options: ToolRegistrationOptions = {},
 ) {
+  if (isToolAllowed("get_subscriber", options)) {
   server.tool(
     "get_subscriber",
     "Get detailed information about a subscriber by their ID",
@@ -20,7 +23,9 @@ export function registerSubscriberTools(
       };
     },
   );
+  }
 
+  if (isToolAllowed("find_subscriber_by_email", options)) {
   server.tool(
     "find_subscriber_by_email",
     "Find a subscriber by their email address",
@@ -34,7 +39,9 @@ export function registerSubscriberTools(
       };
     },
   );
+  }
 
+  if (isToolAllowed("find_subscriber_by_phone", options)) {
   server.tool(
     "find_subscriber_by_phone",
     "Find a subscriber by their phone number",
@@ -48,7 +55,9 @@ export function registerSubscriberTools(
       };
     },
   );
+  }
 
+  if (isToolAllowed("find_subscriber_by_name", options)) {
   server.tool(
     "find_subscriber_by_name",
     "Find subscribers by name (returns up to 100 matches)",
@@ -62,7 +71,9 @@ export function registerSubscriberTools(
       };
     },
   );
+  }
 
+  if (isToolAllowed("create_subscriber", options)) {
   server.tool(
     "create_subscriber",
     "Create a new subscriber. Must provide at least one of: phone, whatsapp_phone, or email.",
@@ -88,7 +99,9 @@ export function registerSubscriberTools(
       };
     },
   );
+  }
 
+  if (isToolAllowed("update_subscriber", options)) {
   server.tool(
     "update_subscriber",
     "Update an existing subscriber's information",
@@ -114,4 +127,5 @@ export function registerSubscriberTools(
       };
     },
   );
+  }
 }

@@ -2,8 +2,14 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ManyChatClient } from "../auth/manychat-client.js";
 import type { Page, BotField, GrowthTool, OtnTopic } from "../types/manychat.js";
+import { isToolAllowed, type ToolRegistrationOptions } from "../hosted/capabilities.js";
 
-export function registerPageTools(server: McpServer, client: ManyChatClient) {
+export function registerPageTools(
+  server: McpServer,
+  client: ManyChatClient,
+  options: ToolRegistrationOptions = {},
+) {
+  if (isToolAllowed("get_page_info", options)) {
   server.tool(
     "get_page_info",
     "Get information about the connected ManyChat page/bot (name, category, timezone, etc.)",
@@ -15,7 +21,9 @@ export function registerPageTools(server: McpServer, client: ManyChatClient) {
       };
     },
   );
+  }
 
+  if (isToolAllowed("list_bot_fields", options)) {
   server.tool(
     "list_bot_fields",
     "List all bot-level fields (system fields shared across subscribers)",
@@ -27,7 +35,9 @@ export function registerPageTools(server: McpServer, client: ManyChatClient) {
       };
     },
   );
+  }
 
+  if (isToolAllowed("set_bot_field", options)) {
   server.tool(
     "set_bot_field",
     "Set a bot-level field value by field ID",
@@ -49,7 +59,9 @@ export function registerPageTools(server: McpServer, client: ManyChatClient) {
       };
     },
   );
+  }
 
+  if (isToolAllowed("list_growth_tools", options)) {
   server.tool(
     "list_growth_tools",
     "List all growth tools (widgets) configured in the ManyChat account",
@@ -61,7 +73,9 @@ export function registerPageTools(server: McpServer, client: ManyChatClient) {
       };
     },
   );
+  }
 
+  if (isToolAllowed("list_otn_topics", options)) {
   server.tool(
     "list_otn_topics",
     "List all One-Time Notification topics available",
@@ -73,7 +87,9 @@ export function registerPageTools(server: McpServer, client: ManyChatClient) {
       };
     },
   );
+  }
 
+  if (isToolAllowed("health_check", options)) {
   server.tool(
     "health_check",
     "Verify the ManyChat API connection is working with the current API key",
@@ -92,4 +108,5 @@ export function registerPageTools(server: McpServer, client: ManyChatClient) {
       };
     },
   );
+  }
 }

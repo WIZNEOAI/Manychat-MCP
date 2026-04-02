@@ -25,7 +25,7 @@ The core product identity is still:
 | MCP local (`stdio`) | local compatibility for MCP clients | supported |
 | MCP remote (`HTTP`) | self-hosted remote access layer | supported |
 | Web frontend (`apps/web`) | landing, docs, dashboard (Clerk + Convex in progress) | scaffolded + auth |
-| Hosted SaaS | control plane, tokens, billing, docs UX | planned |
+| Hosted SaaS | control plane, vault, product tokens, billing, docs UX | beta |
 
 ## The auth model in one minute
 
@@ -53,6 +53,16 @@ Important:
 
 - the ManyChat API key remains the **execution credential**
 - OAuth is a **client access layer**, not the core product identity
+
+### Hosted MCP
+
+Hosted mode adds a third production auth pattern:
+
+3. **hosted MCP product token**
+   - the MCP client sends `Authorization: Bearer mcp_live_...`
+   - the Railway gateway resolves that token against the web control plane
+   - the control plane decrypts the stored ManyChat API key server-side
+   - plan limits, concurrency, and audit events are enforced per workspace
 
 ## Official source of truth
 
@@ -160,6 +170,7 @@ Phase 0 removes the ambiguous "maybe CLI, maybe HTTP MCP" production behavior.
 | --- | --- | --- |
 | `manychat_header` | `NODE_ENV=production`, `MCP_REMOTE_AUTH=manychat_header` | simplest open-source self-host |
 | `oauth` | `NODE_ENV=production`, `MCP_REMOTE_AUTH=oauth`, `OAUTH_STORE=redis`, `REDIS_URL`, `MCP_BASE_URL` | remote OAuth connectors |
+| `hosted_token` | `NODE_ENV=production`, `MCP_REMOTE_AUTH=hosted_token`, `HOSTED_CONTROL_PLANE_URL`, `HOSTED_CONTROL_PLANE_SECRET` | hosted SaaS on Railway + Vercel |
 
 ## Deployment docs
 
@@ -210,7 +221,14 @@ Clerk keys and `NEXT_PUBLIC_CONVEX_URL`, then:
    Clerk Frontend API / issuer host, deploy `convex/auth.config.ts`, and run
    `npm run convex:dev` from the repo (runs Convex against `apps/web/convex/`).
 
-Stripe Pro checkout and webhooks run in **Convex** (`@convex-dev/stripe`); set
+The app now also includes:
+
+- welcome CTA on `/`
+- dedicated Clerk card routes at `/sign-in` and `/sign-up`
+- protected `/dashboard`
+- hosted MCP setup UI for vault, tokens, usage, and billing
+
+Stripe Supporter checkout and webhooks run in **Convex** (`@convex-dev/stripe`); set
 `STRIPE_*` and `PUBLIC_APP_URL` in the Convex dashboard. See `apps/web/README.md` and
 [`docs/product/action-plan-convex-clerk-stripe.md`](docs/product/action-plan-convex-clerk-stripe.md)
 for Vercel + Railway deployment notes.

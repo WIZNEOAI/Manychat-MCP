@@ -2,11 +2,14 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ManyChatClient } from "../auth/manychat-client.js";
 import type { CustomField } from "../types/manychat.js";
+import { isToolAllowed, type ToolRegistrationOptions } from "../hosted/capabilities.js";
 
 export function registerCustomFieldTools(
   server: McpServer,
   client: ManyChatClient,
+  options: ToolRegistrationOptions = {},
 ) {
+  if (isToolAllowed("list_custom_fields", options)) {
   server.tool(
     "list_custom_fields",
     "List all custom fields defined in the ManyChat account",
@@ -18,7 +21,9 @@ export function registerCustomFieldTools(
       };
     },
   );
+  }
 
+  if (isToolAllowed("create_custom_field", options)) {
   server.tool(
     "create_custom_field",
     "Create a new custom field in the ManyChat account",
@@ -41,7 +46,9 @@ export function registerCustomFieldTools(
       };
     },
   );
+  }
 
+  if (isToolAllowed("set_custom_field", options)) {
   server.tool(
     "set_custom_field",
     "Set a custom field value for a subscriber by field ID",
@@ -68,7 +75,9 @@ export function registerCustomFieldTools(
       };
     },
   );
+  }
 
+  if (isToolAllowed("set_custom_field_by_name", options)) {
   server.tool(
     "set_custom_field_by_name",
     "Set a custom field value for a subscriber by field name",
@@ -95,7 +104,9 @@ export function registerCustomFieldTools(
       };
     },
   );
+  }
 
+  if (isToolAllowed("set_custom_fields_bulk", options)) {
   server.tool(
     "set_custom_fields_bulk",
     "Set multiple custom field values for a subscriber at once (max 20 fields)",
@@ -127,4 +138,5 @@ export function registerCustomFieldTools(
       };
     },
   );
+  }
 }

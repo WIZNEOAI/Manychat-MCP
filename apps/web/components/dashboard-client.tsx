@@ -4,20 +4,55 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { dashboardPanels, pricingTiers } from "@/lib/site-data";
-import { repoBlobUrl } from "@/lib/repo";
+import { pricingTiers } from "@/lib/site-data";
 
-function StatusBadge({ status }: { status: "scaffold" | "planned_api" }) {
-  const label = status === "scaffold" ? "UI scaffold" : "Planned API";
-  const className =
-    status === "scaffold"
-      ? "bg-amber-500/15 text-amber-900 dark:text-amber-100"
-      : "bg-sky-500/15 text-sky-900 dark:text-sky-100";
-  return (
-    <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-[0.14em] ${className}`}>
-      {label}
-    </span>
-  );
+type Bundle = "read_only" | "operator" | "messaging_safe" | "admin";
+
+const MCP_URL = process.env.NEXT_PUBLIC_MCP_HTTP_URL ?? "https://mcp.example.com/mcp";
+
+function formatTimestamp(value: number) {
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(value);
+}
+
+function snippetBlock(secret: string) {
+  return {
+    claudeCode: `claude mcp add --transport http manychat "${MCP_URL}" \\\n  --header "Authorization: Bearer ${secret}"`,
+    cursor: `{
+  "mcpServers": {
+    "manychat": {
+      "url": "${MCP_URL}",
+      "headers": {
+        "Authorization": "Bearer ${secret}"
+      }
+    }
+  }
+}`,
+    codex: `[mcp_servers.manychat]
+url = "${MCP_URL}"
+bearer_token = "${secret}"`,
+  };
+}
+
+async function postJson(url: string, body: Record<string, unknown>, method = "POST") {
+  const response = await fetch(url, {
+    method,
+    headers: {
+      "content-type": "application/json",
+    },
+    body: method === "DELETE" ? undefined : JSON.stringify(body),
+  });
+
+  const payload = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!response.ok) {
+    throw new Error(
+      typeof payload.error === "string" ? payload.error : `Request failed with ${response.status}.`,
+    );
+  }
+
+  return payload;
 }
 
 export function DashboardClient() {
@@ -26,20 +61,32 @@ export function DashboardClient() {
 
   const viewer = useQuery(api.dashboard.viewer);
   const ensureUser = useMutation(api.users.ensureCurrentUser);
-  const createProCheckout = useAction(api.stripeActions.createProSubscriptionCheckout);
+  const createSupporterCheckout = useAction(api.stripeActions.createProSubscriptionCheckout);
   const openBillingPortal = useAction(api.stripeActions.createBillingPortalSession);
+
   const [bootstrapError, setBootstrapError] = useState<string | null>(null);
   const [billingError, setBillingError] = useState<string | null>(null);
   const [billingBusy, setBillingBusy] = useState(false);
+  const [accountError, setAccountError] = useState<string | null>(null);
+  const [tokenError, setTokenError] = useState<string | null>(null);
+  const [accountBusy, setAccountBusy] = useState(false);
+  const [tokenBusy, setTokenBusy] = useState(false);
+  const [accountName, setAccountName] = useState("");
+  const [accountApiKey, setAccountApiKey] = useState("");
+  const [tokenName, setTokenName] = useState("Primary operator token");
+  const [bundle, setBundle] = useState<Bundle>("operator");
+  const [issuedSecret, setIssuedSecret] = useState<string | null>(null);
+  const [rotatingAccountId, setRotatingAccountId] = useState<string | null>(null);
+  const [rotateKeyValue, setRotateKeyValue] = useState<Record<string, string>>({});
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       try {
         await ensureUser();
-      } catch (e) {
+      } catch (error) {
         if (!cancelled) {
-          setBootstrapError(e instanceof Error ? e.message : "Failed to sync user");
+          setBootstrapError(error instanceof Error ? error.message : "Failed to sync user");
         }
       }
     })();
@@ -49,11 +96,13 @@ export function DashboardClient() {
   }, [ensureUser]);
 
   const primaryWorkspace = viewer?.workspaces[0];
+  const snippets = issuedSecret ? snippetBlock(issuedSecret) : null;
+
   const sessionLine =
     viewer === undefined
-      ? "Loading…"
+      ? "Loading..."
       : viewer === null
-        ? "Not authenticated with Convex (check Clerk JWT template “convex” and Convex auth config)."
+        ? "Not authenticated with Convex. Check Clerk and Convex auth config."
         : viewer.email ?? viewer.name ?? viewer.clerkUserId;
 
   return (
@@ -61,37 +110,18 @@ export function DashboardClient() {
       <section className="card p-8 md:p-10">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] muted">Control plane</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] muted">Hosted control plane</p>
             <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">Workspace dashboard</h1>
             <p className="max-w-3xl text-lg leading-8 muted">
-              Clerk handles human sign-in; Convex stores users and workspaces. Pro plan checkout uses Stripe
-              (subscription) and webhooks sync <code className="text-sm">plan</code> on the workspace. ManyChat vault
-              and MCP tokens are next—see{" "}
-              <a
-                href={repoBlobUrl("docs/product/control-plane-contracts.md")}
-                target="_blank"
-                rel="noreferrer"
-                className="font-medium text-emerald-700 underline-offset-4 hover:underline dark:text-emerald-300"
-              >
-                control-plane-contracts.md
-              </a>{" "}
-              and{" "}
-              <a
-                href={repoBlobUrl("docs/product/action-plan-convex-clerk-stripe.md")}
-                target="_blank"
-                rel="noreferrer"
-                className="font-medium text-emerald-700 underline-offset-4 hover:underline dark:text-emerald-300"
-              >
-                action-plan-convex-clerk-stripe.md
-              </a>
-              .
+              Hosted mode keeps the CLI and MCP runtime intact while adding an encrypted ManyChat vault,
+              workspace-scoped MCP tokens, plan enforcement, and client snippets for AI agents.
             </p>
             {bootstrapError ? (
               <p className="text-sm text-red-600 dark:text-red-400">Convex: {bootstrapError}</p>
             ) : null}
             {checkoutParam === "success" ? (
               <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-900 dark:text-emerald-100">
-                Checkout completed. Stripe may take a moment to confirm—refresh if your plan still shows Free.
+                Checkout completed. Stripe can take a moment to sync; refresh if your plan still shows Free.
               </p>
             ) : null}
             {checkoutParam === "canceled" ? (
@@ -108,132 +138,435 @@ export function DashboardClient() {
               {primaryWorkspace
                 ? `${primaryWorkspace.name} · Plan: ${primaryWorkspace.plan}`
                 : viewer && viewer.workspaces.length === 0
-                  ? "No workspace yet (run sync)"
-                  : "—"}
+                  ? "No workspace yet"
+                  : "-"}
             </p>
-            {primaryWorkspace && viewer && viewer !== null ? (
+            {primaryWorkspace ? (
               <div className="mt-4 border-t border-black/10 pt-4 dark:border-white/10">
-                <p className="font-semibold">Billing</p>
-                {billingError ? (
-                  <p className="mt-2 text-xs text-red-600 dark:text-red-400">{billingError}</p>
-                ) : null}
-                <div className="mt-3 flex flex-col gap-2">
-                  {primaryWorkspace.plan === "free" ? (
-                    <button
-                      type="button"
-                      disabled={billingBusy}
-                      onClick={async () => {
-                        setBillingError(null);
-                        setBillingBusy(true);
-                        try {
-                          const { url } = await createProCheckout({ workspaceId: primaryWorkspace._id });
-                          if (url) {
-                            window.location.href = url;
-                          } else {
-                            setBillingError("Stripe did not return a checkout URL.");
-                          }
-                        } catch (e) {
-                          setBillingError(e instanceof Error ? e.message : "Checkout failed");
-                        } finally {
-                          setBillingBusy(false);
-                        }
-                      }}
-                      className="rounded-full bg-black px-4 py-2 text-xs font-semibold text-white transition hover:bg-black/85 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-white/85"
-                    >
-                      {billingBusy ? "Redirecting…" : "Upgrade to Pro — $20/mo"}
-                    </button>
-                  ) : null}
-                  {primaryWorkspace.plan === "pro" && primaryWorkspace.stripeCustomerId ? (
-                    <button
-                      type="button"
-                      disabled={billingBusy}
-                      onClick={async () => {
-                        setBillingError(null);
-                        setBillingBusy(true);
-                        try {
-                          const { url } = await openBillingPortal({ workspaceId: primaryWorkspace._id });
-                          window.location.href = url;
-                        } catch (e) {
-                          setBillingError(e instanceof Error ? e.message : "Portal failed");
-                        } finally {
-                          setBillingBusy(false);
-                        }
-                      }}
-                      className="rounded-full border border-black/15 px-4 py-2 text-xs font-semibold transition hover:bg-black/5 disabled:opacity-50 dark:border-white/15 dark:hover:bg-white/10"
-                    >
-                      {billingBusy ? "Opening…" : "Manage billing (Stripe portal)"}
-                    </button>
-                  ) : null}
-                  {primaryWorkspace.plan === "pro" && !primaryWorkspace.stripeCustomerId ? (
-                    <p className="text-xs muted">Pro without Stripe customer id—contact support or re-run checkout.</p>
-                  ) : null}
-                </div>
+                <p className="font-semibold">Limits</p>
+                <p className="mt-2 text-xs muted">
+                  {primaryWorkspace.accounts.length}/{primaryWorkspace.limits.maxAccounts} accounts ·{" "}
+                  {primaryWorkspace.tokens.filter((token: any) => token.revokedAt === null).length}/
+                  {primaryWorkspace.limits.maxTokens} active tokens
+                </p>
+                <p className="mt-1 text-xs muted">
+                  {primaryWorkspace.usage.daily.requestCount}/{primaryWorkspace.limits.dailyRequests} daily requests ·{" "}
+                  {primaryWorkspace.usage.monthly.requestCount}/{primaryWorkspace.limits.monthlyRequests} monthly requests
+                </p>
               </div>
             ) : null}
           </div>
         </div>
       </section>
 
-      <section className="grid gap-5 md:grid-cols-2">
-        {dashboardPanels.map((panel) => (
-          <article key={panel.id} className="card flex flex-col p-6">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h2 className="text-xl font-semibold tracking-tight">{panel.title}</h2>
-                <p className="mt-2 text-sm leading-6 muted">{panel.description}</p>
-              </div>
-              <StatusBadge status={panel.status} />
+      <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+        <article className="card p-6 md:p-8">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] muted">Billing</p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight">Free and Supporter</h2>
+              <p className="mt-2 text-sm leading-6 muted">
+                The public launch keeps pricing simple: a generous Free tier and a single Supporter plan at $20/month.
+              </p>
             </div>
-            <ul className="mt-5 space-y-2 rounded-xl border border-dashed border-black/12 bg-black/[0.02] px-4 py-3 text-sm dark:border-white/12 dark:bg-white/[0.03]">
-              {panel.bullets.map((line) => (
-                <li key={line} className="leading-6 muted">
-                  • {line}
-                </li>
-              ))}
-            </ul>
-          </article>
-        ))}
-      </section>
-
-      <section className="card p-6 md:p-8">
-        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h2 className="text-2xl font-semibold tracking-tight">Capability bundle (token scope)</h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 muted">
-              New MCP tokens will pick a bundle: read_only, operator, messaging_safe, or admin. This mirrors MCP tool
-              visibility and plan entitlements—see the repo safety model and MCP migration map.
-            </p>
           </div>
-          <span className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-800 dark:text-amber-200">
-            Not enforced in UI yet
-          </span>
-        </div>
-        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {["read_only", "operator", "messaging_safe", "admin"].map((bundle) => (
-            <div
-              key={bundle}
-              className="rounded-xl border border-black/8 px-4 py-3 text-sm font-medium dark:border-white/10"
-            >
-              {bundle}
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {pricingTiers.map((tier) => (
+              <article key={tier.name} className="rounded-2xl border border-black/8 p-5 dark:border-white/10">
+                <p className="text-sm font-semibold uppercase tracking-[0.16em] muted">{tier.name}</p>
+                <p className="mt-2 text-3xl font-semibold">{tier.price}</p>
+                <p className="mt-2 text-sm leading-6 muted">{tier.tagline}</p>
+                <ul className="mt-4 space-y-2 text-sm leading-6 muted">
+                  {tier.limits.map((limit) => (
+                    <li key={limit}>{limit}</li>
+                  ))}
+                </ul>
+              </article>
+            ))}
+          </div>
+          {primaryWorkspace ? (
+            <div className="mt-6 border-t border-black/10 pt-6 dark:border-white/10">
+              {billingError ? (
+                <p className="mb-3 text-sm text-red-600 dark:text-red-400">{billingError}</p>
+              ) : null}
+              {primaryWorkspace.plan === "free" ? (
+                <button
+                  type="button"
+                  disabled={billingBusy}
+                  onClick={async () => {
+                    setBillingBusy(true);
+                    setBillingError(null);
+                    try {
+                      const { url } = await createSupporterCheckout({ workspaceId: primaryWorkspace._id });
+                      if (!url) throw new Error("Stripe did not return a checkout URL.");
+                      window.location.href = url;
+                    } catch (error) {
+                      setBillingError(error instanceof Error ? error.message : "Checkout failed");
+                    } finally {
+                      setBillingBusy(false);
+                    }
+                  }}
+                  className="rounded-full bg-black px-4 py-2 text-xs font-semibold text-white transition hover:bg-black/85 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-white/85"
+                >
+                  {billingBusy ? "Redirecting..." : "Upgrade to Supporter - $20/mo"}
+                </button>
+              ) : null}
+              {primaryWorkspace.plan !== "free" && primaryWorkspace.stripeCustomerId ? (
+                <button
+                  type="button"
+                  disabled={billingBusy}
+                  onClick={async () => {
+                    setBillingBusy(true);
+                    setBillingError(null);
+                    try {
+                      const { url } = await openBillingPortal({ workspaceId: primaryWorkspace._id });
+                      window.location.href = url;
+                    } catch (error) {
+                      setBillingError(error instanceof Error ? error.message : "Portal failed");
+                    } finally {
+                      setBillingBusy(false);
+                    }
+                  }}
+                  className="rounded-full border border-black/15 px-4 py-2 text-xs font-semibold transition hover:bg-black/5 disabled:opacity-50 dark:border-white/15 dark:hover:bg-white/10"
+                >
+                  {billingBusy ? "Opening..." : "Manage billing"}
+                </button>
+              ) : null}
             </div>
-          ))}
-        </div>
+          ) : null}
+        </article>
+
+        <article className="card p-6 md:p-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] muted">Usage</p>
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight">Current workspace activity</h2>
+          {primaryWorkspace ? (
+            <div className="mt-6 grid gap-4">
+              <div className="rounded-2xl border border-black/8 p-4 dark:border-white/10">
+                <p className="text-sm font-semibold">Daily</p>
+                <p className="mt-2 text-3xl font-semibold">{primaryWorkspace.usage.daily.requestCount}</p>
+                <p className="mt-1 text-xs muted">
+                  Requests today · session starts: {primaryWorkspace.usage.daily.sessionStarts} · auth failures:{" "}
+                  {primaryWorkspace.usage.daily.authFailures}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-black/8 p-4 dark:border-white/10">
+                <p className="text-sm font-semibold">Monthly</p>
+                <p className="mt-2 text-3xl font-semibold">{primaryWorkspace.usage.monthly.requestCount}</p>
+                <p className="mt-1 text-xs muted">
+                  Requests this month · session starts: {primaryWorkspace.usage.monthly.sessionStarts} · auth failures:{" "}
+                  {primaryWorkspace.usage.monthly.authFailures}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <p className="mt-6 text-sm muted">Sign in and create a workspace to inspect hosted usage.</p>
+          )}
+        </article>
       </section>
 
-      <section className="card p-6 md:p-8">
-        <h2 className="text-2xl font-semibold tracking-tight">Plans on this workspace</h2>
-        <p className="mt-2 max-w-3xl text-sm leading-6 muted">
-          Stripe sync is not wired yet; plans below mirror the public pricing story.
-        </p>
-        <div className="mt-6 grid gap-4 lg:grid-cols-3">
-          {pricingTiers.map((tier) => (
-            <article key={tier.name} className="rounded-2xl border border-black/8 p-5 dark:border-white/10">
-              <p className="text-sm font-semibold uppercase tracking-[0.16em] muted">{tier.name}</p>
-              <p className="mt-2 text-3xl font-semibold">{tier.price}</p>
-              <p className="mt-2 text-sm leading-6 muted">{tier.tagline}</p>
-            </article>
-          ))}
-        </div>
+      <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+        <article className="card p-6 md:p-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] muted">ManyChat vault</p>
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight">Connect or rotate a ManyChat API key</h2>
+          <p className="mt-2 text-sm leading-6 muted">
+            Keys are encrypted at rest and never shown again after save. The hosted MCP gateway only decrypts them in memory.
+          </p>
+          {primaryWorkspace ? (
+            <>
+              <div className="mt-6 grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+                <input
+                  value={accountName}
+                  onChange={(event) => setAccountName(event.target.value)}
+                  placeholder="Account display name"
+                  className="rounded-xl border border-black/12 bg-transparent px-4 py-3 text-sm outline-none transition focus:border-emerald-500 dark:border-white/12"
+                />
+                <input
+                  value={accountApiKey}
+                  onChange={(event) => setAccountApiKey(event.target.value)}
+                  placeholder="mc_..."
+                  className="rounded-xl border border-black/12 bg-transparent px-4 py-3 text-sm outline-none transition focus:border-emerald-500 dark:border-white/12"
+                />
+                <button
+                  type="button"
+                  disabled={accountBusy}
+                  onClick={async () => {
+                    setAccountBusy(true);
+                    setAccountError(null);
+                    try {
+                      await postJson(`/api/v1/workspaces/${primaryWorkspace._id}/manychat-accounts`, {
+                        displayName: accountName,
+                        apiKey: accountApiKey,
+                        isDefault: primaryWorkspace.accounts.length === 0,
+                      });
+                      setAccountName("");
+                      setAccountApiKey("");
+                    } catch (error) {
+                      setAccountError(error instanceof Error ? error.message : "Failed to save account");
+                    } finally {
+                      setAccountBusy(false);
+                    }
+                  }}
+                  className="rounded-full bg-black px-4 py-3 text-xs font-semibold text-white transition hover:bg-black/85 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-white/85"
+                >
+                  {accountBusy ? "Saving..." : "Save key"}
+                </button>
+              </div>
+              {accountError ? (
+                <p className="mt-3 text-sm text-red-600 dark:text-red-400">{accountError}</p>
+              ) : null}
+              <div className="mt-6 grid gap-3">
+                {primaryWorkspace.accounts.length === 0 ? (
+                  <p className="rounded-2xl border border-dashed border-black/12 px-4 py-4 text-sm muted dark:border-white/12">
+                    No ManyChat accounts connected yet.
+                  </p>
+                ) : (
+                  primaryWorkspace.accounts.map((account: any) => (
+                    <div key={account._id} className="rounded-2xl border border-black/8 p-4 dark:border-white/10">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <p className="font-semibold">{account.displayName}</p>
+                          <p className="text-xs muted">
+                            {account.isDefault ? "Default account" : "Secondary account"} · rotated{" "}
+                            {formatTimestamp(account.lastRotatedAt)}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setRotatingAccountId((current) => (current === account._id ? null : account._id))
+                          }
+                          className="rounded-full border border-black/15 px-3 py-1.5 text-xs font-semibold transition hover:bg-black/5 dark:border-white/15 dark:hover:bg-white/10"
+                        >
+                          Rotate key
+                        </button>
+                      </div>
+                      {rotatingAccountId === account._id ? (
+                        <div className="mt-4 flex flex-col gap-3 md:flex-row">
+                          <input
+                            value={rotateKeyValue[account._id] ?? ""}
+                            onChange={(event) =>
+                              setRotateKeyValue((current) => ({
+                                ...current,
+                                [account._id]: event.target.value,
+                              }))
+                            }
+                            placeholder="Paste replacement API key"
+                            className="flex-1 rounded-xl border border-black/12 bg-transparent px-4 py-3 text-sm outline-none transition focus:border-emerald-500 dark:border-white/12"
+                          />
+                          <button
+                            type="button"
+                            disabled={accountBusy}
+                            onClick={async () => {
+                              setAccountBusy(true);
+                              setAccountError(null);
+                              try {
+                                await postJson(
+                                  `/api/v1/workspaces/${primaryWorkspace._id}/manychat-accounts/${account._id}/rotate-key`,
+                                  { apiKey: rotateKeyValue[account._id] },
+                                );
+                                setRotateKeyValue((current) => ({ ...current, [account._id]: "" }));
+                                setRotatingAccountId(null);
+                              } catch (error) {
+                                setAccountError(error instanceof Error ? error.message : "Failed to rotate key");
+                              } finally {
+                                setAccountBusy(false);
+                              }
+                            }}
+                            className="rounded-full bg-black px-4 py-3 text-xs font-semibold text-white transition hover:bg-black/85 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-white/85"
+                          >
+                            Replace key
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
+          ) : (
+            <p className="mt-6 text-sm muted">Sign in to add your first ManyChat account.</p>
+          )}
+        </article>
+
+        <article className="card p-6 md:p-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] muted">Hosted MCP token</p>
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight">Issue a workspace token</h2>
+          <p className="mt-2 text-sm leading-6 muted">
+            Tokens are one-time reveal secrets. Revoke and re-issue if they ever leak.
+          </p>
+          {primaryWorkspace ? (
+            <>
+              <div className="mt-6 grid gap-3">
+                <input
+                  value={tokenName}
+                  onChange={(event) => setTokenName(event.target.value)}
+                  placeholder="Token name"
+                  className="rounded-xl border border-black/12 bg-transparent px-4 py-3 text-sm outline-none transition focus:border-emerald-500 dark:border-white/12"
+                />
+                <select
+                  value={bundle}
+                  onChange={(event) => setBundle(event.target.value as Bundle)}
+                  className="rounded-xl border border-black/12 bg-transparent px-4 py-3 text-sm outline-none transition focus:border-emerald-500 dark:border-white/12"
+                >
+                  <option value="read_only">read_only</option>
+                  <option value="operator">operator</option>
+                  <option value="messaging_safe">messaging_safe</option>
+                  <option value="admin">admin</option>
+                </select>
+                <button
+                  type="button"
+                  disabled={tokenBusy}
+                  onClick={async () => {
+                    setTokenBusy(true);
+                    setTokenError(null);
+                    try {
+                      const payload = await postJson(`/api/v1/workspaces/${primaryWorkspace._id}/mcp-tokens`, {
+                        name: tokenName,
+                        bundle,
+                        accountId: primaryWorkspace.accounts[0]?._id ?? null,
+                      });
+                      setIssuedSecret(typeof payload.secret === "string" ? payload.secret : null);
+                    } catch (error) {
+                      setTokenError(error instanceof Error ? error.message : "Failed to issue token");
+                    } finally {
+                      setTokenBusy(false);
+                    }
+                  }}
+                  className="rounded-full bg-black px-4 py-3 text-xs font-semibold text-white transition hover:bg-black/85 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-white/85"
+                >
+                  {tokenBusy ? "Issuing..." : "Issue token"}
+                </button>
+              </div>
+              {tokenError ? (
+                <p className="mt-3 text-sm text-red-600 dark:text-red-400">{tokenError}</p>
+              ) : null}
+              {issuedSecret && snippets ? (
+                <div className="mt-6 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4">
+                  <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">
+                    Copy this token now. It will not be shown again.
+                  </p>
+                  <code className="mt-3 block overflow-x-auto rounded-xl bg-black/80 px-4 py-3 text-xs text-white">
+                    {issuedSecret}
+                  </code>
+                  <div className="mt-4 grid gap-3">
+                    <pre className="overflow-x-auto rounded-xl border border-black/10 bg-black/[0.03] px-4 py-3 text-xs dark:border-white/10 dark:bg-white/[0.04]">
+                      {snippets.claudeCode}
+                    </pre>
+                    <pre className="overflow-x-auto rounded-xl border border-black/10 bg-black/[0.03] px-4 py-3 text-xs dark:border-white/10 dark:bg-white/[0.04]">
+                      {snippets.cursor}
+                    </pre>
+                    <pre className="overflow-x-auto rounded-xl border border-black/10 bg-black/[0.03] px-4 py-3 text-xs dark:border-white/10 dark:bg-white/[0.04]">
+                      {snippets.codex}
+                    </pre>
+                  </div>
+                </div>
+              ) : null}
+              <div className="mt-6 grid gap-3">
+                {primaryWorkspace.tokens.length === 0 ? (
+                  <p className="rounded-2xl border border-dashed border-black/12 px-4 py-4 text-sm muted dark:border-white/12">
+                    No MCP tokens issued yet.
+                  </p>
+                ) : (
+                  primaryWorkspace.tokens.map((token: any) => (
+                    <div key={token._id} className="rounded-2xl border border-black/8 p-4 dark:border-white/10">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <p className="font-semibold">{token.name}</p>
+                          <p className="text-xs muted">
+                            {token.prefix} · {token.bundle} · created {formatTimestamp(token.createdAt)}
+                          </p>
+                        </div>
+                        {token.revokedAt === null ? (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              setTokenError(null);
+                              try {
+                                await postJson(
+                                  `/api/v1/workspaces/${primaryWorkspace._id}/mcp-tokens/${token._id}`,
+                                  {},
+                                  "DELETE",
+                                );
+                              } catch (error) {
+                                setTokenError(error instanceof Error ? error.message : "Failed to revoke token");
+                              }
+                            }}
+                            className="rounded-full border border-red-500/30 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-500/10 dark:text-red-300"
+                          >
+                            Revoke
+                          </button>
+                        ) : (
+                          <span className="text-xs font-semibold uppercase tracking-[0.16em] text-red-600 dark:text-red-300">
+                            Revoked
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
+          ) : (
+            <p className="mt-6 text-sm muted">Sign in to issue hosted MCP tokens.</p>
+          )}
+        </article>
+      </section>
+
+      <section className="grid gap-6 lg:grid-cols-[1fr_1fr]">
+        <article className="card p-6 md:p-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] muted">Audit trail</p>
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight">Recent hosted activity</h2>
+          {primaryWorkspace ? (
+            <div className="mt-6 grid gap-3">
+              {primaryWorkspace.audit.length === 0 ? (
+                <p className="rounded-2xl border border-dashed border-black/12 px-4 py-4 text-sm muted dark:border-white/12">
+                  No audit events yet.
+                </p>
+              ) : (
+                primaryWorkspace.audit.map((event: any) => (
+                  <div key={event._id} className="rounded-2xl border border-black/8 p-4 dark:border-white/10">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="font-semibold">{event.action}</p>
+                        <p className="mt-1 text-xs muted">{formatTimestamp(event.createdAt)}</p>
+                      </div>
+                    </div>
+                    {event.metadataJson ? (
+                      <pre className="mt-3 overflow-x-auto rounded-xl bg-black/[0.03] px-3 py-2 text-xs dark:bg-white/[0.04]">
+                        {event.metadataJson}
+                      </pre>
+                    ) : null}
+                  </div>
+                ))
+              )}
+            </div>
+          ) : (
+            <p className="mt-6 text-sm muted">Sign in to inspect workspace audit history.</p>
+          )}
+        </article>
+
+        <article className="card p-6 md:p-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] muted">Bundle policy</p>
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight">Capability bundles</h2>
+          <div className="mt-6 grid gap-3">
+            <div className="rounded-2xl border border-black/8 p-4 dark:border-white/10">
+              <p className="font-semibold">read_only</p>
+              <p className="mt-1 text-sm muted">Inspection only: page info, lists, subscriber lookup, and health checks.</p>
+            </div>
+            <div className="rounded-2xl border border-black/8 p-4 dark:border-white/10">
+              <p className="font-semibold">operator</p>
+              <p className="mt-1 text-sm muted">Subscriber, tags, and custom field operations without direct messaging.</p>
+            </div>
+            <div className="rounded-2xl border border-black/8 p-4 dark:border-white/10">
+              <p className="font-semibold">messaging_safe</p>
+              <p className="mt-1 text-sm muted">Operator bundle plus flow and message tools for controlled send workflows.</p>
+            </div>
+            <div className="rounded-2xl border border-black/8 p-4 dark:border-white/10">
+              <p className="font-semibold">admin</p>
+              <p className="mt-1 text-sm muted">Full hosted access, including bot field and custom field administration.</p>
+            </div>
+          </div>
+        </article>
       </section>
     </div>
   );

@@ -3,7 +3,6 @@ export const supportedClients = [
   "Claude Code",
   "Cursor",
   "Codex",
-  "Antigravity",
   "Other streamable HTTP MCP clients",
 ] as const;
 
@@ -12,25 +11,25 @@ export const productSurfaces = [
     name: "CLI",
     status: "Primary",
     description:
-      "Deterministic ManyChat operations: JSON on stdout, stable exit codes, and the full command tree agents rely on.",
+      "Deterministic ManyChat operations: JSON on stdout, stable exit codes, and the command tree agents already rely on.",
   },
   {
     name: "Local MCP (stdio)",
     status: "Supported",
     description:
-      "Drop-in MCP transport for coding agents on your machine. Same execution layer as the CLI—no separate runtime.",
+      "Drop-in MCP transport for coding agents on your machine. Same execution layer as the CLI and no extra hosted dependency.",
   },
   {
     name: "Remote MCP (HTTP)",
     status: "Supported",
     description:
-      "Production HTTP endpoint for Railway, Docker, or any VPS. Explicit startup contract: health check + POST /mcp.",
+      "Production HTTP endpoint for Railway, Docker, or a VPS. Hosted mode adds product tokens, quotas, and routing on top.",
   },
   {
-    name: "Web (this app)",
-    status: "Scaffolded",
+    name: "Hosted dashboard",
+    status: "Beta",
     description:
-      "Landing, docs shell, and dashboard shell. Hosted mode will add auth, vault, tokens, and usage—without replacing the CLI.",
+      "Sign in, store ManyChat keys securely, issue MCP tokens, inspect usage, and copy client snippets without changing the OSS runtime.",
   },
 ] as const;
 
@@ -38,73 +37,62 @@ export const pricingTiers = [
   {
     name: "Free",
     price: "$0",
-    tagline: "Validate hosted remote MCP with safe limits.",
+    tagline: "Try hosted MCP with safe daily limits and no credit card.",
     limits: [
       "1 workspace",
       "1 connected ManyChat account",
-      "Capped daily requests",
-      "1 concurrent remote MCP session",
+      "250 requests/day, 3,000 requests/month",
+      "1 concurrent MCP session",
+      "2 active MCP tokens",
       "Community support",
     ],
-    cta: "Best for trying the hosted path",
+    cta: "Best for evaluation and light personal usage",
   },
   {
     name: "Supporter",
     price: "$20/mo",
-    tagline: "Serious individual use, fair-use limits, and OSS sustainability.",
+    tagline: "Serious individual usage under fair-use, plus support for the OSS core.",
     limits: [
-      "Unlimited individual usage under fair-use",
-      "Up to 3 connected ManyChat accounts",
-      "Up to 3 concurrent remote sessions",
-      "Priority support",
-      "Helps fund the open-source core",
+      "1 workspace",
+      "Up to 3 ManyChat accounts",
+      "10,000 requests/day, 100,000 requests/month",
+      "Up to 3 concurrent MCP sessions",
+      "10 active MCP tokens",
+      "Priority support and basic audit history",
     ],
-    cta: "Best for power users who want hosted convenience",
-  },
-  {
-    name: "Pro",
-    price: "Custom",
-    tagline: "Agencies and teams: more accounts, concurrency, and governance.",
-    limits: [
-      "Higher account and concurrency caps",
-      "Team members and roles",
-      "Audit logs and usage visibility",
-      "Capability bundles and policy controls",
-      "Billing-ready metering hooks",
-    ],
-    cta: "Best for multi-brand and multi-seat operators",
+    cta: "Best for operators, marketers, and AI-heavy workflows",
   },
 ] as const;
 
 export const dashboardRoadmap = [
-  "Workspace creation and plan badge (Free / Supporter / Pro)",
-  "Members and roles (Pro): invite, revoke, audit who changed what",
-  "Connected ManyChat accounts: name, default account, disconnect",
-  "Encrypted vault: keys never re-displayed after save; rotation flow",
-  "MCP tokens: issue, one-time reveal, revoke; scoped to workspace + bundle",
-  "Usage meters: daily/monthly requests, concurrent sessions vs plan caps",
+  "Encrypted ManyChat vault with one-way save and key rotation",
+  "Hosted MCP tokens with one-time reveal and revocation",
+  "Workspace usage meters for daily and monthly limits",
+  "Capability bundles for read_only, operator, messaging_safe, and admin",
+  "Client snippets for Claude Code, Cursor, Codex, and Claude Desktop",
+  "Manual Pro upgrade path for agencies and team governance",
 ] as const;
 
 export const selfHostVsHosted = [
   {
     dimension: "Who runs the MCP server",
     selfHost: "You (local, Railway, Docker, VPS)",
-    hosted: "We run HTTPS MCP; you connect clients",
+    hosted: "We run the MCP endpoint and product token layer",
   },
   {
     dimension: "ManyChat API key",
-    selfHost: "Your env or X-ManyChat-API-Key (you manage rotation)",
-    hosted: "Stored encrypted per workspace; injected server-side",
+    selfHost: "Your env or X-ManyChat-API-Key",
+    hosted: "Stored encrypted per workspace and injected server-side",
   },
   {
     dimension: "Client credential",
-    selfHost: "Often the same key or your own proxy rules",
-    hosted: "Dashboard / MCP product token (routing, limits, audit)",
+    selfHost: "Usually the same ManyChat key or your own proxy rules",
+    hosted: "Workspace-scoped MCP product token",
   },
   {
     dimension: "Billing",
-    selfHost: "Free OSS; your infra costs only",
-    hosted: "Free / Supporter / Pro tiers for scale and support",
+    selfHost: "Free OSS and your infra only",
+    hosted: "Free + Supporter tiers for convenience, limits, and support",
   },
 ] as const;
 
@@ -112,73 +100,35 @@ export const credentialLanes = [
   {
     title: "ManyChat API key",
     subtitle: "Execution credential",
-    body: "Required to call the ManyChat Account Public API. In OSS you set MANYCHAT_API_KEY or pass a header. In hosted, it lives in an encrypted vault and never goes back to the MCP client.",
+    body: "Required to call the ManyChat Account Public API. In OSS you set MANYCHAT_API_KEY or pass a header. In hosted, it lives in the encrypted vault and never goes back to the MCP client.",
   },
   {
-    title: "Dashboard login (hosted)",
+    title: "Dashboard login",
     subtitle: "Human control plane",
-    body: "Owners manage workspaces, connected accounts, issued MCP tokens, and plan limits. Not used by the CLI self-host path.",
+    body: "Owners manage workspaces, connected accounts, billing, and token issuance. It is not used by the CLI self-host path.",
   },
   {
-    title: "MCP access token",
+    title: "Hosted MCP token",
     subtitle: "Product credential",
-    body: "What Claude, Cursor, Codex, and similar clients send to the hosted MCP endpoint. Maps to a workspace, enforces concurrency and usage, and keeps ManyChat keys off laptops.",
+    body: "What Claude, Cursor, Codex, and similar clients send to the hosted MCP endpoint. It maps to a workspace, enforces limits, and keeps ManyChat keys off laptops.",
   },
 ] as const;
 
 export const executionFlowSteps = [
   {
     step: "01",
-    title: "Choose a surface",
-    body: "CLI for automation, stdio MCP for local agents, HTTP MCP for remote clients—or hosted MCP when you want vault + tokens.",
+    title: "Pick your surface",
+    body: "Use the CLI for automation, stdio MCP for local agents, HTTP MCP for self-hosted remote access, or the hosted control plane when you want vaulting and product tokens.",
   },
   {
     step: "02",
     title: "Attach the ManyChat key",
-    body: "OSS: environment or header. Hosted: paste once in the dashboard; the server encrypts and uses it for execution.",
+    body: "OSS uses environment variables or headers. Hosted asks for the key once, encrypts it at rest, and injects it server-side when the MCP gateway runs.",
   },
   {
     step: "03",
     title: "Operate with guardrails",
-    body: "Read before write, verify after mutations, respect messaging windows. JSON stays on stdout; diagnostics on stderr.",
-  },
-] as const;
-
-export const docsSections = [
-  {
-    id: "overview",
-    title: "Overview",
-    body: "This project is CLI-first: the command surface and JSON contracts are the source of truth. MCP adds compatibility and remote access; the web app is packaging and onboarding.",
-    path: "README.md",
-  },
-  {
-    id: "railway",
-    title: "Deploy on Railway",
-    body: "Use the explicit production command npm run start:mcp:http, honor PORT, expose GET /health and POST /mcp, and keep Phase 0 services single-replica unless you know why not.",
-    path: "docs/deploy/railway.md",
-  },
-  {
-    id: "vps-docker",
-    title: "VPS + Docker",
-    body: "Run the same HTTP MCP entrypoint in a container, terminate TLS at a reverse proxy, and enable Redis-backed OAuth only when MCP_REMOTE_AUTH=oauth.",
-    path: "docs/deploy/vps-docker.md",
-  },
-  {
-    id: "clients",
-    title: "Connect MCP clients",
-    body: "Wire Claude, Cursor, Codex, and Claude Desktop to streamable HTTP MCP. ManyChat keys remain the execution credential; OAuth is optional compatibility for some clients.",
-    path: "docs/connect/mcp-clients.md",
-  },
-  {
-    id: "product",
-    title: "Product & hosted model",
-    body: "Hosted control plane, pricing intent, API/route sketch, and how the repo may grow (apps/api, optional MCP service).",
-    path: "docs/product/hosted-control-plane.md",
-    extraPaths: [
-      "docs/product/pricing-tiers.md",
-      "docs/product/control-plane-contracts.md",
-      "docs/product/repository-evolution.md",
-    ],
+    body: "Read before write, verify after mutations, respect messaging windows, and keep stdout machine-readable for agents and automation.",
   },
 ] as const;
 
@@ -186,68 +136,59 @@ export const docsLinks = [
   {
     title: "Deploy on Railway",
     href: "/docs#railway",
-    description: "Explicit HTTP MCP startup, PORT, health checks, and production env.",
+    description: "Explicit HTTP MCP startup, hosted_token mode, and production env guidance.",
   },
   {
     title: "Deploy on VPS + Docker",
     href: "/docs#vps-docker",
-    description: "Container layout, TLS, and when Redis is required.",
+    description: "Container layout, TLS, and when Redis is still relevant for OAuth.",
   },
   {
     title: "Connect MCP clients",
     href: "/docs#clients",
-    description: "Claude, Cursor, Codex, Antigravity, and streamable HTTP patterns.",
+    description: "Claude, Cursor, Codex, and hosted bearer-token snippets.",
   },
   {
     title: "Hosted control plane",
     href: "/docs#product",
-    description: "Workspaces, vault, MCP tokens, usage, and plan limits (spec).",
+    description: "Workspaces, vault, tokens, usage, and plan limits.",
   },
 ] as const;
 
-export type DashboardPanelStatus = "scaffold" | "planned_api";
-
-export const dashboardPanels = [
+export const docsSections = [
   {
-    id: "workspace",
-    title: "Workspace",
-    description: "Active workspace name, plan (Free / Supporter / Pro), and billing placeholder.",
-    status: "scaffold" satisfies DashboardPanelStatus,
-    bullets: ["Default workspace: Acme Growth (example)", "Plan: Free — upgrade for higher limits"],
+    id: "overview",
+    title: "Overview",
+    body: "This project is CLI-first: the command surface and JSON contracts remain the source of truth. MCP adds compatibility and remote access, while the web app is the control plane and onboarding layer.",
+    path: "README.md",
   },
   {
-    id: "members",
-    title: "Members",
-    description: "Team access to the control plane. Pro-tier invites and roles.",
-    status: "planned_api" satisfies DashboardPanelStatus,
-    bullets: ["Owner: you@example.com", "Role: owner · Last active —"],
+    id: "railway",
+    title: "Deploy on Railway",
+    body: "Use the explicit production command npm run start:mcp:http, honor PORT, expose GET /health and POST /mcp, and choose between manychat_header, hosted_token, or OAuth modes intentionally.",
+    path: "docs/deploy/railway.md",
   },
   {
-    id: "accounts",
-    title: "ManyChat accounts",
-    description: "Named connections; each maps to encrypted credentials in the vault.",
-    status: "planned_api" satisfies DashboardPanelStatus,
-    bullets: ["No accounts connected yet", "Connect from ManyChat → API token docs"],
+    id: "vps-docker",
+    title: "Deploy on VPS + Docker",
+    body: "Run the same HTTP MCP entrypoint in a container, terminate TLS at a reverse proxy, and keep OAuth + Redis only for clients that truly need remote OAuth compatibility.",
+    path: "docs/deploy/vps-docker.md",
   },
   {
-    id: "vault",
-    title: "Encrypted key vault",
-    description: "ManyChat API keys at rest. Never shown in full after save.",
-    status: "planned_api" satisfies DashboardPanelStatus,
-    bullets: ["Encryption: KMS envelope (planned)", "Rotation: supported via dashboard (planned)"],
+    id: "clients",
+    title: "Connect MCP clients",
+    body: "Wire Claude, Cursor, Codex, and Claude Desktop to streamable HTTP MCP. Hosted bearer tokens become the product credential; ManyChat API keys remain the execution credential.",
+    path: "docs/connect/mcp-clients.md",
   },
   {
-    id: "tokens",
-    title: "MCP tokens",
-    description: "Issue scoped tokens for remote MCP clients; revoke anytime.",
-    status: "planned_api" satisfies DashboardPanelStatus,
-    bullets: ["No active tokens", "Bundle default: read_only (example)"],
-  },
-  {
-    id: "usage",
-    title: "Usage & limits",
-    description: "Requests, concurrent sessions, and account counts vs plan.",
-    status: "planned_api" satisfies DashboardPanelStatus,
-    bullets: ["Daily requests: 0 / quota (placeholder)", "Concurrent MCP sessions: 0 / cap (placeholder)"],
+    id: "product",
+    title: "Hosted control plane",
+    body: "Workspaces, encrypted ManyChat vault, MCP tokens, usage, and pricing intent for the hosted control plane.",
+    path: "docs/product/hosted-control-plane.md",
+    extraPaths: [
+      "docs/product/pricing-tiers.md",
+      "docs/product/control-plane-contracts.md",
+      "docs/product/action-plan-convex-clerk-stripe.md",
+    ],
   },
 ] as const;
