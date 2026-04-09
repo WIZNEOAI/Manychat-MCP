@@ -1,5 +1,10 @@
 import { query } from "./_generated/server";
 
+/** Normalize legacy "supporter" rows to "pro". */
+function normalizePlan(plan: string): "free" | "pro" {
+  return plan === "supporter" ? "pro" : (plan as "free" | "pro");
+}
+
 const planLimits = {
   free: {
     dailyRequests: 250,
@@ -7,13 +12,6 @@ const planLimits = {
     maxConcurrentSessions: 1,
     maxAccounts: 1,
     maxTokens: 2,
-  },
-  supporter: {
-    dailyRequests: 10000,
-    monthlyRequests: 100000,
-    maxConcurrentSessions: 3,
-    maxAccounts: 3,
-    maxTokens: 10,
   },
   pro: {
     dailyRequests: 100000,
@@ -80,7 +78,7 @@ export const viewer = query({
           slug: workspace.slug,
           plan: workspace.plan,
           stripeCustomerId: workspace.stripeCustomerId,
-          limits: planLimits[workspace.plan],
+          limits: planLimits[normalizePlan(workspace.plan)],
           accounts: accounts.map((account) => ({
             _id: account._id,
             displayName: account.displayName,

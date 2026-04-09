@@ -10,7 +10,10 @@ function appOrigin(): string {
 }
 
 export const createProSubscriptionCheckout = action({
-  args: { workspaceId: v.id("workspaces") },
+  args: {
+    workspaceId: v.id("workspaces"),
+    interval: v.union(v.literal("monthly"), v.literal("annual")),
+  },
   handler: async (ctx, args): Promise<{ sessionId: string; url: string | null }> => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
@@ -25,9 +28,14 @@ export const createProSubscriptionCheckout = action({
       throw new Error("Workspace not found or access denied");
     }
 
-    const priceId = process.env.STRIPE_PRO_PRICE_ID;
+    const priceId =
+      args.interval === "annual"
+        ? process.env.STRIPE_PRO_ANNUAL_PRICE_ID
+        : process.env.STRIPE_PRO_MONTHLY_PRICE_ID;
     if (!priceId) {
-      throw new Error("STRIPE_PRO_PRICE_ID is not set in Convex environment variables");
+      throw new Error(
+        `STRIPE_PRO_${args.interval === "annual" ? "ANNUAL" : "MONTHLY"}_PRICE_ID is not set in Convex environment variables`,
+      );
     }
 
     const origin = appOrigin();

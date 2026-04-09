@@ -10,6 +10,11 @@ const bundleValidator = v.union(
   v.literal("admin"),
 );
 
+/** Normalize legacy "supporter" rows to "pro". */
+function normalizePlan(plan: string): "free" | "pro" {
+  return plan === "supporter" ? "pro" : (plan as "free" | "pro");
+}
+
 const planLimits = {
   free: {
     maxAccounts: 1,
@@ -17,13 +22,6 @@ const planLimits = {
     monthlyRequests: 3000,
     maxConcurrentSessions: 1,
     maxTokens: 2,
-  },
-  supporter: {
-    maxAccounts: 3,
-    dailyRequests: 10000,
-    monthlyRequests: 100000,
-    maxConcurrentSessions: 3,
-    maxTokens: 10,
   },
   pro: {
     maxAccounts: 20,
@@ -110,7 +108,7 @@ export const upsertManychatAccount = mutation({
   }),
   handler: async (ctx, args) => {
     const { workspace, user } = await requireWorkspaceOwner(ctx, args.workspaceId, args.clerkUserId);
-    await ensureAccountCap(ctx, args.workspaceId, workspace.plan);
+    await ensureAccountCap(ctx, args.workspaceId, normalizePlan(workspace.plan));
 
     const now = Date.now();
     const shouldDefault = args.isDefault ?? true;
@@ -236,7 +234,7 @@ export const issueMcpToken = mutation({
   }),
   handler: async (ctx, args) => {
     const { workspace, user } = await requireWorkspaceOwner(ctx, args.workspaceId, args.clerkUserId);
-    await ensureTokenCap(ctx, args.workspaceId, workspace.plan);
+    await ensureTokenCap(ctx, args.workspaceId, normalizePlan(workspace.plan));
 
     if (args.accountId) {
       const account = await ctx.db.get(args.accountId);
@@ -501,7 +499,7 @@ export const getGatewayTokenByPrefix = query({
       accountName: account.displayName,
       ciphertext: credential.ciphertext,
       keyVersion: credential.keyVersion,
-      limits: planLimits[workspace.plan],
+      limits: planLimits[normalizePlan(workspace.plan)],
       usage: {
         dailyRequestCount: daily?.requestCount ?? 0,
         monthlyRequestCount: monthly?.requestCount ?? 0,
@@ -622,7 +620,7 @@ export const authorizeGatewayRequest = mutation({
     const now = Date.now();
     const day = dateKey(now);
     const month = monthKey(now);
-    const limits = planLimits[workspace.plan];
+    const limits = planLimits[normalizePlan(workspace.plan)];
 
     const daily = await ctx.db
       .query("usageDaily")

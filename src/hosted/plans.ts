@@ -1,6 +1,11 @@
 import type { HostedPlan, HostedPlanLimits } from "./types.js";
 
-export const HOSTED_PLAN_LIMITS: Record<HostedPlan, HostedPlanLimits> = {
+/** Normalize legacy "supporter" rows to "pro". */
+export function normalizePlan(plan: HostedPlan): "free" | "pro" {
+  return plan === "supporter" ? "pro" : plan;
+}
+
+export const HOSTED_PLAN_LIMITS: Record<"free" | "pro", HostedPlanLimits> = {
   free: {
     maxWorkspaces: 1,
     maxAccounts: 1,
@@ -8,14 +13,6 @@ export const HOSTED_PLAN_LIMITS: Record<HostedPlan, HostedPlanLimits> = {
     monthlyRequests: 3000,
     maxConcurrentSessions: 1,
     maxTokens: 2,
-  },
-  supporter: {
-    maxWorkspaces: 1,
-    maxAccounts: 3,
-    dailyRequests: 10000,
-    monthlyRequests: 100000,
-    maxConcurrentSessions: 3,
-    maxTokens: 10,
   },
   pro: {
     maxWorkspaces: 5,
@@ -28,5 +25,5 @@ export const HOSTED_PLAN_LIMITS: Record<HostedPlan, HostedPlanLimits> = {
 };
 
 export function resolveHostedPlanLimits(plan: HostedPlan): HostedPlanLimits {
-  return HOSTED_PLAN_LIMITS[plan];
+  return HOSTED_PLAN_LIMITS[normalizePlan(plan)];
 }

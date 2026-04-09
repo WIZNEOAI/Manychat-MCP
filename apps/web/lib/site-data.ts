@@ -36,7 +36,9 @@ export const productSurfaces = [
 export const pricingTiers = [
   {
     name: "Free",
-    price: "$0",
+    monthlyPrice: "$0",
+    annualPrice: "$0",
+    annualSavings: null,
     tagline: "Try hosted MCP with safe daily limits and no credit card.",
     limits: [
       "1 workspace",
@@ -49,16 +51,18 @@ export const pricingTiers = [
     cta: "Best for evaluation and light personal usage",
   },
   {
-    name: "Supporter",
-    price: "$20/mo",
-    tagline: "Serious individual usage under fair-use, plus support for the OSS core.",
+    name: "Pro",
+    monthlyPrice: "$20/mo",
+    annualPrice: "$209/year",
+    annualSavings: "Save $31/year",
+    tagline: "Unlimited-scale operations with priority support.",
     limits: [
-      "1 workspace",
-      "Up to 3 ManyChat accounts",
-      "10,000 requests/day, 100,000 requests/month",
-      "Up to 3 concurrent MCP sessions",
-      "10 active MCP tokens",
-      "Priority support and basic audit history",
+      "Up to 5 workspaces",
+      "Up to 20 ManyChat accounts",
+      "100,000 requests/day, 1,000,000 requests/month",
+      "Up to 10 concurrent MCP sessions",
+      "50 active MCP tokens",
+      "Priority support and full audit history",
     ],
     cta: "Best for operators, marketers, and AI-heavy workflows",
   },
@@ -70,7 +74,7 @@ export const dashboardRoadmap = [
   "Workspace usage meters for daily and monthly limits",
   "Capability bundles for read_only, operator, messaging_safe, and admin",
   "Client snippets for Claude Code, Cursor, Codex, and Claude Desktop",
-  "Manual Pro upgrade path for agencies and team governance",
+  "Pro upgrade path with monthly and annual billing options",
 ] as const;
 
 export const selfHostVsHosted = [
@@ -92,7 +96,7 @@ export const selfHostVsHosted = [
   {
     dimension: "Billing",
     selfHost: "Free OSS and your infra only",
-    hosted: "Free + Supporter tiers for convenience, limits, and support",
+    hosted: "Free + Pro tiers for convenience, limits, and support",
   },
 ] as const;
 

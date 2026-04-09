@@ -94,7 +94,7 @@ export default function Home() {
           <p className="mt-4 max-w-3xl text-lg leading-8 muted">
             The hosted path is built for operators who want a clean control plane:
             Clerk for account access, Convex for workspace state, Stripe for the
-            Supporter plan, and Railway for the remote MCP gateway. The MCP client
+            Pro plan, and Railway for the remote MCP gateway. The MCP client
             only gets a workspace token while the ManyChat key stays encrypted on
             the server side.
           </p>
@@ -232,8 +232,8 @@ export default function Home() {
 
       <section className="space-y-6">
         <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] muted">Hosted pricing (initial)</p>
-          <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">Free to try, Supporter at $20, Pro for teams.</h2>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] muted">Hosted pricing</p>
+          <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">Free to start. Pro when you scale.</h2>
           <p className="max-w-3xl text-lg leading-8 muted">
             OSS stays fully usable without an account. Hosted tiers add convenience, concurrency, and support—not a
             wall around the runtime.
@@ -244,7 +244,12 @@ export default function Home() {
             <article key={tier.name} className="card flex flex-col gap-5 p-6">
               <div className="space-y-2">
                 <p className="text-sm font-semibold uppercase tracking-[0.16em] muted">{tier.name}</p>
-                <h3 className="text-3xl font-semibold">{tier.price}</h3>
+                <h3 className="text-3xl font-semibold">{tier.monthlyPrice}</h3>
+                {tier.annualPrice !== "$0" ? (
+                  <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                    or {tier.annualPrice} · {tier.annualSavings}
+                  </p>
+                ) : null}
                 <p className="text-sm leading-6 muted">{tier.tagline}</p>
                 <p className="text-xs font-medium text-emerald-800 dark:text-emerald-200">{tier.cta}</p>
               </div>

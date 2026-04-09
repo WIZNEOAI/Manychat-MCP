@@ -87,6 +87,7 @@ export function DashboardClient() {
   const [bootstrapError, setBootstrapError] = useState<string | null>(null);
   const [billingError, setBillingError] = useState<string | null>(null);
   const [billingBusy, setBillingBusy] = useState(false);
+  const [billingInterval, setBillingInterval] = useState<"monthly" | "annual">("monthly");
   const [accountError, setAccountError] = useState<string | null>(null);
   const [tokenError, setTokenError] = useState<string | null>(null);
   const [accountBusy, setAccountBusy] = useState(false);
@@ -189,17 +190,38 @@ export function DashboardClient() {
           <div className="flex items-end justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] muted">Billing</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-tight">Free and Supporter</h2>
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight">Free and Pro</h2>
               <p className="mt-2 text-sm leading-6 muted">
-                The public launch keeps pricing simple: a generous Free tier and a single Supporter plan at $20/month.
+                A generous Free tier and Pro at $20/month or $209/year.
               </p>
             </div>
+          </div>
+          <div className="mt-4 flex gap-2">
+            <button
+              type="button"
+              onClick={() => setBillingInterval("monthly")}
+              className={`rounded-full px-4 py-2 text-xs font-semibold transition ${billingInterval === "monthly" ? "bg-black text-white dark:bg-white dark:text-black" : "border border-black/15 dark:border-white/15 hover:bg-black/5 dark:hover:bg-white/10"}`}
+            >
+              Monthly
+            </button>
+            <button
+              type="button"
+              onClick={() => setBillingInterval("annual")}
+              className={`rounded-full px-4 py-2 text-xs font-semibold transition ${billingInterval === "annual" ? "bg-black text-white dark:bg-white dark:text-black" : "border border-black/15 dark:border-white/15 hover:bg-black/5 dark:hover:bg-white/10"}`}
+            >
+              Annual · Save $31
+            </button>
           </div>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             {pricingTiers.map((tier) => (
               <article key={tier.name} className="rounded-2xl border border-black/8 p-5 dark:border-white/10">
                 <p className="text-sm font-semibold uppercase tracking-[0.16em] muted">{tier.name}</p>
-                <p className="mt-2 text-3xl font-semibold">{tier.price}</p>
+                <p className="mt-2 text-3xl font-semibold">
+                  {billingInterval === "annual" ? tier.annualPrice : tier.monthlyPrice}
+                </p>
+                {billingInterval === "annual" && tier.annualSavings ? (
+                  <p className="mt-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300">{tier.annualSavings}</p>
+                ) : null}
                 <p className="mt-2 text-sm leading-6 muted">{tier.tagline}</p>
                 <ul className="mt-4 space-y-2 text-sm leading-6 muted">
                   {tier.limits.map((limit) => (
@@ -222,7 +244,10 @@ export function DashboardClient() {
                     setBillingBusy(true);
                     setBillingError(null);
                     try {
-                      const { url } = await createSupporterCheckout({ workspaceId: primaryWorkspace._id });
+                      const { url } = await createSupporterCheckout({
+                        workspaceId: primaryWorkspace._id,
+                        interval: billingInterval,
+                      });
                       if (!url) throw new Error("Stripe did not return a checkout URL.");
                       window.location.href = url;
                     } catch (error) {
@@ -233,7 +258,11 @@ export function DashboardClient() {
                   }}
                   className="rounded-full bg-black px-4 py-2 text-xs font-semibold text-white transition hover:bg-black/85 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-white/85"
                 >
-                  {billingBusy ? "Redirecting..." : "Upgrade to Supporter - $20/mo"}
+                  {billingBusy
+                    ? "Redirecting..."
+                    : billingInterval === "annual"
+                      ? "Upgrade to Pro - $209/year"
+                      : "Upgrade to Pro - $20/mo"}
                 </button>
               ) : null}
               {primaryWorkspace.plan !== "free" && primaryWorkspace.stripeCustomerId ? (

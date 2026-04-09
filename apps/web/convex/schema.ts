@@ -14,6 +14,7 @@ export default defineSchema({
     name: v.string(),
     slug: v.string(),
     ownerUserId: v.id("users"),
+    // "supporter" is legacy, treated identically to "pro"
     plan: v.union(v.literal("free"), v.literal("supporter"), v.literal("pro")),
     stripeCustomerId: v.optional(v.string()),
     createdAt: v.number(),

@@ -447,7 +447,7 @@ function resolveBaseUrl(
   port: number,
 ): string {
   const configuredRailwayUrl = env.RAILWAY_STATIC_URL
-    ? normalizeUrl(env.RAILWAY_STATIC_URL)
+    ? normalizeRailwayPublicUrl(env.RAILWAY_STATIC_URL)
     : undefined;
   const configured =
     env.MCP_BASE_URL ??
