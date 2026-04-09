@@ -3,8 +3,8 @@ builder = "dockerfile"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "npm run start:mcp:http"
+startCommand = "node dist/mcp/http-entry.js"
 healthcheckPath = "/health"
-healthcheckTimeout = 30
+healthcheckTimeout = 60
 restartPolicyType = "always"
 numReplicas = 1
