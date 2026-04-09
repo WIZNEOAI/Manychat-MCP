@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 import { requireClerkUser, unauthorized } from "@/lib/server/auth";
 import { getServerConvexClient } from "@/lib/server/convex";
 
@@ -13,9 +14,9 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
     const { workspaceId, tokenId } = await context.params;
     const convex = getServerConvexClient();
     await convex.mutation(api.hosted.revokeMcpToken, {
-      workspaceId,
+      workspaceId: workspaceId as Id<"workspaces">,
       clerkUserId,
-      tokenId,
+      tokenId: tokenId as Id<"mcpTokens">,
     });
 
     return NextResponse.json({ ok: true });

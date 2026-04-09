@@ -1,4 +1,5 @@
 import { mutation } from "./_generated/server";
+import { internal } from "./_generated/api";
 
 function slugifyWorkspaceName(name: string): string {
   return (
@@ -43,6 +44,13 @@ export const ensureCurrentUser = mutation({
         imageUrl: identity.pictureUrl ?? undefined,
         createdAt: Date.now(),
       });
+
+      if (identity.email) {
+        await ctx.scheduler.runAfter(0, internal.emails.sendWelcomeEmail, {
+          to: identity.email,
+          name: identity.name ?? undefined,
+        });
+      }
     }
 
     const workspaces = await ctx.db

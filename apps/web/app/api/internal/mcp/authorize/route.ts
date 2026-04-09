@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 import { assertInternalSecret } from "@/lib/server/auth";
 import { getServerConvexClient } from "@/lib/server/convex";
 
@@ -21,9 +22,9 @@ export async function POST(request: NextRequest) {
 
     const convex = getServerConvexClient();
     const result = await convex.mutation(api.hosted.authorizeGatewayRequest, {
-      workspaceId: body.workspaceId,
-      tokenId: body.tokenId,
-      accountId: body.accountId,
+      workspaceId: body.workspaceId as Id<"workspaces">,
+      tokenId: body.tokenId as Id<"mcpTokens">,
+      accountId: body.accountId as Id<"manychatAccounts"> | null | undefined,
     });
 
     return NextResponse.json({ ok: true, usage: result });

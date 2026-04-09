@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 import { requireClerkUser, unauthorized } from "@/lib/server/auth";
 import { getServerConvexClient } from "@/lib/server/convex";
 import { encryptVaultValue } from "@/lib/server/hosted";
@@ -20,9 +21,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const convex = getServerConvexClient();
     const encrypted = encryptVaultValue(body.apiKey.trim());
     const result = await convex.mutation(api.hosted.rotateManychatCredential, {
-      workspaceId,
+      workspaceId: workspaceId as Id<"workspaces">,
       clerkUserId,
-      accountId,
+      accountId: accountId as Id<"manychatAccounts">,
       ciphertext: encrypted.ciphertext,
       keyVersion: encrypted.keyVersion,
     });

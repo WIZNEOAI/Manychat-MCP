@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 import { requireClerkUser, unauthorized } from "@/lib/server/auth";
 import { getServerConvexClient } from "@/lib/server/convex";
 import { createHostedTokenSecret, hashHostedToken, parseHostedTokenPrefix } from "@/lib/server/hosted";
@@ -14,7 +15,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     const { workspaceId } = await context.params;
     const convex = getServerConvexClient();
     const tokens = await convex.query(api.hosted.getWorkspaceTokens, {
-      workspaceId,
+      workspaceId: workspaceId as Id<"workspaces">,
       clerkUserId,
     });
     return NextResponse.json({ ok: true, tokens });
@@ -48,9 +49,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     const convex = getServerConvexClient();
     const token = await convex.mutation(api.hosted.issueMcpToken, {
-      workspaceId,
+      workspaceId: workspaceId as Id<"workspaces">,
       clerkUserId,
-      accountId: body.accountId ?? null,
+      accountId: (body.accountId ?? null) as Id<"manychatAccounts"> | null,
       name: body.name.trim(),
       bundle: body.bundle,
       prefix,

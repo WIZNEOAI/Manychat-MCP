@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 import { requireClerkUser, unauthorized } from "@/lib/server/auth";
 import { getServerConvexClient } from "@/lib/server/convex";
 
@@ -13,7 +14,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     const { workspaceId } = await context.params;
     const convex = getServerConvexClient();
     const result = await convex.query(api.hosted.getUsageAndAudit, {
-      workspaceId,
+      workspaceId: workspaceId as Id<"workspaces">,
       clerkUserId,
     });
     return NextResponse.json({ ok: true, audit: result.audit });
