@@ -1,0 +1,33 @@
+# CODEOWNERS — archivos que requieren aprobación humana (Ulises)
+# GitHub Free no enforza, pero agentes (Claude Code, CodeRabbit) lo respetan y escalan.
+
+# Root markers
+/README.md                  @WIZNEOAI
+/SECURITY.md                @WIZNEOAI
+/.env.example               @WIZNEOAI
+
+# CI/CD — agentes no modifican workflows
+/.github/                   @WIZNEOAI
+
+# Secrets & config
+/.env                       @WIZNEOAI
+/.env.local                 @WIZNEOAI
+/.env.production            @WIZNEOAI
+
+# Convex (para repos con Convex)
+/convex/schema.ts           @WIZNEOAI
+/convex/auth.config.ts      @WIZNEOAI
+
+# Clerk / auth config
+/clerk.config.*             @WIZNEOAI
+/src/app/middleware.ts      @WIZNEOAI
+/middleware.ts              @WIZNEOAI
+
+# Database migrations
+/migrations/                @WIZNEOAI
+/prisma/schema.prisma       @WIZNEOAI
+
+# Package manager lock files — cambios L/XL ameritan revisión
+/package-lock.json          @WIZNEOAI
+/pnpm-lock.yaml             @WIZNEOAI
+/bun.lockb                  @WIZNEOAI
