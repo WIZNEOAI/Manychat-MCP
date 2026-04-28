@@ -16,6 +16,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm ci --prefix apps/web
       - run: npm run lint
       - run: npm run build
       - run: npm test
+      - run: npm run web:lint
+      - run: npm run web:test
+      - run: npm run web:build

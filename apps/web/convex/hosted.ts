@@ -100,11 +100,16 @@ export const upsertManychatAccount = mutation({
     ciphertext: v.string(),
     keyVersion: v.string(),
     isDefault: v.optional(v.boolean()),
+    manychatPageName: v.optional(v.string()),
+    keyValidatedAt: v.number(),
   },
   returns: v.object({
     accountId: v.id("manychatAccounts"),
     displayName: v.string(),
     lastRotatedAt: v.number(),
+    manychatPageName: v.optional(v.string()),
+    keyValidationStatus: v.literal("valid"),
+    keyValidatedAt: v.number(),
   }),
   handler: async (ctx, args) => {
     const { workspace, user } = await requireWorkspaceOwner(ctx, args.workspaceId, args.clerkUserId);
@@ -131,6 +136,9 @@ export const upsertManychatAccount = mutation({
       isDefault: shouldDefault || workspaceAccounts.length === 0,
       createdAt: now,
       lastRotatedAt: now,
+      manychatPageName: args.manychatPageName,
+      keyValidationStatus: "valid",
+      keyValidatedAt: args.keyValidatedAt,
     });
 
     await ctx.db.insert("manychatCredentials", {
@@ -154,6 +162,9 @@ export const upsertManychatAccount = mutation({
       accountId,
       displayName: args.displayName,
       lastRotatedAt: now,
+      manychatPageName: args.manychatPageName,
+      keyValidationStatus: "valid" as const,
+      keyValidatedAt: args.keyValidatedAt,
     };
   },
 });
@@ -165,10 +176,15 @@ export const rotateManychatCredential = mutation({
     accountId: v.id("manychatAccounts"),
     ciphertext: v.string(),
     keyVersion: v.string(),
+    manychatPageName: v.optional(v.string()),
+    keyValidatedAt: v.number(),
   },
   returns: v.object({
     accountId: v.id("manychatAccounts"),
     lastRotatedAt: v.number(),
+    manychatPageName: v.optional(v.string()),
+    keyValidationStatus: v.literal("valid"),
+    keyValidatedAt: v.number(),
   }),
   handler: async (ctx, args) => {
     const { user } = await requireWorkspaceOwner(ctx, args.workspaceId, args.clerkUserId);
@@ -199,7 +215,12 @@ export const rotateManychatCredential = mutation({
       });
     }
 
-    await ctx.db.patch(args.accountId, { lastRotatedAt: now });
+    await ctx.db.patch(args.accountId, {
+      lastRotatedAt: now,
+      manychatPageName: args.manychatPageName,
+      keyValidationStatus: "valid",
+      keyValidatedAt: args.keyValidatedAt,
+    });
     await ctx.db.insert("auditEvents", {
       workspaceId: args.workspaceId,
       actorUserId: user._id,
@@ -212,6 +233,9 @@ export const rotateManychatCredential = mutation({
     return {
       accountId: args.accountId,
       lastRotatedAt: now,
+      manychatPageName: args.manychatPageName,
+      keyValidationStatus: "valid" as const,
+      keyValidatedAt: args.keyValidatedAt,
     };
   },
 });
@@ -297,6 +321,91 @@ export const revokeMcpToken = mutation({
       metadataJson: JSON.stringify({ tokenId: args.tokenId }),
       createdAt: now,
     });
+    return null;
+  },
+});
+
+export const revokeAllWorkspaceMcpTokens = mutation({
+  args: {
+    workspaceId: v.id("workspaces"),
+    clerkUserId: v.string(),
+  },
+  returns: v.object({ revokedCount: v.number() }),
+  handler: async (ctx, args) => {
+    const { user } = await requireWorkspaceOwner(ctx, args.workspaceId, args.clerkUserId);
+    const tokens = await ctx.db
+      .query("mcpTokens")
+      .withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))
+      .collect();
+
+    const now = Date.now();
+    let revokedCount = 0;
+    for (const token of tokens) {
+      if (token.revokedAt === null) {
+        await ctx.db.patch(token._id, { revokedAt: now });
+        revokedCount += 1;
+      }
+    }
+
+    if (revokedCount > 0) {
+      await ctx.db.insert("auditEvents", {
+        workspaceId: args.workspaceId,
+        actorUserId: user._id,
+        actorTokenId: null,
+        action: "mcp_tokens.revoked_all",
+        metadataJson: JSON.stringify({ revokedCount }),
+        createdAt: now,
+      });
+    }
+
+    return { revokedCount };
+  },
+});
+
+export const disconnectManychatAccount = mutation({
+  args: {
+    workspaceId: v.id("workspaces"),
+    clerkUserId: v.string(),
+    accountId: v.id("manychatAccounts"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const { user } = await requireWorkspaceOwner(ctx, args.workspaceId, args.clerkUserId);
+    const account = await ctx.db.get(args.accountId);
+    if (!account || account.workspaceId !== args.workspaceId) {
+      throw new Error("ManyChat account not found");
+    }
+
+    const now = Date.now();
+    const tokens = await ctx.db
+      .query("mcpTokens")
+      .withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))
+      .collect();
+    for (const token of tokens) {
+      if (token.revokedAt === null) {
+        await ctx.db.patch(token._id, { revokedAt: now });
+      }
+    }
+
+    const credential = await ctx.db
+      .query("manychatCredentials")
+      .withIndex("by_account", (q) => q.eq("accountId", args.accountId))
+      .unique();
+    if (credential) {
+      await ctx.db.delete(credential._id);
+    }
+
+    await ctx.db.delete(args.accountId);
+
+    await ctx.db.insert("auditEvents", {
+      workspaceId: args.workspaceId,
+      actorUserId: user._id,
+      actorTokenId: null,
+      action: "manychat_account.disconnected",
+      metadataJson: JSON.stringify({ accountId: args.accountId }),
+      createdAt: now,
+    });
+
     return null;
   },
 });

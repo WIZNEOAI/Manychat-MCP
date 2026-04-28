@@ -7,25 +7,23 @@ import { getServerConvexClient } from "@/lib/server/convex";
 import { rateLimitAllow } from "@/lib/server/rate-limit";
 
 type RouteContext = {
-  params: Promise<{ workspaceId: string; tokenId: string }>;
+  params: Promise<{ workspaceId: string }>;
 };
 
-export async function DELETE(request: NextRequest, context: RouteContext) {
-  if (!rateLimitAllow(request, "mcp-revoke", 40)) {
+export async function POST(request: NextRequest, context: RouteContext) {
+  if (!rateLimitAllow(request, "mcp-revoke-all", 10)) {
     return NextResponse.json({ error: "Too many requests. Try again shortly." }, { status: 429 });
   }
 
   try {
     const clerkUserId = await requireClerkUser();
-    const { workspaceId, tokenId } = await context.params;
+    const { workspaceId } = await context.params;
     const convex = getServerConvexClient();
-    await convex.mutation(api.hosted.revokeMcpToken, {
+    const result = await convex.mutation(api.hosted.revokeAllWorkspaceMcpTokens, {
       workspaceId: workspaceId as Id<"workspaces">,
       clerkUserId,
-      tokenId: tokenId as Id<"mcpTokens">,
     });
-
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, revokedCount: result.revokedCount });
   } catch (error) {
     if (error instanceof Error && error.message === "Authentication required") {
       return unauthorized(error.message);
@@ -34,7 +32,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       {
         error: clientSafeError(
           error,
-          "Failed to revoke token.",
+          "Could not revoke tokens.",
           error instanceof Error ? error.message : undefined,
         ),
       },

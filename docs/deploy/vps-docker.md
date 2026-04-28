@@ -137,6 +137,27 @@ curl -i -X POST https://mcp.example.com/mcp \
 
 Then test with a real client from `docs/connect/mcp-clients.md`.
 
+## 5b. Hosted control plane (`hosted_token`) on Docker
+
+When the MCP container acts as a **multi-tenant gateway**, users send a dashboard-issued bearer token and the container resolves the real ManyChat API key from your Next.js control plane:
+
+```bash
+docker run -d \
+  --name manychat-mcp \
+  --restart unless-stopped \
+  -p 3000:3000 \
+  -e NODE_ENV=production \
+  -e MCP_REMOTE_AUTH=hosted_token \
+  -e MCP_BASE_URL=https://mcp.example.com \
+  -e HOSTED_CONTROL_PLANE_URL=https://your-app.vercel.app \
+  -e HOSTED_CONTROL_PLANE_SECRET=replace-with-shared-secret \
+  manychat-mcp:latest
+```
+
+The same secret must be set on Vercel as `MCP_INTERNAL_SHARED_SECRET`. See [mcp-gateway-vps.md](./mcp-gateway-vps.md) and [production-beta.md](./production-beta.md).
+
+You can also use root [docker-compose.yml](../../docker-compose.yml) and uncomment the hosted env lines.
+
 ## 6. Production warnings
 
 ### MCP sessions are still process-local

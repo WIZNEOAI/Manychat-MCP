@@ -1,9 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import { clientSafeError } from "@/lib/server/api-errors";
+import { mcpTokenIssueBodySchema, schemaErrorMessage } from "@/lib/server/api-schemas";
 import { requireClerkUser, unauthorized } from "@/lib/server/auth";
 import { getServerConvexClient } from "@/lib/server/convex";
 import { createHostedTokenSecret, hashHostedToken, parseHostedTokenPrefix } from "@/lib/server/hosted";
+import { rateLimitAllow } from "@/lib/server/rate-limit";
 
 type RouteContext = {
   params: Promise<{ workspaceId: string }>;
@@ -28,18 +31,19 @@ export async function GET(_request: NextRequest, context: RouteContext) {
 }
 
 export async function POST(request: NextRequest, context: RouteContext) {
+  if (!rateLimitAllow(request, "mcp-issue", 30)) {
+    return NextResponse.json({ error: "Too many requests. Try again shortly." }, { status: 429 });
+  }
+
   try {
     const clerkUserId = await requireClerkUser();
     const { workspaceId } = await context.params;
-    const body = (await request.json()) as {
-      name?: string;
-      bundle?: "read_only" | "operator" | "messaging_safe" | "admin";
-      accountId?: string | null;
-    };
-
-    if (!body.name?.trim() || !body.bundle) {
-      return NextResponse.json({ error: "name and bundle are required." }, { status: 400 });
+    const raw = await request.json();
+    const parsed = mcpTokenIssueBodySchema.safeParse(raw);
+    if (!parsed.success) {
+      return NextResponse.json({ error: schemaErrorMessage(parsed.error) }, { status: 400 });
     }
+    const body = parsed.data;
 
     const secret = createHostedTokenSecret();
     const prefix = parseHostedTokenPrefix(secret);
@@ -52,7 +56,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       workspaceId: workspaceId as Id<"workspaces">,
       clerkUserId,
       accountId: (body.accountId ?? null) as Id<"manychatAccounts"> | null,
-      name: body.name.trim(),
+      name: body.name,
       bundle: body.bundle,
       prefix,
       tokenHash: hashHostedToken(secret),
@@ -68,7 +72,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return unauthorized(error.message);
     }
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to issue token." },
+      {
+        error: clientSafeError(
+          error,
+          "Failed to issue token.",
+          error instanceof Error ? error.message : undefined,
+        ),
+      },
       { status: 400 },
     );
   }
