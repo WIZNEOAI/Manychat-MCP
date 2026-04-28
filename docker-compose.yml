@@ -1,0 +1,38 @@
+# Minimal stack for the MCP HTTP gateway (OSS self-host).
+# For hosted_token mode, set HOSTED_CONTROL_PLANE_URL and HOSTED_CONTROL_PLANE_SECRET.
+
+services:
+  manychat-mcp:
+    build: .
+    image: manychat-mcp:local
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      # Self-host with one ManyChat key on the server:
+      MCP_REMOTE_AUTH: manychat_header
+      MANYCHAT_API_KEY: ${MANYCHAT_API_KEY:?Set MANYCHAT_API_KEY in .env}
+      MCP_BASE_URL: ${MCP_BASE_URL:-http://localhost:3000}
+      # Hosted SaaS gateway (uncomment and set):
+      # MCP_REMOTE_AUTH: hosted_token
+      # HOSTED_CONTROL_PLANE_URL: https://your-app.vercel.app
+      # HOSTED_CONTROL_PLANE_SECRET: ${HOSTED_CONTROL_PLANE_SECRET}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # Optional: OAuth mode requires Redis (uncomment both services and set MCP_REMOTE_AUTH=oauth)
+  # manychat-redis:
+  #   image: redis:7-alpine
+  #   restart: unless-stopped

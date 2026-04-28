@@ -1,40 +1,26 @@
-# Security Policy
+# Security policy
+
+## Supported versions
+
+Security fixes are applied to the default branch (`main`) and released as tagged versions when appropriate. Use the latest commit or release for production.
 
 ## Reporting a vulnerability
 
-1. Do not open a public issue
-2. Email `security@gnosix.com`
-3. Expected acknowledgment: within 48 hours
+**Please do not** open a public GitHub issue for undisclosed security bugs.
 
-## Authentication boundaries
+Instead, email maintainers with:
 
-This project separates:
+- Description of the issue and impact
+- Steps to reproduce (if possible)
+- Affected surface (CLI, MCP HTTP, dashboard, Convex, etc.)
 
-- **ManyChat auth**: user-supplied ManyChat API key
-- **MCP auth**: OAuth 2.0 bearer token used by MCP clients
+We aim to acknowledge reports within a few business days.
 
-OAuth bearer tokens are mapped to ManyChat API keys through the configured OAuth store.
+## Sensitive data
 
-## Key and token handling
+Never paste real **ManyChat API keys**, **hosted MCP tokens**, **VAULT_MASTER_KEY**, or **MCP_INTERNAL_SHARED_SECRET** / **HOSTED_CONTROL_PLANE_SECRET** into issues or public chats.
 
-- Secrets and tokens are redacted in structured logs
-- OAuth bearer tokens are stored in configured backend:
-  - `memory` for development only
-  - `redis` for production
-- Production mode (`NODE_ENV=production`) requires Redis-backed OAuth store
-- Authorization codes are one-time use and short-lived
-- Access and refresh tokens are TTL-bound and revocable
+## Scope notes
 
-## Transport and deployment requirements
-
-- Use HTTPS in production
-- Restrict access to Redis using network and credential controls
-- Rotate ManyChat API keys periodically
-- Do not use shared global ManyChat keys for multi-user SaaS scenarios
-
-## Operational checks
-
-- Verify `/.well-known/oauth-protected-resource`
-- Verify `/.well-known/oauth-authorization-server`
-- Verify `/health`
-- Run OAuth flow smoke tests after deploy and after rollback
+- Hosted mode relies on a shared secret between the MCP gateway and the control plane; protect both sides equally.
+- Rate limiting on dashboard API routes is best-effort per server instance; high-risk deployments should add edge or Redis-backed limits.
