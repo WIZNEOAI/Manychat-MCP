@@ -1,69 +1,34 @@
-# Contributing to ManyChat MCP
+# Contributing
 
-Thanks for your interest in contributing! Here's how to get started.
+Thanks for helping improve ManyChat MCP.
 
-## Development Setup
+## Before you start
+
+1. Read [AGENTS.md](AGENTS.md) and, for web changes, [apps/web/AGENTS.md](apps/web/AGENTS.md).
+2. Keep the **CLI** as the source of truth: MCP and the dashboard should align with CLI behavior, not redefine it.
+3. **Stdout** stays JSON for CLI; diagnostics belong on **stderr**.
+
+## Development
 
 ```bash
-git clone https://github.com/gnosix/manychat-mcp.git
-cd manychat-mcp
 npm install
-cp .env.example .env
-# Edit .env with your ManyChat API key
-npm run dev
+npm ci --prefix apps/web
+npm run lint
+npm test
+npm run build
+npm run web:lint
+npm run web:test
+npm run web:build
 ```
 
-## Project Structure
+Convex: from `apps/web`, run `npx convex dev` for a linked deployment (interactive first time).
 
-```
-src/
-  index.ts              # Entry point (stdio + HTTP transports)
-  server.ts             # MCP server factory
-  auth/
-    manychat-client.ts  # ManyChat API HTTP client
-    oauth.ts            # OAuth token store
-    oauth-routes.ts     # OAuth endpoints + auth page
-  tools/                # MCP tools grouped by domain
-  resources/            # MCP resources (read-only data)
-  prompts/              # MCP prompt templates
-  lib/                  # Utilities (logger, etc.)
-  types/                # TypeScript type definitions
-```
+## Pull requests
 
-## Adding a New Tool
+- Small, focused diffs with clear commit messages.
+- Add or update tests for behavior changes (Vitest; mocked HTTP only—no live ManyChat calls in CI).
+- Do not log secrets (API keys, MCP tokens, vault material, shared internal secrets).
 
-1. Pick the right domain file in `src/tools/` (or create one).
-2. Register your tool with `server.tool()` inside the register function.
-3. Use `client.get()` or `client.post()` to call the ManyChat API.
-4. Add a clear description so agents understand what the tool does.
-5. Run `npm run lint` and `npm run build` to verify.
+## Security
 
-## Pull Request Process
-
-1. Fork the repo and create your branch from `main`.
-2. Make your changes with clear commit messages.
-3. Ensure `npm run lint` and `npm run build` pass.
-4. Open a PR with a description of what and why.
-
-## Skills in this repo
-
-This repo includes `skills/manychat-mcp-ops` for agent operations.
-
-- Keep `SKILL.md` concise and procedural
-- Put detailed guidance in `references/`
-- Put deterministic checks in `scripts/`
-- Validate scripts by running them locally before opening PRs
-
-## Code Style
-
-- TypeScript strict mode.
-- No `any` types unless absolutely necessary.
-- Tool descriptions should be clear and agent-friendly.
-- Keep the ManyChat client as the single point of API contact.
-
-## Reporting Issues
-
-Open a GitHub issue with:
-- What you expected vs. what happened.
-- Steps to reproduce.
-- Your Node.js version and transport mode (stdio/http).
+See [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
