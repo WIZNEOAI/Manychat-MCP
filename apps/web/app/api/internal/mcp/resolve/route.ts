@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { api } from "@/convex/_generated/api";
+import { clientSafeError } from "@/lib/server/api-errors";
+import { internalHostedTokenBodySchema, schemaErrorMessage } from "@/lib/server/api-schemas";
 import { assertInternalSecret } from "@/lib/server/auth";
 import { getServerConvexClient } from "@/lib/server/convex";
 import {
@@ -8,14 +10,21 @@ import {
   parseHostedTokenPrefix,
   safeEqualHex,
 } from "@/lib/server/hosted";
+import { rateLimitAllow } from "@/lib/server/rate-limit";
 
 export async function POST(request: NextRequest) {
+  if (!rateLimitAllow(request, "internal-resolve", 120)) {
+    return NextResponse.json({ error: "Too many requests." }, { status: 429 });
+  }
+
   try {
     assertInternalSecret(request);
-    const body = (await request.json()) as { token?: string };
-    if (!body.token) {
-      return NextResponse.json({ error: "token is required." }, { status: 400 });
+    const raw = await request.json();
+    const parsed = internalHostedTokenBodySchema.safeParse(raw);
+    if (!parsed.success) {
+      return NextResponse.json({ error: schemaErrorMessage(parsed.error) }, { status: 400 });
     }
+    const body = parsed.data;
 
     const prefix = parseHostedTokenPrefix(body.token);
     if (!prefix) {
@@ -74,7 +83,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 401 });
     }
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to resolve token." },
+      {
+        error: clientSafeError(
+          error,
+          "Failed to resolve token.",
+          error instanceof Error ? error.message : undefined,
+        ),
+      },
       { status: 400 },
     );
   }

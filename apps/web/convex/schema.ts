@@ -28,6 +28,12 @@ export default defineSchema({
     isDefault: v.boolean(),
     createdAt: v.number(),
     lastRotatedAt: v.number(),
+    /** From ManyChat page/getInfo when key was last validated */
+    manychatPageName: v.optional(v.string()),
+    keyValidationStatus: v.optional(
+      v.union(v.literal("valid"), v.literal("pending"), v.literal("invalid")),
+    ),
+    keyValidatedAt: v.optional(v.number()),
   }).index("by_workspace", ["workspaceId"]),
 
   manychatCredentials: defineTable({

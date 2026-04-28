@@ -1,29 +1,39 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import { clientSafeError } from "@/lib/server/api-errors";
+import {
+  manychatAccountCreateBodySchema,
+  schemaErrorMessage,
+} from "@/lib/server/api-schemas";
 import { requireClerkUser, unauthorized } from "@/lib/server/auth";
 import { getServerConvexClient } from "@/lib/server/convex";
 import { encryptVaultValue } from "@/lib/server/hosted";
+import { validateManyChatApiKey } from "@/lib/server/manychat-validate";
+import { rateLimitAllow } from "@/lib/server/rate-limit";
 
 type RouteContext = {
   params: Promise<{ workspaceId: string }>;
 };
 
 export async function POST(request: NextRequest, context: RouteContext) {
+  if (!rateLimitAllow(request, "manychat-save", 30)) {
+    return NextResponse.json({ error: "Too many requests. Try again shortly." }, { status: 429 });
+  }
+
   try {
     const clerkUserId = await requireClerkUser();
     const { workspaceId } = await context.params;
-    const body = (await request.json()) as {
-      displayName?: string;
-      apiKey?: string;
-      isDefault?: boolean;
-    };
+    const raw = await request.json();
+    const parsed = manychatAccountCreateBodySchema.safeParse(raw);
+    if (!parsed.success) {
+      return NextResponse.json({ error: schemaErrorMessage(parsed.error) }, { status: 400 });
+    }
+    const body = parsed.data;
 
-    if (!body.displayName?.trim() || !body.apiKey?.trim()) {
-      return NextResponse.json(
-        { error: "displayName and apiKey are required." },
-        { status: 400 },
-      );
+    const validation = await validateManyChatApiKey(body.apiKey);
+    if (!validation.ok) {
+      return NextResponse.json({ error: validation.userFacing }, { status: 400 });
     }
 
     const convex = getServerConvexClient();
@@ -31,10 +41,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const result = await convex.mutation(api.hosted.upsertManychatAccount, {
       workspaceId: workspaceId as Id<"workspaces">,
       clerkUserId,
-      displayName: body.displayName.trim(),
+      displayName: body.displayName,
       ciphertext: encrypted.ciphertext,
       keyVersion: encrypted.keyVersion,
       isDefault: body.isDefault ?? true,
+      manychatPageName: validation.pageName,
+      keyValidatedAt: validation.validatedAt,
     });
 
     return NextResponse.json({ ok: true, account: result });
@@ -43,7 +55,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return unauthorized(error.message);
     }
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to save ManyChat account." },
+      {
+        error: clientSafeError(
+          error,
+          "Failed to save ManyChat account.",
+          error instanceof Error ? error.message : undefined,
+        ),
+      },
       { status: 400 },
     );
   }

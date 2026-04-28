@@ -20,6 +20,9 @@ type WorkspaceAccount = {
   displayName: string;
   isDefault: boolean;
   lastRotatedAt: number;
+  manychatPageName?: string;
+  keyValidationStatus?: "valid" | "pending" | "invalid";
+  keyValidatedAt?: number;
 };
 type WorkspaceAuditEvent = {
   _id: string;
@@ -99,6 +102,10 @@ export function DashboardClient() {
   const [issuedSecret, setIssuedSecret] = useState<string | null>(null);
   const [rotatingAccountId, setRotatingAccountId] = useState<string | null>(null);
   const [rotateKeyValue, setRotateKeyValue] = useState<Record<string, string>>({});
+  const [testTokenInput, setTestTokenInput] = useState("");
+  const [testBusy, setTestBusy] = useState(false);
+  const [testResult, setTestResult] = useState<string | null>(null);
+  const [revokeAllBusy, setRevokeAllBusy] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -323,7 +330,8 @@ export function DashboardClient() {
           <p className="text-xs font-semibold uppercase tracking-[0.18em] muted">ManyChat vault</p>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight">Connect or rotate a ManyChat API key</h2>
           <p className="mt-2 text-sm leading-6 muted">
-            Keys are encrypted at rest and never shown again after save. The hosted MCP gateway only decrypts them in memory.
+            Keys are validated against ManyChat before save, encrypted at rest, and never shown again. The hosted MCP gateway
+            only decrypts them in memory.
           </p>
           {primaryWorkspace ? (
             <>
@@ -371,7 +379,7 @@ export function DashboardClient() {
               <div className="mt-6 grid gap-3">
                 {primaryWorkspace.accounts.length === 0 ? (
                   <p className="rounded-2xl border border-dashed border-black/12 px-4 py-4 text-sm muted dark:border-white/12">
-                    No ManyChat accounts connected yet.
+                    Connect your ManyChat API key to start. You will need a key from ManyChat Settings → API.
                   </p>
                 ) : (
                   primaryWorkspace.accounts.map((account: WorkspaceAccount) => (
@@ -383,16 +391,56 @@ export function DashboardClient() {
                             {account.isDefault ? "Default account" : "Secondary account"} · rotated{" "}
                             {formatTimestamp(account.lastRotatedAt)}
                           </p>
+                          {account.keyValidationStatus === "valid" && account.keyValidatedAt ? (
+                            <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-300">
+                              Validated · ManyChat: {account.manychatPageName ?? "connected"}{" "}
+                              · {formatTimestamp(account.keyValidatedAt)}
+                            </p>
+                          ) : null}
                         </div>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setRotatingAccountId((current) => (current === account._id ? null : account._id))
-                          }
-                          className="rounded-full border border-black/15 px-3 py-1.5 text-xs font-semibold transition hover:bg-black/5 dark:border-white/15 dark:hover:bg-white/10"
-                        >
-                          Rotate key
-                        </button>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setRotatingAccountId((current) => (current === account._id ? null : account._id))
+                            }
+                            className="rounded-full border border-black/15 px-3 py-1.5 text-xs font-semibold transition hover:bg-black/5 dark:border-white/15 dark:hover:bg-white/10"
+                          >
+                            Rotate key
+                          </button>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              if (
+                                !window.confirm(
+                                  "Disconnect this ManyChat account? All active MCP tokens for this workspace will be revoked.",
+                                )
+                              ) {
+                                return;
+                              }
+                              setAccountBusy(true);
+                              setAccountError(null);
+                              try {
+                                await postJson(
+                                  `/api/v1/workspaces/${primaryWorkspace._id}/manychat-accounts/${account._id}`,
+                                  {},
+                                  "DELETE",
+                                );
+                                setRotatingAccountId(null);
+                                setIssuedSecret(null);
+                              } catch (error) {
+                                setAccountError(
+                                  error instanceof Error ? error.message : "Failed to disconnect account",
+                                );
+                              } finally {
+                                setAccountBusy(false);
+                              }
+                            }}
+                            className="rounded-full border border-red-500/40 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-500/10 dark:text-red-300"
+                          >
+                            Disconnect
+                          </button>
+                        </div>
                       </div>
                       {rotatingAccountId === account._id ? (
                         <div className="mt-4 flex flex-col gap-3 md:flex-row">
@@ -450,6 +498,37 @@ export function DashboardClient() {
           </p>
           {primaryWorkspace ? (
             <>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={
+                    revokeAllBusy ||
+                    !primaryWorkspace.tokens.some((t: WorkspaceToken) => t.revokedAt === null)
+                  }
+                  onClick={async () => {
+                    if (
+                      !window.confirm(
+                        "Revoke every active MCP token for this workspace? Clients using old tokens will stop working.",
+                      )
+                    ) {
+                      return;
+                    }
+                    setRevokeAllBusy(true);
+                    setTokenError(null);
+                    try {
+                      await postJson(`/api/v1/workspaces/${primaryWorkspace._id}/mcp-tokens/revoke-all`, {});
+                      setIssuedSecret(null);
+                    } catch (error) {
+                      setTokenError(error instanceof Error ? error.message : "Failed to revoke tokens");
+                    } finally {
+                      setRevokeAllBusy(false);
+                    }
+                  }}
+                  className="rounded-full border border-black/15 px-3 py-1.5 text-xs font-semibold transition hover:bg-black/5 disabled:opacity-50 dark:border-white/15 dark:hover:bg-white/10"
+                >
+                  {revokeAllBusy ? "Revoking…" : "Revoke all tokens"}
+                </button>
+              </div>
               <div className="mt-6 grid gap-3">
                 <input
                   value={tokenName}
@@ -515,6 +594,57 @@ export function DashboardClient() {
                   </div>
                 </div>
               ) : null}
+              <div className="mt-8 rounded-2xl border border-black/8 p-4 dark:border-white/10">
+                <p className="text-sm font-semibold">Test hosted MCP connection</p>
+                <p className="mt-1 text-xs leading-5 muted">
+                  Paste a token you issued (or the one shown above). We verify it matches your workspace, decrypts the vault,
+                  and calls ManyChat page info — without exposing your API key.
+                </p>
+                <input
+                  value={testTokenInput}
+                  onChange={(event) => {
+                    setTestTokenInput(event.target.value);
+                    setTestResult(null);
+                  }}
+                  placeholder="mcp_live_…"
+                  className="mt-3 w-full rounded-xl border border-black/12 bg-transparent px-4 py-3 text-sm outline-none transition focus:border-emerald-500 dark:border-white/12"
+                />
+                <button
+                  type="button"
+                  disabled={testBusy || !testTokenInput.trim()}
+                  onClick={async () => {
+                    setTestBusy(true);
+                    setTestResult(null);
+                    setTokenError(null);
+                    try {
+                      const res = await postJson(`/api/v1/workspaces/${primaryWorkspace._id}/mcp-tokens/test`, {
+                        token: testTokenInput.trim(),
+                      });
+                      const pageName =
+                        typeof res.pageName === "string" && res.pageName
+                          ? res.pageName
+                          : "ManyChat responded OK";
+                      setTestResult(`Success: ${pageName}`);
+                    } catch (error) {
+                      setTestResult(
+                        error instanceof Error ? error.message : "Connection test failed",
+                      );
+                    } finally {
+                      setTestBusy(false);
+                    }
+                  }}
+                  className="mt-3 rounded-full bg-black px-4 py-2 text-xs font-semibold text-white transition hover:bg-black/85 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-white/85"
+                >
+                  {testBusy ? "Testing…" : "Run test"}
+                </button>
+                {testResult ? (
+                  <p
+                    className={`mt-3 text-sm ${testResult.startsWith("Success") ? "text-emerald-700 dark:text-emerald-300" : "text-red-600 dark:text-red-400"}`}
+                  >
+                    {testResult}
+                  </p>
+                ) : null}
+              </div>
               <div className="mt-6 grid gap-3">
                 {primaryWorkspace.tokens.length === 0 ? (
                   <p className="rounded-2xl border border-dashed border-black/12 px-4 py-4 text-sm muted dark:border-white/12">

@@ -84,6 +84,9 @@ export const viewer = query({
             displayName: account.displayName,
             isDefault: account.isDefault,
             lastRotatedAt: account.lastRotatedAt,
+            manychatPageName: account.manychatPageName,
+            keyValidationStatus: account.keyValidationStatus,
+            keyValidatedAt: account.keyValidatedAt,
           })),
           tokens: tokens.map((token) => ({
             _id: token._id,

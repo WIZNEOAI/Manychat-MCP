@@ -1,5 +1,11 @@
 # ManyChat CLI + MCP
 
+[![CI](https://github.com/gnosix/manychat-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/gnosix/manychat-mcp/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](Dockerfile)
+
+**ManyChat MCP** is an open-source agent operating layer for ManyChat. Use it locally, self-host the MCP gateway on your VPS or Railway, or connect to a hosted control plane (Vercel + Convex) so Claude Code, Cursor, Codex, and other MCP clients can run ManyChat tools with a product token—without putting your ManyChat API key on every laptop.
+
 CLI-first toolkit for operating ManyChat through the Account Public API, with MCP
 available as a compatibility and remote-access layer.
 
@@ -10,12 +16,14 @@ This repo is building the **agent operating layer for ManyChat**:
 - **primary product:** `manychat` CLI
 - **compatibility layer:** MCP server for local and remote MCP clients
 - **deployment story:** self-host first (local, Railway, VPS/Docker)
-- **future direction:** hosted remote MCP + web control plane
+- **hosted beta:** dashboard (Clerk + Convex + Stripe), encrypted ManyChat vault, MCP product tokens, usage and audit
 
 The core product identity is still:
 
 > Bring your ManyChat API key, run the CLI or connect an MCP client, and operate
 > ManyChat safely in minutes.
+
+**License note:** the project is **MIT** today. If you need stronger copyleft for a hosted offering, evaluate **AGPL-3.0** with legal counsel before switching.
 
 ## Product surfaces
 

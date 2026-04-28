@@ -1,0 +1,15 @@
+node_modules
+apps/web/node_modules
+.git
+.github
+*.md
+!README.md
+.env
+.env.*
+dist
+coverage
+.vscode
+.cursor
+terminals
+**/*.test.ts
+**/__tests__

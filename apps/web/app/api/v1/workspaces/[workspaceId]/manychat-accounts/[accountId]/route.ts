@@ -2,53 +2,29 @@ import { NextResponse, type NextRequest } from "next/server";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { clientSafeError } from "@/lib/server/api-errors";
-import {
-  manychatRotateKeyBodySchema,
-  schemaErrorMessage,
-} from "@/lib/server/api-schemas";
 import { requireClerkUser, unauthorized } from "@/lib/server/auth";
 import { getServerConvexClient } from "@/lib/server/convex";
-import { encryptVaultValue } from "@/lib/server/hosted";
-import { validateManyChatApiKey } from "@/lib/server/manychat-validate";
 import { rateLimitAllow } from "@/lib/server/rate-limit";
 
 type RouteContext = {
   params: Promise<{ workspaceId: string; accountId: string }>;
 };
 
-export async function POST(request: NextRequest, context: RouteContext) {
-  if (!rateLimitAllow(request, "manychat-rotate", 30)) {
+export async function DELETE(request: NextRequest, context: RouteContext) {
+  if (!rateLimitAllow(request, "manychat-disconnect", 20)) {
     return NextResponse.json({ error: "Too many requests. Try again shortly." }, { status: 429 });
   }
 
   try {
     const clerkUserId = await requireClerkUser();
     const { workspaceId, accountId } = await context.params;
-    const raw = await request.json();
-    const parsed = manychatRotateKeyBodySchema.safeParse(raw);
-    if (!parsed.success) {
-      return NextResponse.json({ error: schemaErrorMessage(parsed.error) }, { status: 400 });
-    }
-    const body = parsed.data;
-
-    const validation = await validateManyChatApiKey(body.apiKey);
-    if (!validation.ok) {
-      return NextResponse.json({ error: validation.userFacing }, { status: 400 });
-    }
-
     const convex = getServerConvexClient();
-    const encrypted = encryptVaultValue(body.apiKey);
-    const result = await convex.mutation(api.hosted.rotateManychatCredential, {
+    await convex.mutation(api.hosted.disconnectManychatAccount, {
       workspaceId: workspaceId as Id<"workspaces">,
       clerkUserId,
       accountId: accountId as Id<"manychatAccounts">,
-      ciphertext: encrypted.ciphertext,
-      keyVersion: encrypted.keyVersion,
-      manychatPageName: validation.pageName,
-      keyValidatedAt: validation.validatedAt,
     });
-
-    return NextResponse.json({ ok: true, account: result });
+    return NextResponse.json({ ok: true });
   } catch (error) {
     if (error instanceof Error && error.message === "Authentication required") {
       return unauthorized(error.message);
@@ -57,7 +33,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       {
         error: clientSafeError(
           error,
-          "Failed to rotate key.",
+          "Could not disconnect ManyChat account.",
           error instanceof Error ? error.message : undefined,
         ),
       },
