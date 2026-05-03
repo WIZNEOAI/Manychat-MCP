@@ -1,18 +1,7 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { SiteHeader } from "@/components/site-header";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: {
@@ -29,10 +18,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
+    <html lang="en" className="h-full antialiased">
       <body className="min-h-full bg-[var(--background)] text-[var(--foreground)]">
         <Providers>
           <div className="flex min-h-screen flex-col">
@@ -44,7 +30,7 @@ export default function RootLayout({
                 Open-source core: bring your ManyChat API key, run the CLI, or expose MCP. Hosted adds vaulting and
                 product tokens—not a replacement runtime.
               </p>
-              <p className="text-black/50 dark:text-white/50">MIT licensed · Self-host ready · Hosted roadmap</p>
+              <p className="text-black/50 dark:text-white/50">AGPL v3 · Self-host ready · Hosted roadmap</p>
             </div>
           </footer>
           </div>

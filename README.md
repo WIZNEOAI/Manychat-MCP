@@ -1,13 +1,15 @@
 # ManyChat CLI + MCP
 
-[![CI](https://github.com/gnosix/manychat-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/gnosix/manychat-mcp/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](Dockerfile)
-
-**ManyChat MCP** is an open-source agent operating layer for ManyChat. Use it locally, self-host the MCP gateway on your VPS or Railway, or connect to a hosted control plane (Vercel + Convex) so Claude Code, Cursor, Codex, and other MCP clients can run ManyChat tools with a product token—without putting your ManyChat API key on every laptop.
+[![CI](https://github.com/WIZNEOAI/Manychat-MCP/actions/workflows/ci.yml/badge.svg)](https://github.com/WIZNEOAI/Manychat-MCP/actions/workflows/ci.yml)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
+[![Docker](https://img.shields.io/badge/Docker-self--host-ready-2496ED)](docs/deploy/vps-docker.md)
 
 CLI-first toolkit for operating ManyChat through the Account Public API, with MCP
 available as a compatibility and remote-access layer.
+
+ManyChat MCP is an open-source agent operating layer for ManyChat. Use it locally,
+self-host it on your VPS, or connect to the hosted WIZNEO control plane to operate
+ManyChat safely from Claude Code, Cursor, Codex, and other MCP clients.
 
 ## What this product is
 
@@ -16,14 +18,12 @@ This repo is building the **agent operating layer for ManyChat**:
 - **primary product:** `manychat` CLI
 - **compatibility layer:** MCP server for local and remote MCP clients
 - **deployment story:** self-host first (local, Railway, VPS/Docker)
-- **hosted beta:** dashboard (Clerk + Convex + Stripe), encrypted ManyChat vault, MCP product tokens, usage and audit
+- **future direction:** hosted remote MCP + web control plane
 
 The core product identity is still:
 
 > Bring your ManyChat API key, run the CLI or connect an MCP client, and operate
 > ManyChat safely in minutes.
-
-**License note:** the project is **MIT** today. If you need stronger copyleft for a hosted offering, evaluate **AGPL-3.0** with legal counsel before switching.
 
 ## Product surfaces
 
@@ -32,8 +32,24 @@ The core product identity is still:
 | CLI | source of truth for execution and automation | primary |
 | MCP local (`stdio`) | local compatibility for MCP clients | supported |
 | MCP remote (`HTTP`) | self-hosted remote access layer | supported |
-| Web frontend (`apps/web`) | landing, docs, dashboard (Clerk + Convex in progress) | scaffolded + auth |
-| Hosted SaaS | control plane, vault, product tokens, billing, docs UX | beta |
+| Web frontend (`apps/web`) | landing, docs, dashboard (Clerk + Convex) | beta |
+| Hosted SaaS | control plane, vault, product tokens, billing, docs UX | beta functional |
+
+## Beta hosted flow
+
+The current hosted beta is designed around one operator path:
+
+1. Sign in to the dashboard with Clerk.
+2. Let Convex create or sync the user and personal workspace.
+3. Paste a ManyChat API key.
+4. Validate the key against ManyChat `/page/getInfo` before saving.
+5. Store the key encrypted at rest.
+6. Issue a hosted MCP token.
+7. Copy a Claude Code, Cursor, or Codex snippet.
+8. Connect the remote MCP gateway with `MCP_REMOTE_AUTH=hosted_token`.
+9. Resolve the hosted token through the control plane.
+10. Execute tools such as `get_page_info`, `list_tags`, `list_flows`, and `get_subscriber`.
+11. Track usage and audit events per workspace.
 
 ## The auth model in one minute
 
@@ -89,7 +105,7 @@ This repo is grounded in official ManyChat documentation:
 ### 1. Install and build
 
 ```bash
-git clone https://github.com/gnosix/manychat-mcp.git
+git clone https://github.com/WIZNEOAI/Manychat-MCP.git
 cd manychat-mcp
 npm install
 npm run build
@@ -184,11 +200,24 @@ Phase 0 removes the ambiguous "maybe CLI, maybe HTTP MCP" production behavior.
 
 - Railway: [`docs/deploy/railway.md`](docs/deploy/railway.md)
 - VPS + Docker: [`docs/deploy/vps-docker.md`](docs/deploy/vps-docker.md)
+- Production beta: [`docs/deploy/production-beta.md`](docs/deploy/production-beta.md)
+- Vercel + Convex + Clerk + Stripe: [`docs/deploy/vercel-convex-clerk-stripe.md`](docs/deploy/vercel-convex-clerk-stripe.md)
+- MCP gateway on VPS: [`docs/deploy/mcp-gateway-vps.md`](docs/deploy/mcp-gateway-vps.md)
+- MCP gateway on Railway: [`docs/deploy/mcp-gateway-railway.md`](docs/deploy/mcp-gateway-railway.md)
 
 ## MCP client connection docs
 
 - Claude Code / Cursor / Codex / Claude Desktop:
   [`docs/connect/mcp-clients.md`](docs/connect/mcp-clients.md)
+
+## Open-source and operator docs
+
+- Blueprint: [`docs/open-source-saas-blueprint.md`](docs/open-source-saas-blueprint.md)
+- Control plane contracts: [`docs/product/control-plane-contracts.md`](docs/product/control-plane-contracts.md)
+- Pricing tiers: [`docs/product/pricing-tiers.md`](docs/product/pricing-tiers.md)
+- WIZNEO / Gnosix pipeline: [`docs/wizneo-pipeline.md`](docs/wizneo-pipeline.md)
+- Roadmap: [`ROADMAP.md`](ROADMAP.md)
+- Changelog: [`CHANGELOG.md`](CHANGELOG.md)
 
 ## Web frontend (`apps/web`)
 
@@ -234,7 +263,7 @@ The app now also includes:
 - welcome CTA on `/`
 - dedicated Clerk card routes at `/sign-in` and `/sign-up`
 - protected `/dashboard`
-- hosted MCP setup UI for vault, tokens, usage, and billing
+- hosted MCP setup UI for validated ManyChat keys, vault, tokens, usage, audit, hosted connection tests, and billing
 
 Stripe Supporter checkout and webhooks run in **Convex** (`@convex-dev/stripe`); set
 `STRIPE_*` and `PUBLIC_APP_URL` in the Convex dashboard. See `apps/web/README.md` and
@@ -365,4 +394,4 @@ npm run convex:dev
 
 ## License
 
-MIT. See `LICENSE`.
+AGPL v3 or later. See `LICENSE`.

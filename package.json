@@ -17,7 +17,6 @@
     "web:build": "npm --prefix apps/web run build",
     "web:start": "npm --prefix apps/web run start",
     "web:lint": "npm --prefix apps/web run lint",
-    "web:test": "npm --prefix apps/web run test",
     "convex:dev": "npm --prefix apps/web run convex:dev",
     "convex:deploy": "npm --prefix apps/web run convex:deploy",
     "dev": "tsx src/index.ts",
@@ -34,10 +33,10 @@
     "automation",
     "model-context-protocol"
   ],
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "repository": {
     "type": "git",
-    "url": "https://github.com/gnosix/manychat-mcp.git"
+    "url": "https://github.com/WIZNEOAI/Manychat-MCP.git"
   },
   "engines": {
     "node": ">=18.0.0"
