@@ -92,7 +92,7 @@ export function resolveHttpRuntimeConfig(
 async function startHttp(config: HttpRuntimeConfig) {
   const app = express();
   app.disable("x-powered-by");
-  app.use(express.json());
+  app.use(express.json({ limit: "32kb" }));
 
   app.use((req, _res, next) => {
     const requestId = randomUUID().slice(0, 8);
@@ -116,7 +116,7 @@ async function startHttp(config: HttpRuntimeConfig) {
   });
 
   if (config.authMode === "oauth") {
-    app.use(express.urlencoded({ extended: true }));
+    app.use(express.urlencoded({ extended: true, limit: "32kb" }));
     app.use(createOAuthRouter(config.baseUrl));
   }
 

@@ -6,8 +6,8 @@ CLI-first ManyChat toolkit for agents and operators. Wraps the ManyChat Account 
 
 - **Binaries**: `manychat`, `manychat-mcp` → both point to `dist/index.js`
 - **Version**: 0.1.0 (defined in `src/product.ts`)
-- **License**: MIT
-- **Repo**: github.com/WIZNEOAI/manychat-mcp
+- **License**: AGPL v3 or later
+- **Repo**: github.com/WIZNEOAI/Manychat-MCP
 
 ## Commands
 
