@@ -10,7 +10,7 @@ export default function SignUpPage() {
     <div className="mx-auto flex min-h-[calc(100vh-12rem)] w-full max-w-6xl items-center px-6 py-12">
       <div className="grid w-full gap-8 lg:grid-cols-[1.05fr_0.95fr]">
         <section className="card p-8 md:p-10">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] muted">
+          <p className="brand-kicker text-xs">
             Create your account
           </p>
           <h1 className="mt-3 text-4xl font-semibold tracking-tight md:text-5xl">
@@ -22,13 +22,13 @@ export default function SignUpPage() {
             ManyChat key, mint MCP tokens, and connect an AI client safely.
           </p>
           <div className="mt-6 grid gap-3 text-sm leading-6 muted">
-            <div className="rounded-2xl border border-black/8 px-4 py-4 dark:border-white/10">
+            <div className="surface-soft rounded-2xl px-4 py-4">
               Free tier with generous daily limits and no card required.
             </div>
-            <div className="rounded-2xl border border-black/8 px-4 py-4 dark:border-white/10">
+            <div className="surface-soft rounded-2xl px-4 py-4">
               Supporter plan at $20/month through the official Convex Stripe component.
             </div>
-            <div className="rounded-2xl border border-black/8 px-4 py-4 dark:border-white/10">
+            <div className="surface-soft rounded-2xl px-4 py-4">
               Railway hosts the MCP gateway while Vercel serves the app and API routes.
             </div>
           </div>

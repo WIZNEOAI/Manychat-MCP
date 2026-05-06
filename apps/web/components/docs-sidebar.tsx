@@ -3,13 +3,13 @@ import { docsSections } from "@/lib/site-data";
 export function DocsSidebar() {
   return (
     <aside className="lg:sticky lg:top-24 lg:self-start">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] muted">On this page</p>
+      <p className="brand-kicker text-xs">On this page</p>
       <nav className="mt-4 flex flex-col gap-1 text-sm">
         {docsSections.map((section) => (
           <a
             key={section.id}
             href={`#${section.id}`}
-            className="rounded-lg px-3 py-2 transition hover:bg-black/5 dark:hover:bg-white/10"
+            className="rounded-lg px-3 py-2 transition hover:bg-white/[0.06] hover:text-[var(--primary)]"
           >
             {section.title}
           </a>

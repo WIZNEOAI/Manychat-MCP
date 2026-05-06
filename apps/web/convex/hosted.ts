@@ -221,12 +221,28 @@ export const rotateManychatCredential = mutation({
       keyValidationStatus: "valid",
       keyValidatedAt: args.keyValidatedAt,
     });
+
+    const tokens = await ctx.db
+      .query("mcpTokens")
+      .withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))
+      .collect();
+    let revokedCount = 0;
+    for (const token of tokens) {
+      if (token.revokedAt === null) {
+        await ctx.db.patch(token._id, { revokedAt: now });
+        revokedCount += 1;
+      }
+    }
+
     await ctx.db.insert("auditEvents", {
       workspaceId: args.workspaceId,
       actorUserId: user._id,
       actorTokenId: null,
       action: "manychat_account.rotated",
-      metadataJson: JSON.stringify({ accountId: args.accountId }),
+      metadataJson: JSON.stringify({
+        accountId: args.accountId,
+        tokensRevoked: revokedCount,
+      }),
       createdAt: now,
     });
 

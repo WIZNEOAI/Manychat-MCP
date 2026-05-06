@@ -32,6 +32,12 @@ type WorkspaceAuditEvent = {
 };
 
 const MCP_URL = process.env.NEXT_PUBLIC_MCP_HTTP_URL ?? "https://mcp.example.com/mcp";
+const primaryButtonClass = "wiz-button-primary px-4 py-2 text-xs disabled:opacity-50";
+const primaryButtonTallClass = "wiz-button-primary px-4 py-3 text-xs disabled:opacity-50";
+const secondaryButtonClass = "wiz-button-secondary px-4 py-2 text-xs disabled:opacity-50";
+const secondaryButtonSmallClass = "wiz-button-secondary px-3 py-1.5 text-xs disabled:opacity-50";
+const dangerButtonSmallClass = "wiz-button-danger px-3 py-1.5 text-xs";
+const inputClass = "wiz-input px-4 py-3 text-sm";
 
 function formatTimestamp(value: number) {
   return new Intl.DateTimeFormat(undefined, {
@@ -138,27 +144,27 @@ export function DashboardClient() {
       <section className="card p-8 md:p-10">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] muted">Hosted control plane</p>
+            <p className="brand-kicker text-xs">Hosted control plane</p>
             <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">Workspace dashboard</h1>
             <p className="max-w-3xl text-lg leading-8 muted">
               Hosted mode keeps the CLI and MCP runtime intact while adding an encrypted ManyChat vault,
               workspace-scoped MCP tokens, plan enforcement, and client snippets for AI agents.
             </p>
             {bootstrapError ? (
-              <p className="text-sm text-red-600 dark:text-red-400">Convex: {bootstrapError}</p>
+              <p className="status-danger text-sm">Convex: {bootstrapError}</p>
             ) : null}
             {checkoutParam === "success" ? (
-              <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-900 dark:text-emerald-100">
+              <p className="wiz-callout-success rounded-xl px-4 py-3 text-sm">
                 Checkout completed. Stripe can take a moment to sync; refresh if your plan still shows Free.
               </p>
             ) : null}
             {checkoutParam === "canceled" ? (
-              <p className="rounded-xl border border-black/10 bg-black/[0.03] px-4 py-3 text-sm muted dark:border-white/10">
+              <p className="wiz-callout-neutral rounded-xl px-4 py-3 text-sm muted">
                 Checkout canceled. You can try again anytime.
               </p>
             ) : null}
           </div>
-          <div className="rounded-2xl border border-black/10 bg-black/[0.03] px-4 py-3 text-sm dark:border-white/10 dark:bg-white/[0.05]">
+          <div className="surface-panel px-4 py-3 text-sm">
             <p className="font-semibold">Session</p>
             <p className="mt-1 muted">{sessionLine}</p>
             <p className="mt-3 font-semibold">Primary workspace</p>
@@ -170,7 +176,7 @@ export function DashboardClient() {
                   : "-"}
             </p>
             {primaryWorkspace ? (
-              <div className="mt-4 border-t border-black/10 pt-4 dark:border-white/10">
+              <div className="mt-4 border-t border-white/10 pt-4">
                 <p className="font-semibold">Limits</p>
                 <p className="mt-2 text-xs muted">
                   {primaryWorkspace.accounts.length}/{primaryWorkspace.limits.maxAccounts} accounts ·{" "}
@@ -196,7 +202,7 @@ export function DashboardClient() {
         <article className="card p-6 md:p-8">
           <div className="flex items-end justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] muted">Billing</p>
+              <p className="brand-kicker text-xs">Billing</p>
               <h2 className="mt-2 text-2xl font-semibold tracking-tight">Free and Pro</h2>
               <p className="mt-2 text-sm leading-6 muted">
                 A generous Free tier and Pro at $20/month or $209/year.
@@ -207,27 +213,27 @@ export function DashboardClient() {
             <button
               type="button"
               onClick={() => setBillingInterval("monthly")}
-              className={`rounded-full px-4 py-2 text-xs font-semibold transition ${billingInterval === "monthly" ? "bg-black text-white dark:bg-white dark:text-black" : "border border-black/15 dark:border-white/15 hover:bg-black/5 dark:hover:bg-white/10"}`}
+              className={billingInterval === "monthly" ? primaryButtonClass : secondaryButtonClass}
             >
               Monthly
             </button>
             <button
               type="button"
               onClick={() => setBillingInterval("annual")}
-              className={`rounded-full px-4 py-2 text-xs font-semibold transition ${billingInterval === "annual" ? "bg-black text-white dark:bg-white dark:text-black" : "border border-black/15 dark:border-white/15 hover:bg-black/5 dark:hover:bg-white/10"}`}
+              className={billingInterval === "annual" ? primaryButtonClass : secondaryButtonClass}
             >
               Annual · Save $31
             </button>
           </div>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             {pricingTiers.map((tier) => (
-              <article key={tier.name} className="rounded-2xl border border-black/8 p-5 dark:border-white/10">
+              <article key={tier.name} className="surface-panel p-5">
                 <p className="text-sm font-semibold uppercase tracking-[0.16em] muted">{tier.name}</p>
                 <p className="mt-2 text-3xl font-semibold">
                   {billingInterval === "annual" ? tier.annualPrice : tier.monthlyPrice}
                 </p>
                 {billingInterval === "annual" && tier.annualSavings ? (
-                  <p className="mt-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300">{tier.annualSavings}</p>
+                  <p className="mt-1 text-xs font-semibold text-[var(--primary)]">{tier.annualSavings}</p>
                 ) : null}
                 <p className="mt-2 text-sm leading-6 muted">{tier.tagline}</p>
                 <ul className="mt-4 space-y-2 text-sm leading-6 muted">
@@ -239,9 +245,9 @@ export function DashboardClient() {
             ))}
           </div>
           {primaryWorkspace ? (
-            <div className="mt-6 border-t border-black/10 pt-6 dark:border-white/10">
+            <div className="mt-6 border-t border-white/10 pt-6">
               {billingError ? (
-                <p className="mb-3 text-sm text-red-600 dark:text-red-400">{billingError}</p>
+                <p className="status-danger mb-3 text-sm">{billingError}</p>
               ) : null}
               {primaryWorkspace.plan === "free" ? (
                 <button
@@ -263,7 +269,7 @@ export function DashboardClient() {
                       setBillingBusy(false);
                     }
                   }}
-                  className="rounded-full bg-black px-4 py-2 text-xs font-semibold text-white transition hover:bg-black/85 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-white/85"
+                  className={primaryButtonClass}
                 >
                   {billingBusy
                     ? "Redirecting..."
@@ -288,7 +294,7 @@ export function DashboardClient() {
                       setBillingBusy(false);
                     }
                   }}
-                  className="rounded-full border border-black/15 px-4 py-2 text-xs font-semibold transition hover:bg-black/5 disabled:opacity-50 dark:border-white/15 dark:hover:bg-white/10"
+                  className={secondaryButtonClass}
                 >
                   {billingBusy ? "Opening..." : "Manage billing"}
                 </button>
@@ -298,11 +304,11 @@ export function DashboardClient() {
         </article>
 
         <article className="card p-6 md:p-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] muted">Usage</p>
+          <p className="brand-kicker text-xs">Usage</p>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight">Current workspace activity</h2>
           {primaryWorkspace ? (
             <div className="mt-6 grid gap-4">
-              <div className="rounded-2xl border border-black/8 p-4 dark:border-white/10">
+              <div className="surface-panel p-4">
                 <p className="text-sm font-semibold">Daily</p>
                 <p className="mt-2 text-3xl font-semibold">{primaryWorkspace.usage.daily.requestCount}</p>
                 <p className="mt-1 text-xs muted">
@@ -310,7 +316,7 @@ export function DashboardClient() {
                   {primaryWorkspace.usage.daily.authFailures}
                 </p>
               </div>
-              <div className="rounded-2xl border border-black/8 p-4 dark:border-white/10">
+              <div className="surface-panel p-4">
                 <p className="text-sm font-semibold">Monthly</p>
                 <p className="mt-2 text-3xl font-semibold">{primaryWorkspace.usage.monthly.requestCount}</p>
                 <p className="mt-1 text-xs muted">
@@ -327,7 +333,7 @@ export function DashboardClient() {
 
       <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <article className="card p-6 md:p-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] muted">ManyChat vault</p>
+          <p className="brand-kicker text-xs">ManyChat vault</p>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight">Connect or rotate a ManyChat API key</h2>
           <p className="mt-2 text-sm leading-6 muted">
             Keys are validated against ManyChat before save, encrypted at rest, and never shown again. The hosted MCP gateway
@@ -340,13 +346,13 @@ export function DashboardClient() {
                   value={accountName}
                   onChange={(event) => setAccountName(event.target.value)}
                   placeholder="Account display name"
-                  className="rounded-xl border border-black/12 bg-transparent px-4 py-3 text-sm outline-none transition focus:border-emerald-500 dark:border-white/12"
+                  className={inputClass}
                 />
                 <input
                   value={accountApiKey}
                   onChange={(event) => setAccountApiKey(event.target.value)}
                   placeholder="mc_..."
-                  className="rounded-xl border border-black/12 bg-transparent px-4 py-3 text-sm outline-none transition focus:border-emerald-500 dark:border-white/12"
+                  className={inputClass}
                 />
                 <button
                   type="button"
@@ -368,22 +374,22 @@ export function DashboardClient() {
                       setAccountBusy(false);
                     }
                   }}
-                  className="rounded-full bg-black px-4 py-3 text-xs font-semibold text-white transition hover:bg-black/85 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-white/85"
+                  className={primaryButtonTallClass}
                 >
                   {accountBusy ? "Saving..." : "Save key"}
                 </button>
               </div>
               {accountError ? (
-                <p className="mt-3 text-sm text-red-600 dark:text-red-400">{accountError}</p>
+                <p className="status-danger mt-3 text-sm">{accountError}</p>
               ) : null}
               <div className="mt-6 grid gap-3">
                 {primaryWorkspace.accounts.length === 0 ? (
-                  <p className="rounded-2xl border border-dashed border-black/12 px-4 py-4 text-sm muted dark:border-white/12">
+                  <p className="surface-dashed rounded-2xl px-4 py-4 text-sm muted">
                     Connect your ManyChat API key to start. You will need a key from ManyChat Settings → API.
                   </p>
                 ) : (
                   primaryWorkspace.accounts.map((account: WorkspaceAccount) => (
-                    <div key={account._id} className="rounded-2xl border border-black/8 p-4 dark:border-white/10">
+                    <div key={account._id} className="surface-panel p-4">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
                           <p className="font-semibold">{account.displayName}</p>
@@ -392,7 +398,7 @@ export function DashboardClient() {
                             {formatTimestamp(account.lastRotatedAt)}
                           </p>
                           {account.keyValidationStatus === "valid" && account.keyValidatedAt ? (
-                            <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-300">
+                            <p className="status-success mt-1 text-xs">
                               Validated · ManyChat: {account.manychatPageName ?? "connected"}{" "}
                               · {formatTimestamp(account.keyValidatedAt)}
                             </p>
@@ -404,7 +410,7 @@ export function DashboardClient() {
                             onClick={() =>
                               setRotatingAccountId((current) => (current === account._id ? null : account._id))
                             }
-                            className="rounded-full border border-black/15 px-3 py-1.5 text-xs font-semibold transition hover:bg-black/5 dark:border-white/15 dark:hover:bg-white/10"
+                            className={secondaryButtonSmallClass}
                           >
                             Rotate key
                           </button>
@@ -436,7 +442,7 @@ export function DashboardClient() {
                                 setAccountBusy(false);
                               }
                             }}
-                            className="rounded-full border border-red-500/40 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-500/10 dark:text-red-300"
+                            className={dangerButtonSmallClass}
                           >
                             Disconnect
                           </button>
@@ -453,7 +459,7 @@ export function DashboardClient() {
                               }))
                             }
                             placeholder="Paste replacement API key"
-                            className="flex-1 rounded-xl border border-black/12 bg-transparent px-4 py-3 text-sm outline-none transition focus:border-emerald-500 dark:border-white/12"
+                            className={`flex-1 ${inputClass}`}
                           />
                           <button
                             type="button"
@@ -474,7 +480,7 @@ export function DashboardClient() {
                                 setAccountBusy(false);
                               }
                             }}
-                            className="rounded-full bg-black px-4 py-3 text-xs font-semibold text-white transition hover:bg-black/85 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-white/85"
+                            className={primaryButtonTallClass}
                           >
                             Replace key
                           </button>
@@ -491,7 +497,7 @@ export function DashboardClient() {
         </article>
 
         <article className="card p-6 md:p-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] muted">Hosted MCP token</p>
+          <p className="brand-kicker text-xs">Hosted MCP token</p>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight">Issue a workspace token</h2>
           <p className="mt-2 text-sm leading-6 muted">
             Tokens are one-time reveal secrets. Revoke and re-issue if they ever leak.
@@ -524,7 +530,7 @@ export function DashboardClient() {
                       setRevokeAllBusy(false);
                     }
                   }}
-                  className="rounded-full border border-black/15 px-3 py-1.5 text-xs font-semibold transition hover:bg-black/5 disabled:opacity-50 dark:border-white/15 dark:hover:bg-white/10"
+                  className={secondaryButtonSmallClass}
                 >
                   {revokeAllBusy ? "Revoking…" : "Revoke all tokens"}
                 </button>
@@ -534,12 +540,12 @@ export function DashboardClient() {
                   value={tokenName}
                   onChange={(event) => setTokenName(event.target.value)}
                   placeholder="Token name"
-                  className="rounded-xl border border-black/12 bg-transparent px-4 py-3 text-sm outline-none transition focus:border-emerald-500 dark:border-white/12"
+                  className={inputClass}
                 />
                 <select
                   value={bundle}
                   onChange={(event) => setBundle(event.target.value as Bundle)}
-                  className="rounded-xl border border-black/12 bg-transparent px-4 py-3 text-sm outline-none transition focus:border-emerald-500 dark:border-white/12"
+                  className={inputClass}
                 >
                   <option value="read_only">read_only</option>
                   <option value="operator">operator</option>
@@ -565,36 +571,36 @@ export function DashboardClient() {
                       setTokenBusy(false);
                     }
                   }}
-                  className="rounded-full bg-black px-4 py-3 text-xs font-semibold text-white transition hover:bg-black/85 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-white/85"
+                  className={primaryButtonTallClass}
                 >
                   {tokenBusy ? "Issuing..." : "Issue token"}
                 </button>
               </div>
               {tokenError ? (
-                <p className="mt-3 text-sm text-red-600 dark:text-red-400">{tokenError}</p>
+                <p className="status-danger mt-3 text-sm">{tokenError}</p>
               ) : null}
               {issuedSecret && snippets ? (
-                <div className="mt-6 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4">
-                  <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">
+                <div className="wiz-callout-success mt-6 rounded-2xl p-4">
+                  <p className="text-sm font-semibold">
                     Copy this token now. It will not be shown again.
                   </p>
-                  <code className="mt-3 block overflow-x-auto rounded-xl bg-black/80 px-4 py-3 text-xs text-white">
+                  <code className="wiz-code-block mt-3 block overflow-x-auto px-4 py-3 text-xs">
                     {issuedSecret}
                   </code>
                   <div className="mt-4 grid gap-3">
-                    <pre className="overflow-x-auto rounded-xl border border-black/10 bg-black/[0.03] px-4 py-3 text-xs dark:border-white/10 dark:bg-white/[0.04]">
+                    <pre className="wiz-pre overflow-x-auto px-4 py-3 text-xs">
                       {snippets.claudeCode}
                     </pre>
-                    <pre className="overflow-x-auto rounded-xl border border-black/10 bg-black/[0.03] px-4 py-3 text-xs dark:border-white/10 dark:bg-white/[0.04]">
+                    <pre className="wiz-pre overflow-x-auto px-4 py-3 text-xs">
                       {snippets.cursor}
                     </pre>
-                    <pre className="overflow-x-auto rounded-xl border border-black/10 bg-black/[0.03] px-4 py-3 text-xs dark:border-white/10 dark:bg-white/[0.04]">
+                    <pre className="wiz-pre overflow-x-auto px-4 py-3 text-xs">
                       {snippets.codex}
                     </pre>
                   </div>
                 </div>
               ) : null}
-              <div className="mt-8 rounded-2xl border border-black/8 p-4 dark:border-white/10">
+              <div className="surface-panel mt-8 p-4">
                 <p className="text-sm font-semibold">Test hosted MCP connection</p>
                 <p className="mt-1 text-xs leading-5 muted">
                   Paste a token you issued (or the one shown above). We verify it matches your workspace, decrypts the vault,
@@ -607,7 +613,7 @@ export function DashboardClient() {
                     setTestResult(null);
                   }}
                   placeholder="mcp_live_…"
-                  className="mt-3 w-full rounded-xl border border-black/12 bg-transparent px-4 py-3 text-sm outline-none transition focus:border-emerald-500 dark:border-white/12"
+                  className={`mt-3 w-full ${inputClass}`}
                 />
                 <button
                   type="button"
@@ -633,13 +639,13 @@ export function DashboardClient() {
                       setTestBusy(false);
                     }
                   }}
-                  className="mt-3 rounded-full bg-black px-4 py-2 text-xs font-semibold text-white transition hover:bg-black/85 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-white/85"
+                  className={`mt-3 ${primaryButtonClass}`}
                 >
                   {testBusy ? "Testing…" : "Run test"}
                 </button>
                 {testResult ? (
                   <p
-                    className={`mt-3 text-sm ${testResult.startsWith("Success") ? "text-emerald-700 dark:text-emerald-300" : "text-red-600 dark:text-red-400"}`}
+                    className={`mt-3 text-sm ${testResult.startsWith("Success") ? "status-success" : "status-danger"}`}
                   >
                     {testResult}
                   </p>
@@ -647,12 +653,12 @@ export function DashboardClient() {
               </div>
               <div className="mt-6 grid gap-3">
                 {primaryWorkspace.tokens.length === 0 ? (
-                  <p className="rounded-2xl border border-dashed border-black/12 px-4 py-4 text-sm muted dark:border-white/12">
+                  <p className="surface-dashed rounded-2xl px-4 py-4 text-sm muted">
                     No MCP tokens issued yet.
                   </p>
                 ) : (
                   primaryWorkspace.tokens.map((token: WorkspaceToken) => (
-                    <div key={token._id} className="rounded-2xl border border-black/8 p-4 dark:border-white/10">
+                    <div key={token._id} className="surface-panel p-4">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
                           <p className="font-semibold">{token.name}</p>
@@ -675,12 +681,12 @@ export function DashboardClient() {
                                 setTokenError(error instanceof Error ? error.message : "Failed to revoke token");
                               }
                             }}
-                            className="rounded-full border border-red-500/30 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-500/10 dark:text-red-300"
+                            className={dangerButtonSmallClass}
                           >
                             Revoke
                           </button>
                         ) : (
-                          <span className="text-xs font-semibold uppercase tracking-[0.16em] text-red-600 dark:text-red-300">
+                          <span className="status-danger text-xs font-semibold uppercase tracking-[0.16em]">
                             Revoked
                           </span>
                         )}
@@ -698,17 +704,17 @@ export function DashboardClient() {
 
       <section className="grid gap-6 lg:grid-cols-[1fr_1fr]">
         <article className="card p-6 md:p-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] muted">Audit trail</p>
+          <p className="brand-kicker text-xs">Audit trail</p>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight">Recent hosted activity</h2>
           {primaryWorkspace ? (
             <div className="mt-6 grid gap-3">
               {primaryWorkspace.audit.length === 0 ? (
-                <p className="rounded-2xl border border-dashed border-black/12 px-4 py-4 text-sm muted dark:border-white/12">
+                <p className="surface-dashed rounded-2xl px-4 py-4 text-sm muted">
                   No audit events yet.
                 </p>
               ) : (
                 primaryWorkspace.audit.map((event: WorkspaceAuditEvent) => (
-                  <div key={event._id} className="rounded-2xl border border-black/8 p-4 dark:border-white/10">
+                  <div key={event._id} className="surface-panel p-4">
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <p className="font-semibold">{event.action}</p>
@@ -716,7 +722,7 @@ export function DashboardClient() {
                       </div>
                     </div>
                     {event.metadataJson ? (
-                      <pre className="mt-3 overflow-x-auto rounded-xl bg-black/[0.03] px-3 py-2 text-xs dark:bg-white/[0.04]">
+                      <pre className="wiz-pre mt-3 overflow-x-auto px-3 py-2 text-xs">
                         {event.metadataJson}
                       </pre>
                     ) : null}
@@ -730,22 +736,22 @@ export function DashboardClient() {
         </article>
 
         <article className="card p-6 md:p-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] muted">Bundle policy</p>
+          <p className="brand-kicker text-xs">Bundle policy</p>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight">Capability bundles</h2>
           <div className="mt-6 grid gap-3">
-            <div className="rounded-2xl border border-black/8 p-4 dark:border-white/10">
+            <div className="surface-panel p-4">
               <p className="font-semibold">read_only</p>
               <p className="mt-1 text-sm muted">Inspection only: page info, lists, subscriber lookup, and health checks.</p>
             </div>
-            <div className="rounded-2xl border border-black/8 p-4 dark:border-white/10">
+            <div className="surface-panel p-4">
               <p className="font-semibold">operator</p>
               <p className="mt-1 text-sm muted">Subscriber, tags, and custom field operations without direct messaging.</p>
             </div>
-            <div className="rounded-2xl border border-black/8 p-4 dark:border-white/10">
+            <div className="surface-panel p-4">
               <p className="font-semibold">messaging_safe</p>
               <p className="mt-1 text-sm muted">Operator bundle plus flow and message tools for controlled send workflows.</p>
             </div>
-            <div className="rounded-2xl border border-black/8 p-4 dark:border-white/10">
+            <div className="surface-panel p-4">
               <p className="font-semibold">admin</p>
               <p className="mt-1 text-sm muted">Full hosted access, including bot field and custom field administration.</p>
             </div>

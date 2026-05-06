@@ -12,7 +12,7 @@ function SourceLink({ path }: { path: string }) {
       href={repoBlobUrl(path)}
       target="_blank"
       rel="noreferrer"
-      className="font-medium text-emerald-700 underline-offset-4 hover:underline dark:text-emerald-300"
+      className="brand-link font-medium underline-offset-4 hover:underline"
     >
       View on GitHub →
     </a>
@@ -23,7 +23,7 @@ export default function DocsPage() {
   return (
     <div className="flex flex-col gap-12">
       <header className="space-y-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] muted">Documentation</p>
+        <p className="brand-kicker text-xs">Documentation</p>
         <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">
           Ship ManyChat automation for agents—CLI-first, MCP when you need it.
         </h1>
@@ -37,7 +37,7 @@ export default function DocsPage() {
             href={REPO_TREE_BASE}
             target="_blank"
             rel="noreferrer"
-            className="font-medium text-emerald-700 underline-offset-4 hover:underline dark:text-emerald-300"
+            className="brand-link font-medium underline-offset-4 hover:underline"
           >
             {REPO_TREE_BASE.replace(/^https:\/\//, "")}
           </a>
@@ -52,16 +52,16 @@ export default function DocsPage() {
               <SourceLink path={section.path} />
             </div>
             <p className="mt-4 max-w-3xl leading-7 muted">{section.body}</p>
-            <div className="mt-5 rounded-2xl border border-black/8 bg-black/[0.02] px-4 py-3 text-sm dark:border-white/10 dark:bg-white/[0.03]">
+            <div className="wiz-pre mt-5 px-4 py-3 text-sm">
               <span className="muted">Source file:</span>{" "}
-              <code className="rounded bg-black/5 px-1.5 py-0.5 text-xs dark:bg-white/10">{section.path}</code>
+              <code className="rounded bg-white/[0.08] px-1.5 py-0.5 text-xs text-white/[0.82]">{section.path}</code>
             </div>
             {"extraPaths" in section && section.extraPaths ? (
               <ul className="mt-3 space-y-2 text-sm muted">
                 {section.extraPaths.map((path) => (
                   <li key={path}>
                     <SourceLink path={path} />{" "}
-                    <code className="text-xs text-black/50 dark:text-white/50">({path})</code>
+                    <code className="text-xs text-white/[0.45]">({path})</code>
                   </li>
                 ))}
               </ul>

@@ -24,15 +24,15 @@ export default function RootLayout({
           <div className="flex min-h-screen flex-col">
             <SiteHeader />
             <main className="flex-1">{children}</main>
-          <footer className="border-t border-black/10 px-6 py-8 text-sm text-black/60 dark:border-white/10 dark:text-white/60">
-            <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <p className="max-w-xl leading-6">
-                Open-source core: bring your ManyChat API key, run the CLI, or expose MCP. Hosted adds vaulting and
-                product tokens—not a replacement runtime.
-              </p>
-              <p className="text-black/50 dark:text-white/50">AGPL v3 · Self-host ready · Hosted roadmap</p>
-            </div>
-          </footer>
+            <footer className="border-t border-white/8 bg-white/[0.02] px-6 py-8 text-sm text-[var(--muted)]">
+              <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <p className="max-w-xl leading-6">
+                  Open-source core: bring your ManyChat API key, run the CLI, or expose MCP. Hosted adds vaulting and
+                  product tokens, not a replacement runtime.
+                </p>
+                <p className="text-white/[0.45]">AGPL v3 · Self-host ready · Hosted roadmap</p>
+              </div>
+            </footer>
           </div>
         </Providers>
       </body>
