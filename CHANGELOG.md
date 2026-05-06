@@ -22,3 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Expanded root and `apps/web` `.env.example` for hosted gateway and web variables
 - README narrative for open-source + hosted positioning
+- **Key rotation now revokes all active workspace MCP tokens** (security: forces re-issue after credential change)
+- Root `package.json` now exposes `web:test` shorthand; web `package.json` gained `test` script
+- **Key rotation now revokes all active workspace MCP tokens** (security: forces re-issue after credential change)
+- Root `package.json` now exposes `web:test` shorthand; web `package.json` gained `test` script
