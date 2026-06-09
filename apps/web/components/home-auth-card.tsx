@@ -21,7 +21,7 @@ export function HomeAuthCard() {
         aria-hidden
         style={{
           background:
-            "radial-gradient(circle at top right, rgba(0, 255, 136, 0.14), transparent 36%), radial-gradient(circle at bottom left, rgba(123, 47, 255, 0.16), transparent 32%)",
+            "radial-gradient(circle at top right, rgba(16, 185, 129, 0.14), transparent 36%), linear-gradient(135deg, rgba(244, 244, 245, 0.05), transparent 42%)",
         }}
       />
       <div className="relative">

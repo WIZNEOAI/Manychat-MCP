@@ -21,7 +21,7 @@ export default function Home() {
           aria-hidden
           style={{
             background:
-              "radial-gradient(ellipse 80% 60% at 20% 0%, rgba(0, 255, 136, 0.22), transparent 55%), radial-gradient(ellipse 60% 50% at 100% 20%, rgba(123, 47, 255, 0.2), transparent 50%)",
+              "radial-gradient(ellipse 80% 60% at 20% 0%, rgba(16, 185, 129, 0.16), transparent 55%), linear-gradient(135deg, rgba(244, 244, 245, 0.05), transparent 42%)",
           }}
         />
         <div className="relative grid gap-10 md:grid-cols-[1.35fr_0.85fr]">
@@ -138,7 +138,7 @@ export default function Home() {
             <article key={surface.name} className="card p-6">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h3 className="text-xl font-semibold">{surface.name}</h3>
-                <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-white/[0.76]">
+                <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-white/[0.76]">
                   {surface.status}
                 </span>
               </div>
@@ -256,7 +256,7 @@ export default function Home() {
               <ul className="space-y-2 text-sm leading-6 muted">
                 {tier.limits.map((limit) => (
                   <li key={limit} className="flex gap-2">
-                    <span className="text-[var(--primary)]">✓</span>
+                    <span className="text-[var(--primary)]">—</span>
                     <span>{limit}</span>
                   </li>
                 ))}

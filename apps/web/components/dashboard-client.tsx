@@ -131,6 +131,31 @@ export function DashboardClient() {
 
   const primaryWorkspace = viewer?.workspaces[0];
   const snippets = issuedSecret ? snippetBlock(issuedSecret) : null;
+  const connectedAccountCount = primaryWorkspace?.accounts.length ?? 0;
+  const activeTokenCount =
+    primaryWorkspace?.tokens.filter((token: WorkspaceToken) => token.revokedAt === null).length ?? 0;
+  const setupSteps = [
+    {
+      label: "Account synced",
+      detail: viewer ? "Clerk and Convex identity are linked" : "Waiting for authenticated session",
+      done: Boolean(viewer),
+    },
+    {
+      label: "Workspace ready",
+      detail: primaryWorkspace ? `${primaryWorkspace.name} · ${primaryWorkspace.plan}` : "Create or load a workspace",
+      done: Boolean(primaryWorkspace),
+    },
+    {
+      label: "ManyChat vault",
+      detail: connectedAccountCount > 0 ? `${connectedAccountCount} encrypted account(s)` : "Save the first API key",
+      done: connectedAccountCount > 0,
+    },
+    {
+      label: "MCP client token",
+      detail: activeTokenCount > 0 ? `${activeTokenCount} active token(s)` : "Issue a scoped token for agents",
+      done: activeTokenCount > 0,
+    },
+  ];
 
   const sessionLine =
     viewer === undefined
@@ -196,6 +221,27 @@ export function DashboardClient() {
             ) : null}
           </div>
         </div>
+      </section>
+
+      <section className="grid gap-3 md:grid-cols-4">
+        {setupSteps.map((step, index) => (
+          <article key={step.label} className="surface-panel p-4">
+            <div className="flex items-center justify-between gap-3">
+              <span className="font-mono text-xs text-white/40">0{index + 1}</span>
+              <span
+                className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] ${
+                  step.done
+                    ? "border-[rgba(16,185,129,0.28)] bg-[rgba(16,185,129,0.1)] text-[var(--primary)]"
+                    : "border-white/10 bg-white/[0.03] text-white/42"
+                }`}
+              >
+                {step.done ? "Ready" : "Pending"}
+              </span>
+            </div>
+            <h2 className="mt-4 text-sm font-semibold tracking-tight">{step.label}</h2>
+            <p className="mt-2 text-xs leading-5 muted">{step.detail}</p>
+          </article>
+        ))}
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">

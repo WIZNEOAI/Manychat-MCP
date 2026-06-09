@@ -1,20 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0d0d0d;
-  --foreground: #e0e0e0;
-  --card: #171727;
-  --surface: #1a1a2e;
-  --surface-raised: #202038;
-  --muted: #8e91a6;
-  --border: rgba(224, 224, 224, 0.1);
-  --border-strong: rgba(0, 255, 136, 0.22);
-  --primary: #00ff88;
-  --primary-strong: #00cc6a;
-  --primary-ink: #04150d;
-  --secondary: #7b2fff;
-  --danger: #ff7388;
-  --font-sans: "Avenir Next", "Segoe UI", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --background: #09090b;
+  --foreground: #f4f4f5;
+  --card: #111114;
+  --surface: #18181b;
+  --surface-raised: #1f1f23;
+  --muted: #a1a1aa;
+  --border: rgba(244, 244, 245, 0.1);
+  --border-strong: rgba(16, 185, 129, 0.32);
+  --primary: #10b981;
+  --primary-strong: #059669;
+  --primary-ink: #04130d;
+  --secondary: #3f3f46;
+  --danger: #fb7185;
+  --font-sans: "Geist", "Avenir Next", "Segoe UI", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: "SFMono-Regular", "SF Mono", ui-monospace, "Cascadia Mono", "Segoe UI Mono", monospace;
 }
 
@@ -32,17 +32,13 @@
 
 html {
   scroll-behavior: smooth;
-  background:
-    radial-gradient(circle at top left, rgba(0, 255, 136, 0.1), transparent 34%),
-    radial-gradient(circle at top right, rgba(123, 47, 255, 0.12), transparent 26%),
-    var(--background);
+  background: var(--background);
 }
 
 body {
   background:
-    radial-gradient(circle at top left, rgba(0, 255, 136, 0.08), transparent 34%),
-    radial-gradient(circle at top right, rgba(123, 47, 255, 0.12), transparent 26%),
-    linear-gradient(180deg, rgba(26, 26, 46, 0.28), transparent 24%),
+    radial-gradient(circle at top left, rgba(16, 185, 129, 0.08), transparent 32%),
+    linear-gradient(180deg, rgba(39, 39, 42, 0.42), transparent 26%),
     var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
@@ -55,11 +51,10 @@ a {
 }
 
 .card {
-  background:
-    linear-gradient(180deg, rgba(36, 36, 58, 0.96), rgba(21, 21, 35, 0.94));
+  background: linear-gradient(180deg, rgba(24, 24, 27, 0.98), rgba(17, 17, 20, 0.98));
   border: 1px solid var(--border);
-  border-radius: 1.25rem;
-  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.26);
+  border-radius: 1.5rem;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.26);
 }
 
 .muted {
@@ -79,7 +74,7 @@ a {
 }
 
 .brand-link:hover {
-  color: #7cffbc;
+  color: #6ee7b7;
 }
 
 .brand-badge {
@@ -87,25 +82,24 @@ a {
   align-items: center;
   border-radius: 999px;
   border: 1px solid var(--border-strong);
-  background: rgba(0, 255, 136, 0.12);
+  background: rgba(16, 185, 129, 0.12);
   color: var(--primary);
 }
 
 .surface-panel {
   border: 1px solid var(--border);
   border-radius: 1.25rem;
-  background:
-    linear-gradient(180deg, rgba(32, 32, 56, 0.82), rgba(18, 18, 30, 0.92));
+  background: linear-gradient(180deg, rgba(31, 31, 35, 0.88), rgba(17, 17, 20, 0.94));
 }
 
 .surface-soft {
-  border: 1px solid rgba(123, 47, 255, 0.18);
-  background: rgba(123, 47, 255, 0.08);
+  border: 1px solid rgba(244, 244, 245, 0.1);
+  background: rgba(244, 244, 245, 0.04);
 }
 
 .surface-dashed {
-  border: 1px dashed rgba(224, 224, 224, 0.14);
-  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(244, 244, 245, 0.16);
+  background: rgba(244, 244, 245, 0.03);
 }
 
 .wiz-button-primary,
@@ -130,83 +124,89 @@ a {
   transform: translateY(-1px);
 }
 
+.wiz-button-primary:active,
+.wiz-button-secondary:active,
+.wiz-button-danger:active {
+  transform: translateY(1px);
+}
+
 .wiz-button-primary {
-  border: 1px solid rgba(0, 255, 136, 0.22);
-  background: linear-gradient(180deg, #00ff88, #00cc6a);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  background: linear-gradient(180deg, #34d399, #10b981);
   color: var(--primary-ink);
-  box-shadow: 0 10px 32px rgba(0, 255, 136, 0.2);
+  box-shadow: 0 10px 32px rgba(16, 185, 129, 0.16);
 }
 
 .wiz-button-primary:hover {
-  background: linear-gradient(180deg, #5cffad, #00d771);
+  background: linear-gradient(180deg, #6ee7b7, #10b981);
 }
 
 .wiz-button-secondary {
-  border: 1px solid rgba(224, 224, 224, 0.14);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(244, 244, 245, 0.14);
+  background: rgba(244, 244, 245, 0.03);
   color: var(--foreground);
 }
 
 .wiz-button-secondary:hover {
-  border-color: rgba(0, 255, 136, 0.18);
-  background: rgba(0, 255, 136, 0.06);
+  border-color: rgba(16, 185, 129, 0.22);
+  background: rgba(16, 185, 129, 0.07);
 }
 
 .wiz-button-danger {
-  border: 1px solid rgba(255, 115, 136, 0.34);
-  color: #ff9bab;
-  background: rgba(255, 115, 136, 0.08);
+  border: 1px solid rgba(251, 113, 133, 0.34);
+  color: #fda4af;
+  background: rgba(251, 113, 133, 0.08);
 }
 
 .wiz-button-danger:hover {
-  background: rgba(255, 115, 136, 0.14);
+  background: rgba(251, 113, 133, 0.14);
 }
 
 .wiz-input {
-  border: 1px solid rgba(224, 224, 224, 0.14);
+  border: 1px solid rgba(244, 244, 245, 0.14);
   border-radius: 0.9rem;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(244, 244, 245, 0.03);
   color: var(--foreground);
 }
 
 .wiz-input::placeholder {
-  color: #777b92;
+  color: #71717a;
 }
 
 .wiz-input:focus {
   outline: none;
-  border-color: rgba(0, 255, 136, 0.48);
-  box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.1);
+  border-color: rgba(16, 185, 129, 0.5);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
 .wiz-callout-success {
-  border: 1px solid rgba(0, 255, 136, 0.24);
-  background: rgba(0, 255, 136, 0.1);
-  color: #cbffe5;
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  background: rgba(16, 185, 129, 0.1);
+  color: #d1fae5;
 }
 
 .wiz-callout-neutral {
-  border: 1px solid rgba(224, 224, 224, 0.12);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(244, 244, 245, 0.12);
+  background: rgba(244, 244, 245, 0.03);
 }
 
 .wiz-code-block {
-  border: 1px solid rgba(123, 47, 255, 0.18);
+  border: 1px solid rgba(244, 244, 245, 0.1);
   border-radius: 1rem;
-  background: rgba(8, 10, 18, 0.92);
+  background: rgba(3, 7, 18, 0.92);
   color: #dfffea;
 }
 
 .wiz-pre {
-  border: 1px solid rgba(224, 224, 224, 0.1);
+  border: 1px solid rgba(244, 244, 245, 0.1);
   border-radius: 1rem;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(244, 244, 245, 0.03);
 }
 
 .status-success {
-  color: #92ffc9;
+  color: #86efac;
 }
 
 .status-danger {
-  color: #ff9bab;
+  color: #fda4af;
 }
