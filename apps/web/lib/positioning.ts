@@ -35,7 +35,15 @@ export const buyerPainCards = [
   },
 ] as const;
 
-export const offerTiers = [
+export const offerTiers: Array<{
+  name: string;
+  setupPrice: string | null;
+  monthlyPrice: string | null;
+  audience: string;
+  bullets: string[];
+  cta: string;
+  badge?: string;
+}> = [
   {
     name: "Builder OSS",
     setupPrice: null,
