@@ -173,7 +173,7 @@ export function DashboardClient() {
     nextAction: "",
   });
 
-  async function refreshLeads(workspaceId: string) {
+  async function refreshLeads(workspaceId: string, shouldCommit: () => boolean = () => true) {
     const response = await fetch(`/api/v1/workspaces/${workspaceId}/leads`);
     const payload = (await response.json().catch(() => ({}))) as {
       ok?: boolean;
@@ -184,6 +184,8 @@ export function DashboardClient() {
     if (!response.ok) {
       throw new Error(payload.error ?? `Lead request failed with ${response.status}.`);
     }
+    if (!shouldCommit()) return;
+    setLeadError(null);
     setLeads(payload.leads ?? []);
     setLeadCounts(
       payload.counts ?? {
@@ -222,7 +224,7 @@ export function DashboardClient() {
     let cancelled = false;
     void (async () => {
       try {
-        await refreshLeads(primaryWorkspace._id);
+        await refreshLeads(primaryWorkspace._id, () => !cancelled);
       } catch (error) {
         if (!cancelled) {
           setLeadError(error instanceof Error ? error.message : "Failed to load leads");
