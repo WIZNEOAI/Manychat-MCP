@@ -58,6 +58,11 @@ describe("dashboard positioning", () => {
     const html = renderToStaticMarkup(<DashboardClient />);
 
     expect(html).toContain("Revenue Operator");
+    expect(html).toContain("Lead queue");
+    expect(html).toContain("leads from going cold");
+    expect(html).toContain("new");
+    expect(html).toContain("contacted");
+    expect(html).toContain("booked");
     expect(html).toContain("leads do not go cold");
     expect(html).toContain("ManyChat is a rail");
   });
