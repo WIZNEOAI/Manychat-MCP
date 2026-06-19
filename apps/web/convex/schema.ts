@@ -111,6 +111,20 @@ export default defineSchema({
     .index("by_workspace_and_updated", ["workspaceId", "updatedAt"])
     .index("by_workspace_and_next_action", ["workspaceId", "nextActionAt"]),
 
+  operatorLeadStatusCounts: defineTable({
+    workspaceId: v.id("workspaces"),
+    status: v.union(
+      v.literal("new"),
+      v.literal("contacted"),
+      v.literal("qualified"),
+      v.literal("booked"),
+      v.literal("won"),
+      v.literal("lost"),
+    ),
+    count: v.number(),
+    updatedAt: v.number(),
+  }).index("by_workspace_and_status", ["workspaceId", "status"]),
+
   auditEvents: defineTable({
     workspaceId: v.id("workspaces"),
     actorUserId: v.union(v.id("users"), v.null()),

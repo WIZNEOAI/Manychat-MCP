@@ -22,6 +22,7 @@ const leadStatusValidator = v.union(
 );
 
 type LeadStatus = "new" | "contacted" | "qualified" | "booked" | "won" | "lost";
+const leadStatuses: LeadStatus[] = ["new", "contacted", "qualified", "booked", "won", "lost"];
 
 type LeadCtx = QueryCtx | MutationCtx;
 
@@ -72,6 +73,55 @@ function emptyStatusCounts(): Record<LeadStatus, number> {
   };
 }
 
+async function getStatusCounts(
+  ctx: LeadCtx,
+  workspaceId: Id<"workspaces">,
+): Promise<Record<LeadStatus, number>> {
+  const counts = emptyStatusCounts();
+  for (const status of leadStatuses) {
+    const row = await ctx.db
+      .query("operatorLeadStatusCounts")
+      .withIndex("by_workspace_and_status", (q) =>
+        q.eq("workspaceId", workspaceId).eq("status", status),
+      )
+      .unique();
+    counts[status] = row?.count ?? 0;
+  }
+  return counts;
+}
+
+async function incrementStatusCount(
+  ctx: MutationCtx,
+  workspaceId: Id<"workspaces">,
+  status: LeadStatus,
+  delta: 1 | -1,
+) {
+  const now = Date.now();
+  const row = await ctx.db
+    .query("operatorLeadStatusCounts")
+    .withIndex("by_workspace_and_status", (q) =>
+      q.eq("workspaceId", workspaceId).eq("status", status),
+    )
+    .unique();
+
+  if (!row) {
+    if (delta > 0) {
+      await ctx.db.insert("operatorLeadStatusCounts", {
+        workspaceId,
+        status,
+        count: delta,
+        updatedAt: now,
+      });
+    }
+    return;
+  }
+
+  await ctx.db.patch(row._id, {
+    count: Math.max(0, row.count + delta),
+    updatedAt: now,
+  });
+}
+
 export const listWorkspaceLeads = query({
   args: { workspaceId: v.id("workspaces") },
   returns: v.object({
@@ -107,10 +157,7 @@ export const listWorkspaceLeads = query({
       .order("desc")
       .take(50);
 
-    const counts = emptyStatusCounts();
-    for (const row of rows) {
-      counts[row.status] += 1;
-    }
+    const counts = await getStatusCounts(ctx, args.workspaceId);
 
     return {
       leads: rows.map((row) => ({
@@ -158,6 +205,7 @@ export const createLead = mutation({
       createdAt: now,
       updatedAt: now,
     });
+    await incrementStatusCount(ctx, args.workspaceId, "new", 1);
 
     await ctx.db.insert("auditEvents", {
       workspaceId: args.workspaceId,
@@ -196,6 +244,10 @@ export const updateLeadStatus = mutation({
       lastStatusChangedAt: lead.status === args.status ? lead.lastStatusChangedAt : now,
       updatedAt: now,
     });
+    if (lead.status !== args.status) {
+      await incrementStatusCount(ctx, args.workspaceId, lead.status, -1);
+      await incrementStatusCount(ctx, args.workspaceId, args.status, 1);
+    }
 
     await ctx.db.insert("auditEvents", {
       workspaceId: args.workspaceId,
