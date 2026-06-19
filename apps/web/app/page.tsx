@@ -1,8 +1,8 @@
 import { HomeAuthCard } from "@/components/home-auth-card";
 import {
   AccentCard,
-  CodeWindow,
   CtaLink,
+  CodeWindow,
   ExternalCta,
   PricingBadge,
   SectionHeader,
@@ -17,6 +17,8 @@ import {
 import { REPO_TREE_BASE } from "@/lib/repo";
 
 export default function Home() {
+  const operatorTier = offerTiers.find((tier) => tier.name === "Revenue Operator");
+
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-24 px-4 py-12 md:px-6 md:py-20">
       <section className="grid gap-6 lg:grid-cols-[1.08fr_0.92fr] lg:items-stretch">
@@ -123,11 +125,9 @@ export default function Home() {
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <p className="brand-kicker text-xs">Operator story</p>
-                <h2 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">
-                  {operatorStory.title}
-                </h2>
+                <h2 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">{operatorStory.title}</h2>
               </div>
-              <PricingBadge>Paid layer</PricingBadge>
+              <PricingBadge>{operatorTier?.badge ?? "Paid layer"}</PricingBadge>
             </div>
             <p className="max-w-2xl text-lg leading-8 muted">{operatorStory.body}</p>
             <div className="grid gap-4 md:grid-cols-3">
@@ -138,8 +138,8 @@ export default function Home() {
               ))}
             </div>
             <div className="surface-dashed rounded-3xl px-5 py-5 text-sm leading-6 muted">
-              The paid layer is not generic hosting. It is the delivery wrapper around response speed,
-              routing rules, and human takeover points.
+              The paid layer is not generic hosting. It is the delivery wrapper around
+              response speed, routing rules, and human takeover points.
             </div>
           </div>
         </AccentCard>
@@ -160,12 +160,8 @@ export default function Home() {
                   <div>
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] muted">{tier.name}</p>
                     <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-2">
-                      <h3 className="text-5xl font-semibold tracking-tight">
-                        {tier.setupPrice ?? "Free"}
-                      </h3>
-                      {tier.monthlyPrice ? (
-                        <p className="text-sm font-medium text-[var(--primary)]">{tier.monthlyPrice}</p>
-                      ) : null}
+                      <h3 className="text-5xl font-semibold tracking-tight">{tier.setupPrice ?? "Free"}</h3>
+                      {tier.monthlyPrice ? <p className="text-sm font-medium text-[var(--primary)]">{tier.monthlyPrice}</p> : null}
                     </div>
                   </div>
                   <PricingBadge>{tier.badge ?? tier.cta}</PricingBadge>
@@ -213,24 +209,22 @@ export default function Home() {
             <div>
               <p className="brand-kicker text-xs">Revenue Operator offer</p>
               <h2 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">
-                Buy the implementation layer, not just access to software.
+                Book the implementation layer, not just access to software.
               </h2>
             </div>
-            <p className="text-lg leading-8 muted">
-              {heroContent.body}
-            </p>
+            <p className="text-lg leading-8 muted">{operatorStory.body}</p>
             <div className="grid gap-3 md:grid-cols-2">
-              {offerTiers[1].bullets.map((bullet) => (
+              {(operatorTier?.bullets ?? []).map((bullet) => (
                 <div key={bullet} className="surface-soft rounded-2xl px-4 py-4 text-sm font-medium leading-6">
                   {bullet}
                 </div>
               ))}
             </div>
             <div className="surface-dashed rounded-3xl px-5 py-5 text-sm leading-6 muted">
-              Setup: {offerTiers[1].setupPrice} · Retainer: {offerTiers[1].monthlyPrice}
+              Setup: {operatorTier?.setupPrice ?? "—"} · Retainer: {operatorTier?.monthlyPrice ?? "—"}
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
-              <CtaLink href="#operator-offer">{offerTiers[1].cta}</CtaLink>
+              <CtaLink href="#operator-offer">{operatorTier?.cta ?? "Contact sales"}</CtaLink>
               <CtaLink href="/docs#product" variant="secondary">
                 See hosted control plane
               </CtaLink>
