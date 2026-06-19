@@ -196,3 +196,11 @@ export const docsSections = [
     ],
   },
 ] as const;
+
+export {
+  buyerPainCards,
+  heroContent,
+  offerTiers,
+  operatorStory,
+  ossStory,
+} from "./positioning";
