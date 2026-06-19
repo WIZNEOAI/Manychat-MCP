@@ -4,8 +4,24 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { offerTiers, operatorStory } from "@/lib/positioning";
 import { pricingTiers } from "@/lib/site-data";
 
+const dashboardPositioning = {
+  eyebrow: "Revenue Operator",
+  title: "Turn connected rails into a real response system.",
+  body:
+    "Hosted mode keeps the OSS runtime intact while adding the operator layer: credential vault, lead routing, handoff, follow-up, and visibility so leads do not go cold. ManyChat is a rail; the paid system is the operating layer around it.",
+} as const;
+
+const setupStepCopy = [
+  { label: "Workspace synced", detail: "Operator workspace ready for business routing" },
+  { label: "ManyChat rail connected", detail: "Primary chat rail validated and encrypted" },
+  { label: "Operator token issued", detail: "Agent access scoped without exposing raw credentials" },
+  { label: "Handoff layer ready", detail: "Prepare follow-up and operator rules next" },
+] as const;
+
+const revenueOperatorTier = offerTiers.find((tier) => tier.name === "Revenue Operator");
 type Bundle = "read_only" | "operator" | "messaging_safe" | "admin";
 type WorkspaceToken = {
   _id: string;
@@ -134,28 +150,16 @@ export function DashboardClient() {
   const connectedAccountCount = primaryWorkspace?.accounts.length ?? 0;
   const activeTokenCount =
     primaryWorkspace?.tokens.filter((token: WorkspaceToken) => token.revokedAt === null).length ?? 0;
-  const setupSteps = [
-    {
-      label: "Account synced",
-      detail: viewer ? "Clerk and Convex identity are linked" : "Waiting for authenticated session",
-      done: Boolean(viewer),
-    },
-    {
-      label: "Workspace ready",
-      detail: primaryWorkspace ? `${primaryWorkspace.name} · ${primaryWorkspace.plan}` : "Create or load a workspace",
-      done: Boolean(primaryWorkspace),
-    },
-    {
-      label: "ManyChat vault",
-      detail: connectedAccountCount > 0 ? `${connectedAccountCount} encrypted account(s)` : "Save the first API key",
-      done: connectedAccountCount > 0,
-    },
-    {
-      label: "MCP client token",
-      detail: activeTokenCount > 0 ? `${activeTokenCount} active token(s)` : "Issue a scoped token for agents",
-      done: activeTokenCount > 0,
-    },
+  const setupStatuses = [
+    Boolean(viewer),
+    Boolean(primaryWorkspace),
+    connectedAccountCount > 0,
+    activeTokenCount > 0,
   ];
+  const setupSteps = setupStepCopy.map((step, index) => ({
+    ...step,
+    done: setupStatuses[index] ?? false,
+  }));
 
   const sessionLine =
     viewer === undefined
@@ -169,12 +173,17 @@ export function DashboardClient() {
       <section className="card p-8 md:p-10">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="space-y-3">
-            <p className="brand-kicker text-xs">Hosted control plane</p>
-            <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">Workspace dashboard</h1>
-            <p className="max-w-3xl text-lg leading-8 muted">
-              Hosted mode keeps the CLI and MCP runtime intact while adding an encrypted ManyChat vault,
-              workspace-scoped MCP tokens, plan enforcement, and client snippets for AI agents.
+            <p className="brand-kicker text-xs">{dashboardPositioning.eyebrow}</p>
+            <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">{dashboardPositioning.title}</h1>
+            <p className="max-w-3xl text-lg leading-8 muted">{dashboardPositioning.body}</p>
+            <p className="max-w-3xl text-sm leading-6 muted">
+              {operatorStory.title}: {operatorStory.body}
             </p>
+            {revenueOperatorTier ? (
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--primary)]">
+                {revenueOperatorTier.name} · {revenueOperatorTier.setupPrice} setup · {revenueOperatorTier.monthlyPrice}
+              </p>
+            ) : null}
             {bootstrapError ? (
               <p className="status-danger text-sm">Convex: {bootstrapError}</p>
             ) : null}
