@@ -73,53 +73,29 @@ function emptyStatusCounts(): Record<LeadStatus, number> {
   };
 }
 
-async function getStatusCounts(
-  ctx: LeadCtx,
-  workspaceId: Id<"workspaces">,
-): Promise<Record<LeadStatus, number>> {
-  const counts = emptyStatusCounts();
-  for (const status of leadStatuses) {
-    const row = await ctx.db
-      .query("operatorLeadStatusCounts")
-      .withIndex("by_workspace_and_status", (q) =>
-        q.eq("workspaceId", workspaceId).eq("status", status),
-      )
-      .unique();
-    counts[status] = row?.count ?? 0;
-  }
-  return counts;
+function getStatusCounts(workspace: Doc<"workspaces">): Record<LeadStatus, number> {
+  return { ...emptyStatusCounts(), ...workspace.operatorLeadStatusCounts };
 }
 
-async function incrementStatusCount(
+async function patchStatusCounts(
   ctx: MutationCtx,
   workspaceId: Id<"workspaces">,
-  status: LeadStatus,
-  delta: 1 | -1,
+  deltas: Partial<Record<LeadStatus, number>>,
 ) {
-  const now = Date.now();
-  const row = await ctx.db
-    .query("operatorLeadStatusCounts")
-    .withIndex("by_workspace_and_status", (q) =>
-      q.eq("workspaceId", workspaceId).eq("status", status),
-    )
-    .unique();
-
-  if (!row) {
-    if (delta > 0) {
-      await ctx.db.insert("operatorLeadStatusCounts", {
-        workspaceId,
-        status,
-        count: delta,
-        updatedAt: now,
-      });
-    }
-    return;
+  const workspace = await ctx.db.get(workspaceId);
+  if (!workspace) {
+    throw new Error("Workspace not found or access denied");
   }
 
-  await ctx.db.patch(row._id, {
-    count: Math.max(0, row.count + delta),
-    updatedAt: now,
-  });
+  const counts = getStatusCounts(workspace);
+  for (const status of leadStatuses) {
+    const delta = deltas[status] ?? 0;
+    if (delta !== 0) {
+      counts[status] = Math.max(0, counts[status] + delta);
+    }
+  }
+
+  await ctx.db.patch(workspaceId, { operatorLeadStatusCounts: counts });
 }
 
 export const listWorkspaceLeads = query({
@@ -150,14 +126,14 @@ export const listWorkspaceLeads = query({
     }),
   }),
   handler: async (ctx, args) => {
-    await requireWorkspaceOwner(ctx, args.workspaceId);
+    const { workspace } = await requireWorkspaceOwner(ctx, args.workspaceId);
     const rows = await ctx.db
       .query("operatorLeads")
       .withIndex("by_workspace_and_updated", (q) => q.eq("workspaceId", args.workspaceId))
       .order("desc")
       .take(50);
 
-    const counts = await getStatusCounts(ctx, args.workspaceId);
+    const counts = getStatusCounts(workspace);
 
     return {
       leads: rows.map((row) => ({
@@ -205,7 +181,7 @@ export const createLead = mutation({
       createdAt: now,
       updatedAt: now,
     });
-    await incrementStatusCount(ctx, args.workspaceId, "new", 1);
+    await patchStatusCounts(ctx, args.workspaceId, { new: 1 });
 
     await ctx.db.insert("auditEvents", {
       workspaceId: args.workspaceId,
@@ -245,8 +221,10 @@ export const updateLeadStatus = mutation({
       updatedAt: now,
     });
     if (lead.status !== args.status) {
-      await incrementStatusCount(ctx, args.workspaceId, lead.status, -1);
-      await incrementStatusCount(ctx, args.workspaceId, args.status, 1);
+      await patchStatusCounts(ctx, args.workspaceId, {
+        [lead.status]: -1,
+        [args.status]: 1,
+      });
     }
 
     await ctx.db.insert("auditEvents", {

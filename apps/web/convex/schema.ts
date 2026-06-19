@@ -17,6 +17,16 @@ export default defineSchema({
     // "supporter" is legacy, treated identically to "pro"
     plan: v.union(v.literal("free"), v.literal("supporter"), v.literal("pro")),
     stripeCustomerId: v.optional(v.string()),
+    operatorLeadStatusCounts: v.optional(
+      v.object({
+        new: v.number(),
+        contacted: v.number(),
+        qualified: v.number(),
+        booked: v.number(),
+        won: v.number(),
+        lost: v.number(),
+      }),
+    ),
     createdAt: v.number(),
   })
     .index("by_owner", ["ownerUserId"])
@@ -111,19 +121,6 @@ export default defineSchema({
     .index("by_workspace_and_updated", ["workspaceId", "updatedAt"])
     .index("by_workspace_and_next_action", ["workspaceId", "nextActionAt"]),
 
-  operatorLeadStatusCounts: defineTable({
-    workspaceId: v.id("workspaces"),
-    status: v.union(
-      v.literal("new"),
-      v.literal("contacted"),
-      v.literal("qualified"),
-      v.literal("booked"),
-      v.literal("won"),
-      v.literal("lost"),
-    ),
-    count: v.number(),
-    updatedAt: v.number(),
-  }).index("by_workspace_and_status", ["workspaceId", "status"]),
 
   auditEvents: defineTable({
     workspaceId: v.id("workspaces"),
