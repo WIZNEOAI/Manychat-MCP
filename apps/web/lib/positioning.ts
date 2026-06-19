@@ -1,4 +1,4 @@
-import { docsLinks, pricingTiers, productSurfaces } from "./site-data";
+import { docsLinks, pricingTiers, productSurfaces } from "./site-data-shared";
 
 export const heroContent = {
   eyebrow: "Revenue Operator System",

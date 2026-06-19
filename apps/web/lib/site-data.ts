@@ -6,67 +6,45 @@ export const supportedClients = [
   "Other streamable HTTP MCP clients",
 ] as const;
 
-export const productSurfaces = [
+export const launchStats = [
+  { label: "Root tests", value: "40" },
+  { label: "Web tests", value: "28" },
+  { label: "Gateway modes", value: "3" },
+] as const;
+
+export const channelLanes = [
   {
-    name: "CLI",
-    status: "Primary",
-    description:
-      "Deterministic ManyChat operations: JSON on stdout, stable exit codes, and the command tree agents already rely on.",
+    channel: "Instagram",
+    trigger: "Comments, DMs, story replies",
+    play: "Keyword capture, product quiz, MCP-assisted account audit, human handoff.",
   },
   {
-    name: "Local MCP (stdio)",
-    status: "Supported",
-    description:
-      "Drop-in MCP transport for coding agents on your machine. Same execution layer as the CLI and no extra hosted dependency.",
+    channel: "Messenger",
+    trigger: "24h window + tagged follow-up",
+    play: "Read segment, apply tag, route to a compliant flow, verify before send.",
   },
   {
-    name: "Remote MCP (HTTP)",
-    status: "Supported",
-    description:
-      "Production HTTP endpoint for Railway, Docker, or a VPS. Hosted mode adds product tokens, quotas, and routing on top.",
+    channel: "WhatsApp",
+    trigger: "Approved opt-in + template paths",
+    play: "Qualify lead, sync CRM context, escalate sales-ready conversations.",
   },
   {
-    name: "Hosted dashboard",
-    status: "Beta",
-    description:
-      "Sign in, store ManyChat keys securely, issue MCP tokens, inspect usage, and copy client snippets without changing the OSS runtime.",
+    channel: "TikTok",
+    trigger: "Lead intent from comments and profile traffic",
+    play: "Bridge into ManyChat entry points, then hand to n8n and Gnosix CRM.",
   },
 ] as const;
 
-export const pricingTiers = [
-  {
-    name: "Free",
-    monthlyPrice: "$0",
-    annualPrice: "$0",
-    annualSavings: null,
-    tagline: "Try hosted MCP with safe daily limits and no credit card.",
-    limits: [
-      "1 workspace",
-      "1 connected ManyChat account",
-      "250 requests/day, 3,000 requests/month",
-      "1 concurrent MCP session",
-      "2 active MCP tokens",
-      "Community support",
-    ],
-    cta: "Best for evaluation and light personal usage",
-  },
-  {
-    name: "Pro",
-    monthlyPrice: "$20/mo",
-    annualPrice: "$209/year",
-    annualSavings: "Save $31/year",
-    tagline: "Unlimited-scale operations with priority support.",
-    limits: [
-      "Up to 5 workspaces",
-      "Up to 20 ManyChat accounts",
-      "100,000 requests/day, 1,000,000 requests/month",
-      "Up to 10 concurrent MCP sessions",
-      "50 active MCP tokens",
-      "Priority support and full audit history",
-    ],
-    cta: "Best for operators, marketers, and AI-heavy workflows",
-  },
+export const automationPlays = [
+  "Comment keyword to lead magnet",
+  "Story reply to qualification",
+  "Dormant lead reactivation",
+  "Operator review before risky sends",
+  "n8n handoff for WhatsApp, CRM, and reporting",
 ] as const;
+
+
+export { docsLinks, pricingTiers, productSurfaces } from "./site-data-shared";
 
 export const dashboardRoadmap = [
   "Encrypted ManyChat vault with one-way save and key rotation",
@@ -136,28 +114,6 @@ export const executionFlowSteps = [
   },
 ] as const;
 
-export const docsLinks = [
-  {
-    title: "Deploy on Railway",
-    href: "/docs#railway",
-    description: "Explicit HTTP MCP startup, hosted_token mode, and production env guidance.",
-  },
-  {
-    title: "Deploy on VPS + Docker",
-    href: "/docs#vps-docker",
-    description: "Container layout, TLS, and when Redis is still relevant for OAuth.",
-  },
-  {
-    title: "Connect MCP clients",
-    href: "/docs#clients",
-    description: "Claude, Cursor, Codex, and hosted bearer-token snippets.",
-  },
-  {
-    title: "Hosted control plane",
-    href: "/docs#product",
-    description: "Workspaces, vault, tokens, usage, and plan limits.",
-  },
-] as const;
 
 export const docsSections = [
   {
