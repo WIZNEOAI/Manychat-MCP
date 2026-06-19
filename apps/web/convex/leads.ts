@@ -73,8 +73,30 @@ function emptyStatusCounts(): Record<LeadStatus, number> {
   };
 }
 
-function getStatusCounts(workspace: Doc<"workspaces">): Record<LeadStatus, number> {
-  return { ...emptyStatusCounts(), ...workspace.operatorLeadStatusCounts };
+async function rebuildStatusCounts(
+  ctx: LeadCtx,
+  workspaceId: Id<"workspaces">,
+): Promise<Record<LeadStatus, number>> {
+  const counts = emptyStatusCounts();
+  for (const status of leadStatuses) {
+    for await (const lead of ctx.db
+      .query("operatorLeads")
+      .withIndex("by_workspace_and_status", (q) =>
+        q.eq("workspaceId", workspaceId).eq("status", status),
+      )) {
+      counts[lead.status] += 1;
+    }
+  }
+  return counts;
+}
+
+async function getStatusCounts(
+  ctx: LeadCtx,
+  workspace: Doc<"workspaces">,
+): Promise<Record<LeadStatus, number>> {
+  return workspace.operatorLeadStatusCounts
+    ? { ...emptyStatusCounts(), ...workspace.operatorLeadStatusCounts }
+    : await rebuildStatusCounts(ctx, workspace._id);
 }
 
 async function patchStatusCounts(
@@ -87,7 +109,7 @@ async function patchStatusCounts(
     throw new Error("Workspace not found or access denied");
   }
 
-  const counts = getStatusCounts(workspace);
+  const counts = await getStatusCounts(ctx, workspace);
   for (const status of leadStatuses) {
     const delta = deltas[status] ?? 0;
     if (delta !== 0) {
@@ -133,7 +155,7 @@ export const listWorkspaceLeads = query({
       .order("desc")
       .take(50);
 
-    const counts = getStatusCounts(workspace);
+    const counts = await getStatusCounts(ctx, workspace);
 
     return {
       leads: rows.map((row) => ({
