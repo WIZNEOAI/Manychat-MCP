@@ -13,8 +13,15 @@ chat, and ad leads from going cold.
 
 ## What this repo is now
 
-- **OSS repo:** CLI, MCP, self-host docs, deployment guides, and contributions.
-- **Paid product:** Revenue Operator dashboard, vault, playbooks, routing, handoff, and reporting.
+This repository stays open-source and self-hostable for anyone who wants to run ManyChat through a CLI or MCP layer.
+
+It also serves as the public wedge for a larger commercial product:
+**Revenue Operator**, an AI Revenue Ops System that helps businesses keep social, chat, and ad leads from going cold.
+
+## OSS vs paid product
+
+- OSS repo: CLI, MCP, self-host docs, contributions
+- Paid product: operator dashboard, vault, playbooks, routing, handoff, reporting
 
 We keep the OSS runtime broadly usable. The commercial system builds on top of it;
 it does not turn the CLI or MCP server into a gated demo.

@@ -1,7 +1,7 @@
 # Roadmap
 
 Near-term focus: **Revenue Operator** as the paid AI Revenue Ops System,
-while preserving a strong **OSS self-host** runtime for CLI and MCP users.
+while preserving a strong **OSS self-host runtime** for CLI and MCP users.
 
 ## In progress / beta
 

@@ -25,10 +25,10 @@ export default function DocsPage() {
       <header className="space-y-4">
         <p className="brand-kicker text-xs">Documentation</p>
         <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">
-          How to self-host the ManyChat runtime, and when to use the paid system for operator outcomes.
+          Self-host the ManyChat runtime. Use the paid system when you need operator outcomes.
         </h1>
         <p className="max-w-3xl text-lg leading-8 muted">
-          The repository remains the canonical OSS source for CLI, MCP, and deployment docs.
+          The repository remains the canonical OSS source for CLI, MCP, self-host, and deployment docs.
           The hosted app builds the Revenue Operator layer on top: vault, handoff, reporting, and playbooks.
         </p>
         <p className="text-sm muted">
