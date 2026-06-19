@@ -1,0 +1,9 @@
+# Default owner for the ManyChat CLI + MCP repository.
+* @gnosixio
+
+# Runtime, auth, billing, and deployment surfaces need explicit owner review.
+/src/ @gnosixio
+/apps/web/convex/ @gnosixio
+/apps/web/app/api/ @gnosixio
+/docs/deploy/ @gnosixio
+/.github/ @gnosixio

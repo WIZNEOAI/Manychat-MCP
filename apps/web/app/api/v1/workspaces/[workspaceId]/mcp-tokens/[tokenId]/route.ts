@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { clientSafeError } from "@/lib/server/api-errors";
-import { requireClerkUser, unauthorized } from "@/lib/server/auth";
+import { requireClerkSession, unauthorized } from "@/lib/server/auth";
 import { getServerConvexClient } from "@/lib/server/convex";
 import { rateLimitAllow } from "@/lib/server/rate-limit";
 
@@ -16,18 +16,17 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
   }
 
   try {
-    const clerkUserId = await requireClerkUser();
+    const { convexToken } = await requireClerkSession();
     const { workspaceId, tokenId } = await context.params;
-    const convex = getServerConvexClient();
+    const convex = getServerConvexClient(convexToken);
     await convex.mutation(api.hosted.revokeMcpToken, {
       workspaceId: workspaceId as Id<"workspaces">,
-      clerkUserId,
       tokenId: tokenId as Id<"mcpTokens">,
     });
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    if (error instanceof Error && error.message === "Authentication required") {
+    if (error instanceof Error && (error.message === "Authentication required" || error.message === "Convex auth token required")) {
       return unauthorized(error.message);
     }
     return NextResponse.json(

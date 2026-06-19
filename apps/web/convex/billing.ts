@@ -5,7 +5,8 @@ import type { Id } from "./_generated/dataModel";
 export const getWorkspaceByOwner = internalQuery({
   args: {
     workspaceId: v.id("workspaces"),
-    clerkUserId: v.string(),
+    ownerIdentityKey: v.string(),
+    ownerSubject: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const workspace = await ctx.db.get(args.workspaceId);
@@ -13,7 +14,11 @@ export const getWorkspaceByOwner = internalQuery({
       return null;
     }
     const owner = await ctx.db.get(workspace.ownerUserId);
-    if (!owner || owner.clerkUserId !== args.clerkUserId) {
+    if (
+      !owner ||
+      (owner.clerkUserId !== args.ownerIdentityKey &&
+        owner.clerkUserId !== args.ownerSubject)
+    ) {
       return null;
     }
     return workspace;

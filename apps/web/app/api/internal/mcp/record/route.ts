@@ -3,7 +3,7 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { clientSafeError } from "@/lib/server/api-errors";
 import { internalRecordBodySchema, schemaErrorMessage } from "@/lib/server/api-schemas";
-import { assertInternalSecret } from "@/lib/server/auth";
+import { assertInternalSecret, requireInternalControlPlaneSecret } from "@/lib/server/auth";
 import { getServerConvexClient } from "@/lib/server/convex";
 import { rateLimitAllow } from "@/lib/server/rate-limit";
 
@@ -24,6 +24,7 @@ export async function POST(request: NextRequest) {
     const convex = getServerConvexClient();
     await convex.mutation(api.hosted.recordGatewayEvent, {
       workspaceId: body.workspaceId as Id<"workspaces">,
+      internalSecret: requireInternalControlPlaneSecret(),
       tokenId: body.tokenId as Id<"mcpTokens">,
       type: body.type,
       requestCount: body.requestCount,

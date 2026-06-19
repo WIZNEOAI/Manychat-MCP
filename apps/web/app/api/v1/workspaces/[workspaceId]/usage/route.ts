@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
-import { requireClerkUser, unauthorized } from "@/lib/server/auth";
+import { requireClerkSession, unauthorized } from "@/lib/server/auth";
 import { getServerConvexClient } from "@/lib/server/convex";
 
 type RouteContext = {
@@ -10,16 +10,15 @@ type RouteContext = {
 
 export async function GET(_request: NextRequest, context: RouteContext) {
   try {
-    const clerkUserId = await requireClerkUser();
+    const { convexToken } = await requireClerkSession();
     const { workspaceId } = await context.params;
-    const convex = getServerConvexClient();
+    const convex = getServerConvexClient(convexToken);
     const result = await convex.query(api.hosted.getUsageAndAudit, {
       workspaceId: workspaceId as Id<"workspaces">,
-      clerkUserId,
     });
     return NextResponse.json({ ok: true, usage: { daily: result.daily, monthly: result.monthly } });
   } catch (error) {
-    if (error instanceof Error && error.message === "Authentication required") {
+    if (error instanceof Error && (error.message === "Authentication required" || error.message === "Convex auth token required")) {
       return unauthorized(error.message);
     }
     return NextResponse.json({ error: "Failed to load usage." }, { status: 400 });

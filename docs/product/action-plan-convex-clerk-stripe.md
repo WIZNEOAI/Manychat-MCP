@@ -191,8 +191,11 @@ from Convex-stored ciphertext (via action or sync — architecture choice in Pha
 | Variable | Purpose |
 | --- | --- |
 | `CLERK_JWT_ISSUER_DOMAIN` / issuer config | Auth |
+| `MCP_INTERNAL_SHARED_SECRET` | Same shared secret used by Vercel and the MCP gateway for hosted-token guardrails |
 | `STRIPE_SECRET_KEY` | Stripe API |
 | `STRIPE_WEBHOOK_SECRET` | Webhook verification |
+| `STRIPE_PRO_MONTHLY_PRICE_ID` / `STRIPE_PRO_ANNUAL_PRICE_ID` | Hosted Pro pricing |
+| `PUBLIC_APP_URL` | Checkout and portal redirects |
 | Encryption / signing secrets | ManyChat vault + MCP tokens |
 
 ### Railway (MCP service)

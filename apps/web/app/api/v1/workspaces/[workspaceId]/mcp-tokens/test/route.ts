@@ -3,7 +3,7 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { clientSafeError } from "@/lib/server/api-errors";
 import { mcpTokenTestBodySchema, schemaErrorMessage } from "@/lib/server/api-schemas";
-import { requireClerkUser, unauthorized } from "@/lib/server/auth";
+import { requireClerkSession, requireInternalControlPlaneSecret, unauthorized } from "@/lib/server/auth";
 import { getServerConvexClient } from "@/lib/server/convex";
 import { decryptVaultValue, hashHostedToken, parseHostedTokenPrefix, safeEqualHex } from "@/lib/server/hosted";
 import { validateManyChatApiKey } from "@/lib/server/manychat-validate";
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
   }
 
   try {
-    await requireClerkUser();
+    const { convexToken } = await requireClerkSession();
     const { workspaceId } = await context.params;
     const raw = await request.json();
     const parsed = mcpTokenTestBodySchema.safeParse(raw);
@@ -27,13 +27,16 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: schemaErrorMessage(parsed.error) }, { status: 400 });
     }
 
-    const convex = getServerConvexClient();
+    const convex = getServerConvexClient(convexToken);
     const prefix = parseHostedTokenPrefix(parsed.data.token);
     if (!prefix) {
       return NextResponse.json({ error: "Invalid hosted token format." }, { status: 400 });
     }
 
-    const tokenRecord = await convex.query(api.hosted.getGatewayTokenByPrefix, { prefix });
+    const tokenRecord = await convex.query(api.hosted.getGatewayTokenByPrefix, {
+      prefix,
+      internalSecret: requireInternalControlPlaneSecret(),
+    });
     if (!tokenRecord || tokenRecord.workspaceId !== (workspaceId as Id<"workspaces">)) {
       return NextResponse.json(
         { error: "Token not found, revoked, or does not belong to this workspace." },
@@ -67,7 +70,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       accountName: tokenRecord.accountName,
     });
   } catch (error) {
-    if (error instanceof Error && error.message === "Authentication required") {
+    if (error instanceof Error && (error.message === "Authentication required" || error.message === "Convex auth token required")) {
       return unauthorized(error.message);
     }
     return NextResponse.json(

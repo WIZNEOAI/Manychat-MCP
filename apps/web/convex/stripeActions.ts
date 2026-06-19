@@ -22,7 +22,8 @@ export const createProSubscriptionCheckout = action({
 
     const workspace = await ctx.runQuery(internal.billing.getWorkspaceByOwner, {
       workspaceId: args.workspaceId,
-      clerkUserId: identity.subject,
+      ownerIdentityKey: identity.tokenIdentifier,
+      ownerSubject: identity.subject,
     });
     if (!workspace) {
       throw new Error("Workspace not found or access denied");
@@ -74,7 +75,8 @@ export const createBillingPortalSession = action({
 
     const workspace = await ctx.runQuery(internal.billing.getWorkspaceByOwner, {
       workspaceId: args.workspaceId,
-      clerkUserId: identity.subject,
+      ownerIdentityKey: identity.tokenIdentifier,
+      ownerSubject: identity.subject,
     });
     if (!workspace?.stripeCustomerId) {
       throw new Error("No Stripe customer linked to this workspace yet");

@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { api } from "@/convex/_generated/api";
 import { clientSafeError } from "@/lib/server/api-errors";
 import { internalHostedTokenBodySchema, schemaErrorMessage } from "@/lib/server/api-schemas";
-import { assertInternalSecret } from "@/lib/server/auth";
+import { assertInternalSecret, requireInternalControlPlaneSecret } from "@/lib/server/auth";
 import { getServerConvexClient } from "@/lib/server/convex";
 import {
   decryptVaultValue,
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     }
 
     const convex = getServerConvexClient();
-    const tokenRecord = await convex.query(api.hosted.getGatewayTokenByPrefix, { prefix });
+    const tokenRecord = await convex.query(api.hosted.getGatewayTokenByPrefix, { prefix, internalSecret: requireInternalControlPlaneSecret() });
     if (!tokenRecord) {
       return NextResponse.json({ error: "Token not found or revoked." }, { status: 401 });
     }
@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
     if (!safeEqualHex(hashed, tokenRecord.tokenHash)) {
       await convex.mutation(api.hosted.recordGatewayEvent, {
         workspaceId: tokenRecord.workspaceId,
+        internalSecret: requireInternalControlPlaneSecret(),
         tokenId: tokenRecord.tokenId,
         type: "auth_failure",
         metadataJson: JSON.stringify({ prefix }),

@@ -6,8 +6,9 @@ End state: dashboard on Vercel, Convex backend, Clerk auth, Stripe billing, MCP 
 
 1. Create a Convex project and note the deployment URL.
 2. Set `CLERK_JWT_ISSUER_DOMAIN` to your Clerk JWT template issuer (Convex + Clerk docs).
-3. Deploy functions: `npm run convex:deploy` from repo root (or CI).
-4. Set Stripe variables if using billing:
+3. Set `MCP_INTERNAL_SHARED_SECRET` in Convex to the same value used by Vercel and the MCP gateway.
+4. Deploy functions: `npm run convex:deploy` from repo root (or CI).
+5. Set Stripe variables if using billing:
    - `STRIPE_SECRET_KEY`
    - `STRIPE_WEBHOOK_SECRET` (endpoint: Convex Stripe component webhook URL)
    - `STRIPE_PRO_MONTHLY_PRICE_ID`
@@ -29,7 +30,7 @@ Environment variables (Production):
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk browser key |
 | `CLERK_SECRET_KEY` | Clerk server |
 | `NEXT_PUBLIC_CONVEX_URL` | Convex deployment URL |
-| `MCP_INTERNAL_SHARED_SECRET` | Shared with MCP gateway (`HOSTED_CONTROL_PLANE_SECRET`) |
+| `MCP_INTERNAL_SHARED_SECRET` | Shared with MCP gateway (`HOSTED_CONTROL_PLANE_SECRET`) and Convex |
 | `VAULT_MASTER_KEY` | Encrypts ManyChat API keys at rest |
 | `VAULT_KEY_VERSION` | Optional tag (default `v1`) |
 | `NEXT_PUBLIC_MCP_HTTP_URL` | Public `POST /mcp` URL for snippets |

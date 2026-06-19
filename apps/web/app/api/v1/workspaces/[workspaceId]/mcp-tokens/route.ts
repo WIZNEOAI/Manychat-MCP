@@ -3,7 +3,7 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { clientSafeError } from "@/lib/server/api-errors";
 import { mcpTokenIssueBodySchema, schemaErrorMessage } from "@/lib/server/api-schemas";
-import { requireClerkUser, unauthorized } from "@/lib/server/auth";
+import { requireClerkSession, unauthorized } from "@/lib/server/auth";
 import { getServerConvexClient } from "@/lib/server/convex";
 import { createHostedTokenSecret, hashHostedToken, parseHostedTokenPrefix } from "@/lib/server/hosted";
 import { rateLimitAllow } from "@/lib/server/rate-limit";
@@ -14,16 +14,15 @@ type RouteContext = {
 
 export async function GET(_request: NextRequest, context: RouteContext) {
   try {
-    const clerkUserId = await requireClerkUser();
+    const { convexToken } = await requireClerkSession();
     const { workspaceId } = await context.params;
-    const convex = getServerConvexClient();
+    const convex = getServerConvexClient(convexToken);
     const tokens = await convex.query(api.hosted.getWorkspaceTokens, {
       workspaceId: workspaceId as Id<"workspaces">,
-      clerkUserId,
     });
     return NextResponse.json({ ok: true, tokens });
   } catch (error) {
-    if (error instanceof Error && error.message === "Authentication required") {
+    if (error instanceof Error && (error.message === "Authentication required" || error.message === "Convex auth token required")) {
       return unauthorized(error.message);
     }
     return NextResponse.json({ error: "Failed to load MCP tokens." }, { status: 400 });
@@ -36,7 +35,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
   }
 
   try {
-    const clerkUserId = await requireClerkUser();
+    const { convexToken } = await requireClerkSession();
     const { workspaceId } = await context.params;
     const raw = await request.json();
     const parsed = mcpTokenIssueBodySchema.safeParse(raw);
@@ -51,10 +50,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Failed to generate MCP token." }, { status: 500 });
     }
 
-    const convex = getServerConvexClient();
+    const convex = getServerConvexClient(convexToken);
     const token = await convex.mutation(api.hosted.issueMcpToken, {
       workspaceId: workspaceId as Id<"workspaces">,
-      clerkUserId,
       accountId: (body.accountId ?? null) as Id<"manychatAccounts"> | null,
       name: body.name,
       bundle: body.bundle,
@@ -68,7 +66,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       secret,
     });
   } catch (error) {
-    if (error instanceof Error && error.message === "Authentication required") {
+    if (error instanceof Error && (error.message === "Authentication required" || error.message === "Convex auth token required")) {
       return unauthorized(error.message);
     }
     return NextResponse.json(

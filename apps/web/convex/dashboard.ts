@@ -30,10 +30,16 @@ export const viewer = query({
       return null;
     }
 
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_user", (q) => q.eq("clerkUserId", identity.subject))
-      .unique();
+    const identityKey = identity.tokenIdentifier;
+    const user =
+      (await ctx.db
+        .query("users")
+        .withIndex("by_clerk_user", (q) => q.eq("clerkUserId", identityKey))
+        .unique()) ??
+      (await ctx.db
+        .query("users")
+        .withIndex("by_clerk_user", (q) => q.eq("clerkUserId", identity.subject))
+        .unique());
 
     const workspaces = user
       ? await ctx.db
@@ -119,7 +125,7 @@ export const viewer = query({
     );
 
     return {
-      clerkUserId: identity.subject,
+      clerkUserId: identityKey,
       email: identity.email ?? undefined,
       name: identity.name ?? undefined,
       userId: user?._id,
