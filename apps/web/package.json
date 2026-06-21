@@ -25,6 +25,8 @@
     "resend": "^6.10.0"
   },
   "devDependencies": {
+    "@clerk/testing": "^2.1.5",
+    "@playwright/test": "^1.61.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
