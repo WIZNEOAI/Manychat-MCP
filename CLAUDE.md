@@ -11,31 +11,28 @@ CLI-first ManyChat toolkit for agents and operators. Wraps the ManyChat Account 
 
 ## Commands
 
+This is a **pnpm workspace** (root CLI/MCP + `apps/web`). Install once at the root: `pnpm install`.
+
 ```bash
-# Lint (TypeScript noEmit)
-node -e "require('child_process').execSync('npx tsc --noEmit', {stdio:'inherit'})"
+# Root (CLI + MCP)
+pnpm run lint     # tsc --noEmit
+pnpm run build    # tsc
+pnpm test         # vitest
 
-# Build
-node -e "require('child_process').execSync('npx tsc', {stdio:'inherit'})"
-
-# Test (all 4 files, 15 tests must pass)
-node -e "require('child_process').execSync('npx vitest run', {stdio:'inherit'})"
-
-# Web app
-npm --prefix apps/web run dev        # Next.js dev server
-npm --prefix apps/web run build      # production build
-npm --prefix apps/web run lint       # eslint
-npm --prefix apps/web run convex:dev # convex dev server
+# Web app (apps/web)
+pnpm run web:dev      # Next.js dev server
+pnpm run web:build    # production build
+pnpm run web:lint     # eslint
+pnpm run web:test     # vitest
+pnpm run convex:dev   # convex dev server
 ```
-
-> **Windows note**: `npx` must be invoked via `node -e` wrapper due to Git Bash path resolution.
 
 ## Architecture
 
 ```
 src/
 ├── index.ts              # CLI entry (shebang), routes "mcp serve" to HTTP
-├── server.ts             # MCP server factory: 7 tools + 6 prompts + 8 resources
+├── server.ts             # MCP server factory: 24 tools (incl. validate_message wedge) + 6 prompts + 8 resources
 ├── product.ts            # Version constant
 ├── cli/app.ts            # CLI router (1,254 lines): doctor|page|tags|fields|flows|subscribers|send|raw
 ├── auth/
@@ -101,8 +98,9 @@ skills/                     # Codex skills (manychat-mcp-ops)
 
 ## Deployment
 
-- **Dockerfile**: multi-stage (Node 22-alpine), exposes :3000
-- **Railway**: build via Dockerfile, start `npm run start:mcp:http`, health GET /health (30s timeout)
+- **Dockerfile**: multi-stage (Node 22-alpine, pnpm), exposes :3000
+- **Gateway host**: EasyPanel/VPS (persistent, multi-tenant; Railway retired). Start `pnpm run start:mcp:http`, health `GET /health`.
+- **apps/web**: Vercel + Convex + Clerk + Stripe.
 - **Smithery**: schema with baseUrl, useOAuth, manychatApiKey
 
 ## Testing Patterns
@@ -111,7 +109,7 @@ skills/                     # Codex skills (manychat-mcp-ops)
 - ManyChatClient tests verify retry logic and error classification
 - OAuth tests cover full PKCE flow lifecycle
 - CLI tests mock API and verify stdout JSON output
-- **All 4 test files (15 tests) must pass before any commit**
+- **The full gate must pass before any commit**: root `pnpm test` (59) + `pnpm run web:test` (55), plus lint + build on both
 
 ## What NOT to do
 
