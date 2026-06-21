@@ -35,33 +35,28 @@ export const buyerPainCards = [
   },
 ] as const;
 
-export const offerTiers: Array<{
+// Single pricing source: derive the landing offer cards from the canonical
+// SaaS tiers (Free / Supporter / Pro) so the landing, dashboard, and docs never
+// drift from the prices Stripe actually charges.
+export type OfferTier = {
   name: string;
-  setupPrice: string | null;
-  monthlyPrice: string | null;
+  monthlyPrice: string;
+  annualPrice: string;
   audience: string;
-  bullets: string[];
+  bullets: readonly string[];
   cta: string;
   badge?: string;
-}> = [
-  {
-    name: "Builder OSS",
-    setupPrice: null,
-    monthlyPrice: null,
-    audience: "Developers, operators, and internal agent workflows.",
-    bullets: ["Open-source CLI", "MCP server", "Self-host docs", "Bring-your-own infra"],
-    cta: "Use the OSS core",
-  },
-  {
-    name: "Revenue Operator",
-    setupPrice: "$3,500",
-    monthlyPrice: "$750/mo",
-    audience: "One business that needs faster response, cleaner handoff, and fewer lost leads.",
-    bullets: ["1 workspace", "ManyChat rail", "WhatsApp handoff", "Reporting baseline"],
-    cta: "Book Operator setup",
-    badge: "Recommended",
-  },
-] as const;
+};
+
+export const offerTiers: readonly OfferTier[] = pricingTiers.map((tier) => ({
+  name: tier.name,
+  monthlyPrice: tier.monthlyPrice,
+  annualPrice: tier.annualPrice,
+  audience: tier.tagline,
+  bullets: tier.limits,
+  cta: tier.cta,
+  badge: tier.name === "Supporter" ? "Recommended" : undefined,
+}));
 
 export const ossStory = {
   title: "Builder OSS",

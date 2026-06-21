@@ -2,20 +2,22 @@ import { describe, expect, it } from "vitest";
 import { heroContent, offerTiers, ossStory } from "./positioning";
 
 describe("Revenue OS positioning", () => {
-  it("states the operator-first promise instead of generic MCP copy", () => {
-    expect(heroContent.title).toContain("Your leads already exist");
-    expect(heroContent.body).toContain("do not go cold");
-    expect(heroContent.railLabels).toContain("ManyChat");
-    expect(heroContent.railLabels).toContain("WhatsApp / Capso");
+  it("leads with the builder-first hero promise", () => {
+    expect(heroContent.title).toContain("ManyChat superpowers");
+    expect(heroContent.railLabels).toContain("Claude");
+    expect(heroContent.railLabels).toContain("Codex");
   });
 
-  it("defines the commercial ladder with Revenue Operator as the primary offer", () => {
-    const operator = offerTiers.find((tier) => tier.name === "Revenue Operator");
-    expect(operator).toMatchObject({
-      setupPrice: "$3,500",
-      monthlyPrice: "$750/mo",
+  it("derives the commercial ladder from the canonical SaaS tiers", () => {
+    expect(offerTiers.map((tier) => tier.name)).toEqual(["Free", "Supporter", "Pro"]);
+    const supporter = offerTiers.find((tier) => tier.name === "Supporter");
+    expect(supporter).toMatchObject({
+      monthlyPrice: "$20/mo",
+      annualPrice: "$209/year",
       badge: "Recommended",
     });
+    const pro = offerTiers.find((tier) => tier.name === "Pro");
+    expect(pro).toMatchObject({ monthlyPrice: "$79/mo", annualPrice: "$790/year" });
   });
 
   it("keeps the OSS wedge explicit", () => {
