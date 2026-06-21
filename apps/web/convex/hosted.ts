@@ -34,9 +34,18 @@ const planLimits = {
 
 type HostedCtx = QueryCtx | MutationCtx;
 
+function constantTimeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < a.length; i += 1) {
+    mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return mismatch === 0;
+}
+
 function assertControlPlaneSecret(actual: string): void {
   const expected = process.env.MCP_INTERNAL_SHARED_SECRET ?? process.env.HOSTED_CONTROL_PLANE_SECRET;
-  if (!expected || actual !== expected) {
+  if (!expected || !constantTimeEqual(actual, expected)) {
     throw new Error("Invalid control plane secret");
   }
 }
@@ -580,11 +589,11 @@ export const getGatewayTokenByPrefix = query({
     }),
   ),
   handler: async (ctx, args) => {
+    assertControlPlaneSecret(args.internalSecret);
     const token = await ctx.db
       .query("mcpTokens")
       .withIndex("by_prefix", (q) => q.eq("prefix", args.prefix))
       .unique();
-    assertControlPlaneSecret(args.internalSecret);
     if (!token || token.revokedAt !== null) {
       return null;
     }
@@ -665,8 +674,8 @@ export const recordGatewayEvent = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const workspace = await ctx.db.get(args.workspaceId);
     assertControlPlaneSecret(args.internalSecret);
+    const workspace = await ctx.db.get(args.workspaceId);
     if (!workspace) {
       return null;
     }
@@ -751,8 +760,8 @@ export const authorizeGatewayRequest = mutation({
     monthlyRequestCount: v.number(),
   }),
   handler: async (ctx, args) => {
-    const workspace = await ctx.db.get(args.workspaceId);
     assertControlPlaneSecret(args.internalSecret);
+    const workspace = await ctx.db.get(args.workspaceId);
     if (!workspace) {
       throw new Error("Workspace not found.");
     }

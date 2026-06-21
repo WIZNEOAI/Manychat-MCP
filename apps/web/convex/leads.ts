@@ -228,6 +228,9 @@ export const updateLeadStatus = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    if (args.status === "new") {
+      throw new Error("Cannot transition a lead back to 'new'.");
+    }
     const { user } = await requireWorkspaceOwner(ctx, args.workspaceId);
     const lead = await ctx.db.get(args.leadId);
     if (!lead || lead.workspaceId !== args.workspaceId) {
