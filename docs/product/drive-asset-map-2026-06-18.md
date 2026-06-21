@@ -1,10 +1,10 @@
 # ManyChat MCP — Drive Asset Map
 
-Updated: 2026-06-18
+Updated: 2026-06-19
 
 ## Root pack
 
-Drive folder: `ManyChat MCP Product Assets — 2026-06-18`
+Drive folder: `ManyChat MCP Product Assets — 2026-06-18` (`1DTFFmfdZY-_Py5gCy9PnenS0k3_OavEF`)
 
 ## Structure
 
@@ -30,8 +30,9 @@ Drive folder: `ManyChat MCP Product Assets — 2026-06-18`
 ## Current status
 
 - Documentation uploaded.
-- Landing screenshots uploaded.
-- Brand assets and product mockups folders prepared for the next visual batch.
+- 2026-06-19 canon Google Doc created in `Documentation/Product`: `ManyChat MCP / Revenue Operator — Canon + Handoff — 2026-06-19`.
+- Current screenshots uploaded to `Screenshots`: landing desktop, landing mobile, and dashboard auth gate.
+- Brand assets and product mockups folders remain prepared for the next visual batch.
 
 ## Next visual batch
 
@@ -42,3 +43,19 @@ When available, upload here:
 - social/product cards
 - client snippet screenshots
 - pricing/usage/dashboard internal captures for sales material
+
+
+## Current screenshot assets
+
+- Landing desktop — `1VUBtyPhyqsH7ucS6rk7AyYD9Q-LKXwEy`
+- Landing mobile — `1qtgl8MUHf6A352eE1GGiIfpu_QI0jJ_g`
+- Dashboard auth gate — `1YUvCGy7wWzhr2nEvWFyIhoiT82GHZDAl`
+
+## Canon document
+
+- Google Doc — `1mjkBscjDKq-VzI7-xXbO4k823F7mBuiUHuqBfXXhG2M`
+
+## Current handoff markdown assets
+
+- Completion handoff — `16pXrKMw70XkwOppqEvvFCujUQczVoEul`
+- Canon markdown source — `1Yyg8iQRJcBgNQVafv6RSSUv5La5U0WjO`
