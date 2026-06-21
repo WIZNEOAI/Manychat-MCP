@@ -6,6 +6,7 @@ export interface ToolRegistrationOptions {
 
 const TOOL_MATRIX: Record<CapabilityBundle, Set<string>> = {
   read_only: new Set([
+    "validate_message",
     "health_check",
     "get_page_info",
     "list_bot_fields",
@@ -20,6 +21,7 @@ const TOOL_MATRIX: Record<CapabilityBundle, Set<string>> = {
     "find_subscriber_by_name",
   ]),
   operator: new Set([
+    "validate_message",
     "health_check",
     "get_page_info",
     "list_bot_fields",
@@ -44,6 +46,7 @@ const TOOL_MATRIX: Record<CapabilityBundle, Set<string>> = {
     "update_subscriber",
   ]),
   messaging_safe: new Set([
+    "validate_message",
     "health_check",
     "get_page_info",
     "list_bot_fields",
@@ -71,6 +74,7 @@ const TOOL_MATRIX: Record<CapabilityBundle, Set<string>> = {
     "update_subscriber",
   ]),
   admin: new Set([
+    "validate_message",
     "health_check",
     "get_page_info",
     "list_bot_fields",
