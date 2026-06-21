@@ -4,26 +4,27 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/Docker-self--host-ready-2496ED)](docs/deploy/vps-docker.md)
 
-CLI-first toolkit for operating ManyChat through the Account Public API, with MCP
-available as a compatibility and remote-access layer.
+This repository stays open-source and self-hostable for anyone who wants to run
+ManyChat through a CLI or MCP layer.
 
-ManyChat MCP is an open-source agent operating layer for ManyChat. Use it locally,
-self-host it on your VPS, or connect to the hosted WIZNEO control plane to operate
-ManyChat safely from Claude Code, Cursor, Codex, and other MCP clients.
+It also serves as the public wedge for a larger commercial product:
+**Revenue Operator**, an AI Revenue Ops System that helps businesses keep social,
+chat, and ad leads from going cold.
 
-## What this product is
+## What this repo is now
 
-This repo is building the **agent operating layer for ManyChat**:
+This repository stays open-source and self-hostable for anyone who wants to run ManyChat through a CLI or MCP layer.
 
-- **primary product:** `manychat` CLI
-- **compatibility layer:** MCP server for local and remote MCP clients
-- **deployment story:** self-host first (local, Railway, VPS/Docker)
-- **future direction:** hosted remote MCP + web control plane
+It also serves as the public wedge for a larger commercial product:
+**Revenue Operator**, an AI Revenue Ops System that helps businesses keep social, chat, and ad leads from going cold.
 
-The core product identity is still:
+## OSS vs paid product
 
-> Bring your ManyChat API key, run the CLI or connect an MCP client, and operate
-> ManyChat safely in minutes.
+- OSS repo: CLI, MCP, self-host docs, contributions
+- Paid product: operator dashboard, vault, playbooks, routing, handoff, reporting
+
+We keep the OSS runtime broadly usable. The commercial system builds on top of it;
+it does not turn the CLI or MCP server into a gated demo.
 
 ## Product surfaces
 
