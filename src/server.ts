@@ -6,6 +6,7 @@ import { registerCustomFieldTools } from "./tools/custom-fields.js";
 import { registerFlowTools } from "./tools/flows.js";
 import { registerMessagingTools } from "./tools/messaging.js";
 import { registerPageTools } from "./tools/page.js";
+import { registerPolicyTools } from "./tools/policy.js";
 import { registerResources } from "./resources/index.js";
 import { registerPrompts } from "./prompts/index.js";
 import { MANYCHAT_PRODUCT } from "./product.js";
@@ -31,6 +32,7 @@ export function createServer(apiKey?: string, options: CreateServerOptions = {})
   registerFlowTools(server, client, { isToolAllowed });
   registerMessagingTools(server, client, { isToolAllowed });
   registerPageTools(server, client, { isToolAllowed });
+  registerPolicyTools(server, { isToolAllowed });
   registerResources(server, client);
   registerPrompts(server);
 
