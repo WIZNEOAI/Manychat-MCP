@@ -1,14 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { api } from "@/convex/_generated/api";
 import { clientSafeError } from "@/lib/server/api-errors";
 import { internalHostedTokenBodySchema, schemaErrorMessage } from "@/lib/server/api-schemas";
-import { assertInternalSecret, requireInternalControlPlaneSecret } from "@/lib/server/auth";
-import { getServerConvexClient } from "@/lib/server/convex";
+import { assertInternalSecret } from "@/lib/server/auth";
+import { callControlPlane } from "@/lib/server/convex";
 import {
   decryptVaultValue,
   hashHostedToken,
   parseHostedTokenPrefix,
   safeEqualHex,
+  type GatewayTokenRecord,
 } from "@/lib/server/hosted";
 import { rateLimitAllow } from "@/lib/server/rate-limit";
 
@@ -31,17 +31,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid hosted token format." }, { status: 401 });
     }
 
-    const convex = getServerConvexClient();
-    const tokenRecord = await convex.query(api.hosted.getGatewayTokenByPrefix, { prefix, internalSecret: requireInternalControlPlaneSecret() });
+    const tokenRecord = await callControlPlane<GatewayTokenRecord | null>(
+      "/internal/mcp/resolve-token",
+      { prefix },
+    );
     if (!tokenRecord) {
       return NextResponse.json({ error: "Token not found or revoked." }, { status: 401 });
     }
 
     const hashed = hashHostedToken(body.token);
     if (!safeEqualHex(hashed, tokenRecord.tokenHash)) {
-      await convex.mutation(api.hosted.recordGatewayEvent, {
+      await callControlPlane("/internal/mcp/record-event", {
         workspaceId: tokenRecord.workspaceId,
-        internalSecret: requireInternalControlPlaneSecret(),
         tokenId: tokenRecord.tokenId,
         type: "auth_failure",
         metadataJson: JSON.stringify({ prefix }),

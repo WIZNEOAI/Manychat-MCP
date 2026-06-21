@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 
@@ -34,20 +34,17 @@ const planLimits = {
 
 type HostedCtx = QueryCtx | MutationCtx;
 
-function constantTimeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let mismatch = 0;
+// Exported for reuse by the http.ts control-plane httpActions, which authenticate
+// the shared secret from a request header (not a logged Convex function arg).
+// Pure JS (no node:crypto) because this runs in the Convex V8 runtime. The length
+// mismatch is folded into the accumulator and the loop always runs over the
+// caller-supplied input, so an early return never leaks the expected secret length.
+export function constantTimeEqual(a: string, b: string): boolean {
+  let mismatch = a.length ^ b.length;
   for (let i = 0; i < a.length; i += 1) {
-    mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
+    mismatch |= a.charCodeAt(i) ^ (b.length > 0 ? b.charCodeAt(i % b.length) : 0);
   }
   return mismatch === 0;
-}
-
-function assertControlPlaneSecret(actual: string): void {
-  const expected = process.env.MCP_INTERNAL_SHARED_SECRET ?? process.env.HOSTED_CONTROL_PLANE_SECRET;
-  if (!expected || !constantTimeEqual(actual, expected)) {
-    throw new Error("Invalid control plane secret");
-  }
 }
 
 async function getAuthenticatedUser(ctx: HostedCtx): Promise<Doc<"users">> {
@@ -557,10 +554,9 @@ export const getWorkspaceTokens = query({
   },
 });
 
-export const getGatewayTokenByPrefix = query({
+export const getGatewayTokenByPrefix = internalQuery({
   args: {
     prefix: v.string(),
-    internalSecret: v.string(),
   },
   returns: v.union(
     v.null(),
@@ -589,7 +585,6 @@ export const getGatewayTokenByPrefix = query({
     }),
   ),
   handler: async (ctx, args) => {
-    assertControlPlaneSecret(args.internalSecret);
     const token = await ctx.db
       .query("mcpTokens")
       .withIndex("by_prefix", (q) => q.eq("prefix", args.prefix))
@@ -658,10 +653,9 @@ export const getGatewayTokenByPrefix = query({
   },
 });
 
-export const recordGatewayEvent = mutation({
+export const recordGatewayEvent = internalMutation({
   args: {
     workspaceId: v.id("workspaces"),
-    internalSecret: v.string(),
     tokenId: v.id("mcpTokens"),
     type: v.union(
       v.literal("session_start"),
@@ -674,7 +668,6 @@ export const recordGatewayEvent = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    assertControlPlaneSecret(args.internalSecret);
     const workspace = await ctx.db.get(args.workspaceId);
     if (!workspace) {
       return null;
@@ -747,10 +740,9 @@ export const recordGatewayEvent = mutation({
   },
 });
 
-export const authorizeGatewayRequest = mutation({
+export const authorizeGatewayRequest = internalMutation({
   args: {
     workspaceId: v.id("workspaces"),
-    internalSecret: v.string(),
     tokenId: v.id("mcpTokens"),
     accountId: v.optional(v.union(v.id("manychatAccounts"), v.null())),
   },
@@ -760,7 +752,6 @@ export const authorizeGatewayRequest = mutation({
     monthlyRequestCount: v.number(),
   }),
   handler: async (ctx, args) => {
-    assertControlPlaneSecret(args.internalSecret);
     const workspace = await ctx.db.get(args.workspaceId);
     if (!workspace) {
       throw new Error("Workspace not found.");
