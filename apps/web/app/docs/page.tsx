@@ -25,11 +25,11 @@ export default function DocsPage() {
       <header className="space-y-4">
         <p className="brand-kicker text-xs">Documentation</p>
         <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">
-          Ship ManyChat automation for agents—CLI-first, MCP when you need it.
+          Self-host the ManyChat runtime. Use the paid system when you need operator outcomes.
         </h1>
         <p className="max-w-3xl text-lg leading-8 muted">
-          The canonical guides live in the repository. Use this page as a map: deploy remote MCP,
-          connect clients, and read the hosted control-plane specs when you are ready for teams.
+          The repository remains the canonical OSS source for CLI, MCP, self-host, and deployment docs.
+          The hosted app builds the Revenue Operator layer on top: vault, handoff, reporting, and playbooks.
         </p>
         <p className="text-sm muted">
           Browse all docs in the tree:{" "}

@@ -78,6 +78,7 @@ NEXT_PUBLIC_MCP_HTTP_URL=     # shown in dashboard snippets
 ### Convex (dashboard env vars)
 ```env
 CLERK_JWT_ISSUER_DOMAIN=
+MCP_INTERNAL_SHARED_SECRET=  # same shared secret, required by hosted-token guardrail functions
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
 STRIPE_PRO_MONTHLY_PRICE_ID=

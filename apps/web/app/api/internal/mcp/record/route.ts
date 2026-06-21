@@ -1,10 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { api } from "@/convex/_generated/api";
-import type { Id } from "@/convex/_generated/dataModel";
 import { clientSafeError } from "@/lib/server/api-errors";
 import { internalRecordBodySchema, schemaErrorMessage } from "@/lib/server/api-schemas";
 import { assertInternalSecret } from "@/lib/server/auth";
-import { getServerConvexClient } from "@/lib/server/convex";
+import { callControlPlane } from "@/lib/server/convex";
 import { rateLimitAllow } from "@/lib/server/rate-limit";
 
 export async function POST(request: NextRequest) {
@@ -21,10 +19,9 @@ export async function POST(request: NextRequest) {
     }
     const body = parsed.data;
 
-    const convex = getServerConvexClient();
-    await convex.mutation(api.hosted.recordGatewayEvent, {
-      workspaceId: body.workspaceId as Id<"workspaces">,
-      tokenId: body.tokenId as Id<"mcpTokens">,
+    await callControlPlane("/internal/mcp/record-event", {
+      workspaceId: body.workspaceId,
+      tokenId: body.tokenId,
       type: body.type,
       requestCount: body.requestCount,
       metadataJson: body.metadata ? JSON.stringify(body.metadata) : undefined,

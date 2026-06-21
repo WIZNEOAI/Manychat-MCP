@@ -7,6 +7,8 @@ import {
   internalHostedTokenBodySchema,
   internalAuthorizeBodySchema,
   internalRecordBodySchema,
+  leadCreateBodySchema,
+  leadStatusUpdateBodySchema,
   schemaErrorMessage,
 } from "./api-schemas";
 
@@ -146,6 +148,51 @@ describe("internalRecordBodySchema", () => {
       tokenId: "k52hz3v40e2b2",
       type: "unknown_event",
     });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("leadCreateBodySchema", () => {
+  it("accepts a minimal manual lead", () => {
+    const result = leadCreateBodySchema.safeParse({
+      source: "manual",
+      displayName: "Maria Lopez",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts optional handoff fields", () => {
+    const result = leadCreateBodySchema.safeParse({
+      source: "manychat",
+      displayName: "Lead from DM",
+      contactHandle: "@lead",
+      intent: "Wants a medspa consult",
+      nextAction: "Reply within 15 minutes",
+      nextActionAt: 1781827200000,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects unknown lead sources", () => {
+    const result = leadCreateBodySchema.safeParse({
+      source: "slack",
+      displayName: "Lead",
+    });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("leadStatusUpdateBodySchema", () => {
+  it("accepts booked status with next action", () => {
+    const result = leadStatusUpdateBodySchema.safeParse({
+      status: "booked",
+      nextAction: "Confirm appointment",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects autonomous_closer status", () => {
+    const result = leadStatusUpdateBodySchema.safeParse({ status: "autonomous_closer" });
     expect(result.success).toBe(false);
   });
 });

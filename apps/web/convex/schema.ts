@@ -17,6 +17,16 @@ export default defineSchema({
     // "supporter" is legacy, treated identically to "pro"
     plan: v.union(v.literal("free"), v.literal("supporter"), v.literal("pro")),
     stripeCustomerId: v.optional(v.string()),
+    operatorLeadStatusCounts: v.optional(
+      v.object({
+        new: v.number(),
+        contacted: v.number(),
+        qualified: v.number(),
+        booked: v.number(),
+        won: v.number(),
+        lost: v.number(),
+      }),
+    ),
     createdAt: v.number(),
   })
     .index("by_owner", ["ownerUserId"])
@@ -79,6 +89,38 @@ export default defineSchema({
     authFailures: v.number(),
     lastSeenAt: v.number(),
   }).index("by_workspace_and_month", ["workspaceId", "monthKey"]),
+
+  operatorLeads: defineTable({
+    workspaceId: v.id("workspaces"),
+    source: v.union(
+      v.literal("manual"),
+      v.literal("manychat"),
+      v.literal("meta_ads"),
+      v.literal("google_ads"),
+      v.literal("whatsapp"),
+      v.literal("other"),
+    ),
+    status: v.union(
+      v.literal("new"),
+      v.literal("contacted"),
+      v.literal("qualified"),
+      v.literal("booked"),
+      v.literal("won"),
+      v.literal("lost"),
+    ),
+    displayName: v.string(),
+    contactHandle: v.optional(v.string()),
+    intent: v.optional(v.string()),
+    nextAction: v.optional(v.string()),
+    nextActionAt: v.optional(v.number()),
+    lastStatusChangedAt: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_workspace_and_status", ["workspaceId", "status"])
+    .index("by_workspace_and_updated", ["workspaceId", "updatedAt"])
+    .index("by_workspace_and_next_action", ["workspaceId", "nextActionAt"]),
+
 
   auditEvents: defineTable({
     workspaceId: v.id("workspaces"),

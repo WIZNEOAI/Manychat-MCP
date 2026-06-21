@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 
@@ -34,19 +34,47 @@ const planLimits = {
 
 type HostedCtx = QueryCtx | MutationCtx;
 
-async function requireWorkspaceOwner(
-  ctx: HostedCtx,
-  workspaceId: Id<"workspaces">,
-  clerkUserId: string,
-): Promise<{ workspace: Doc<"workspaces">; user: Doc<"users"> }> {
-  const user = await ctx.db
-    .query("users")
-    .withIndex("by_clerk_user", (q) => q.eq("clerkUserId", clerkUserId))
-    .unique();
+// Exported for reuse by the http.ts control-plane httpActions, which authenticate
+// the shared secret from a request header (not a logged Convex function arg).
+// Pure JS (no node:crypto) because this runs in the Convex V8 runtime. The length
+// mismatch is folded into the accumulator and the loop always runs over the
+// caller-supplied input, so an early return never leaks the expected secret length.
+export function constantTimeEqual(a: string, b: string): boolean {
+  let mismatch = a.length ^ b.length;
+  for (let i = 0; i < a.length; i += 1) {
+    mismatch |= a.charCodeAt(i) ^ (b.length > 0 ? b.charCodeAt(i % b.length) : 0);
+  }
+  return mismatch === 0;
+}
+
+async function getAuthenticatedUser(ctx: HostedCtx): Promise<Doc<"users">> {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) {
+    throw new Error("Authentication required");
+  }
+
+  const identityKey = identity.tokenIdentifier;
+  const user =
+    (await ctx.db
+      .query("users")
+      .withIndex("by_clerk_user", (q) => q.eq("clerkUserId", identityKey))
+      .unique()) ??
+    (await ctx.db
+      .query("users")
+      .withIndex("by_clerk_user", (q) => q.eq("clerkUserId", identity.subject))
+      .unique());
   if (!user) {
     throw new Error("User not found");
   }
 
+  return user;
+}
+
+async function requireWorkspaceOwner(
+  ctx: HostedCtx,
+  workspaceId: Id<"workspaces">,
+): Promise<{ workspace: Doc<"workspaces">; user: Doc<"users"> }> {
+  const user = await getAuthenticatedUser(ctx);
   const workspace = await ctx.db.get(workspaceId);
   if (!workspace || workspace.ownerUserId !== user._id) {
     throw new Error("Workspace not found or access denied");
@@ -95,7 +123,6 @@ function monthKey(now: number): string {
 export const upsertManychatAccount = mutation({
   args: {
     workspaceId: v.id("workspaces"),
-    clerkUserId: v.string(),
     displayName: v.string(),
     ciphertext: v.string(),
     keyVersion: v.string(),
@@ -112,7 +139,7 @@ export const upsertManychatAccount = mutation({
     keyValidatedAt: v.number(),
   }),
   handler: async (ctx, args) => {
-    const { workspace, user } = await requireWorkspaceOwner(ctx, args.workspaceId, args.clerkUserId);
+    const { workspace, user } = await requireWorkspaceOwner(ctx, args.workspaceId);
     await ensureAccountCap(ctx, args.workspaceId, normalizePlan(workspace.plan));
 
     const now = Date.now();
@@ -172,7 +199,6 @@ export const upsertManychatAccount = mutation({
 export const rotateManychatCredential = mutation({
   args: {
     workspaceId: v.id("workspaces"),
-    clerkUserId: v.string(),
     accountId: v.id("manychatAccounts"),
     ciphertext: v.string(),
     keyVersion: v.string(),
@@ -187,7 +213,7 @@ export const rotateManychatCredential = mutation({
     keyValidatedAt: v.number(),
   }),
   handler: async (ctx, args) => {
-    const { user } = await requireWorkspaceOwner(ctx, args.workspaceId, args.clerkUserId);
+    const { user } = await requireWorkspaceOwner(ctx, args.workspaceId);
     const account = await ctx.db.get(args.accountId);
     if (!account || account.workspaceId !== args.workspaceId) {
       throw new Error("ManyChat account not found");
@@ -259,7 +285,6 @@ export const rotateManychatCredential = mutation({
 export const issueMcpToken = mutation({
   args: {
     workspaceId: v.id("workspaces"),
-    clerkUserId: v.string(),
     accountId: v.union(v.id("manychatAccounts"), v.null()),
     name: v.string(),
     bundle: bundleValidator,
@@ -273,7 +298,7 @@ export const issueMcpToken = mutation({
     createdAt: v.number(),
   }),
   handler: async (ctx, args) => {
-    const { workspace, user } = await requireWorkspaceOwner(ctx, args.workspaceId, args.clerkUserId);
+    const { workspace, user } = await requireWorkspaceOwner(ctx, args.workspaceId);
     await ensureTokenCap(ctx, args.workspaceId, normalizePlan(workspace.plan));
 
     if (args.accountId) {
@@ -316,12 +341,11 @@ export const issueMcpToken = mutation({
 export const revokeMcpToken = mutation({
   args: {
     workspaceId: v.id("workspaces"),
-    clerkUserId: v.string(),
     tokenId: v.id("mcpTokens"),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const { user } = await requireWorkspaceOwner(ctx, args.workspaceId, args.clerkUserId);
+    const { user } = await requireWorkspaceOwner(ctx, args.workspaceId);
     const token = await ctx.db.get(args.tokenId);
     if (!token || token.workspaceId !== args.workspaceId) {
       throw new Error("MCP token not found");
@@ -344,11 +368,10 @@ export const revokeMcpToken = mutation({
 export const revokeAllWorkspaceMcpTokens = mutation({
   args: {
     workspaceId: v.id("workspaces"),
-    clerkUserId: v.string(),
   },
   returns: v.object({ revokedCount: v.number() }),
   handler: async (ctx, args) => {
-    const { user } = await requireWorkspaceOwner(ctx, args.workspaceId, args.clerkUserId);
+    const { user } = await requireWorkspaceOwner(ctx, args.workspaceId);
     const tokens = await ctx.db
       .query("mcpTokens")
       .withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))
@@ -381,12 +404,11 @@ export const revokeAllWorkspaceMcpTokens = mutation({
 export const disconnectManychatAccount = mutation({
   args: {
     workspaceId: v.id("workspaces"),
-    clerkUserId: v.string(),
     accountId: v.id("manychatAccounts"),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const { user } = await requireWorkspaceOwner(ctx, args.workspaceId, args.clerkUserId);
+    const { user } = await requireWorkspaceOwner(ctx, args.workspaceId);
     const account = await ctx.db.get(args.accountId);
     if (!account || account.workspaceId !== args.workspaceId) {
       throw new Error("ManyChat account not found");
@@ -429,7 +451,6 @@ export const disconnectManychatAccount = mutation({
 export const getUsageAndAudit = query({
   args: {
     workspaceId: v.id("workspaces"),
-    clerkUserId: v.string(),
   },
   returns: v.object({
     daily: v.object({
@@ -454,7 +475,7 @@ export const getUsageAndAudit = query({
     ),
   }),
   handler: async (ctx, args) => {
-    await requireWorkspaceOwner(ctx, args.workspaceId, args.clerkUserId);
+    await requireWorkspaceOwner(ctx, args.workspaceId);
     const now = Date.now();
     const daily = await ctx.db
       .query("usageDaily")
@@ -500,7 +521,6 @@ export const getUsageAndAudit = query({
 export const getWorkspaceTokens = query({
   args: {
     workspaceId: v.id("workspaces"),
-    clerkUserId: v.string(),
   },
   returns: v.array(
     v.object({
@@ -514,7 +534,7 @@ export const getWorkspaceTokens = query({
     }),
   ),
   handler: async (ctx, args) => {
-    await requireWorkspaceOwner(ctx, args.workspaceId, args.clerkUserId);
+    await requireWorkspaceOwner(ctx, args.workspaceId);
     const tokens = await ctx.db
       .query("mcpTokens")
       .withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))
@@ -534,7 +554,7 @@ export const getWorkspaceTokens = query({
   },
 });
 
-export const getGatewayTokenByPrefix = query({
+export const getGatewayTokenByPrefix = internalQuery({
   args: {
     prefix: v.string(),
   },
@@ -633,7 +653,7 @@ export const getGatewayTokenByPrefix = query({
   },
 });
 
-export const recordGatewayEvent = mutation({
+export const recordGatewayEvent = internalMutation({
   args: {
     workspaceId: v.id("workspaces"),
     tokenId: v.id("mcpTokens"),
@@ -720,7 +740,7 @@ export const recordGatewayEvent = mutation({
   },
 });
 
-export const authorizeGatewayRequest = mutation({
+export const authorizeGatewayRequest = internalMutation({
   args: {
     workspaceId: v.id("workspaces"),
     tokenId: v.id("mcpTokens"),

@@ -16,7 +16,8 @@ export function DocsSidebar() {
         ))}
       </nav>
       <p className="mt-6 text-xs leading-5 muted">
-        Full markdown lives in the repo. Links open on GitHub so the site stays lightweight.
+        The full markdown stays in GitHub so the OSS runtime is always usable on its own.
+        The hosted product builds on top of these docs; it does not replace them.
       </p>
     </aside>
   );

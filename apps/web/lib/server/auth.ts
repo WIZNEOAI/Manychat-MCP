@@ -2,11 +2,22 @@ import { auth } from "@clerk/nextjs/server";
 import { createHash, timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 
-export async function requireClerkUser() {
-  const { userId } = await auth();
+export async function requireClerkSession() {
+  const { userId, getToken } = await auth();
   if (!userId) {
     throw new Error("Authentication required");
   }
+
+  const convexToken = await getToken({ template: "convex" });
+  if (!convexToken) {
+    throw new Error("Convex auth token required");
+  }
+
+  return { userId, convexToken };
+}
+
+export async function requireClerkUser() {
+  const { userId } = await requireClerkSession();
   return userId;
 }
 
@@ -20,6 +31,16 @@ export function assertInternalSecret(request: NextRequest): void {
     throw new Error("Invalid internal secret");
   }
 }
+export function requireInternalControlPlaneSecret(): string {
+  const secret =
+    process.env.MCP_INTERNAL_SHARED_SECRET ??
+    process.env.HOSTED_CONTROL_PLANE_SECRET;
+  if (!secret) {
+    throw new Error("Internal control plane secret is not configured");
+  }
+  return secret;
+}
+
 
 function safeEqualSecret(actual: string, expected: string): boolean {
   const actualHash = createHash("sha256").update(actual).digest();

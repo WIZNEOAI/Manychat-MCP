@@ -1,11 +1,16 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { clientSafeError } from "@/lib/server/api-errors";
 import { mcpTokenTestBodySchema, schemaErrorMessage } from "@/lib/server/api-schemas";
-import { requireClerkUser, unauthorized } from "@/lib/server/auth";
-import { getServerConvexClient } from "@/lib/server/convex";
-import { decryptVaultValue, hashHostedToken, parseHostedTokenPrefix, safeEqualHex } from "@/lib/server/hosted";
+import { requireClerkSession, unauthorized } from "@/lib/server/auth";
+import { callControlPlane } from "@/lib/server/convex";
+import {
+  decryptVaultValue,
+  hashHostedToken,
+  parseHostedTokenPrefix,
+  safeEqualHex,
+  type GatewayTokenRecord,
+} from "@/lib/server/hosted";
 import { validateManyChatApiKey } from "@/lib/server/manychat-validate";
 import { rateLimitAllow } from "@/lib/server/rate-limit";
 
@@ -19,7 +24,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
   }
 
   try {
-    await requireClerkUser();
+    // Validates a Clerk session exists. The token-to-workspace binding is verified
+    // below (the token must belong to the requested workspace); user-to-workspace
+    // ownership is not enforced here, since testing requires possession of the full token.
+    await requireClerkSession();
     const { workspaceId } = await context.params;
     const raw = await request.json();
     const parsed = mcpTokenTestBodySchema.safeParse(raw);
@@ -27,13 +35,15 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: schemaErrorMessage(parsed.error) }, { status: 400 });
     }
 
-    const convex = getServerConvexClient();
     const prefix = parseHostedTokenPrefix(parsed.data.token);
     if (!prefix) {
       return NextResponse.json({ error: "Invalid hosted token format." }, { status: 400 });
     }
 
-    const tokenRecord = await convex.query(api.hosted.getGatewayTokenByPrefix, { prefix });
+    const tokenRecord = await callControlPlane<GatewayTokenRecord | null>(
+      "/internal/mcp/resolve-token",
+      { prefix },
+    );
     if (!tokenRecord || tokenRecord.workspaceId !== (workspaceId as Id<"workspaces">)) {
       return NextResponse.json(
         { error: "Token not found, revoked, or does not belong to this workspace." },
@@ -67,7 +77,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       accountName: tokenRecord.accountName,
     });
   } catch (error) {
-    if (error instanceof Error && error.message === "Authentication required") {
+    if (error instanceof Error && (error.message === "Authentication required" || error.message === "Convex auth token required")) {
       return unauthorized(error.message);
     }
     return NextResponse.json(

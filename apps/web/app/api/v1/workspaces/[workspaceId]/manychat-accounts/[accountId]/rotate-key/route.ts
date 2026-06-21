@@ -6,7 +6,7 @@ import {
   manychatRotateKeyBodySchema,
   schemaErrorMessage,
 } from "@/lib/server/api-schemas";
-import { requireClerkUser, unauthorized } from "@/lib/server/auth";
+import { requireClerkSession, unauthorized } from "@/lib/server/auth";
 import { getServerConvexClient } from "@/lib/server/convex";
 import { encryptVaultValue } from "@/lib/server/hosted";
 import { validateManyChatApiKey } from "@/lib/server/manychat-validate";
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
   }
 
   try {
-    const clerkUserId = await requireClerkUser();
+    const { convexToken } = await requireClerkSession();
     const { workspaceId, accountId } = await context.params;
     const raw = await request.json();
     const parsed = manychatRotateKeyBodySchema.safeParse(raw);
@@ -36,11 +36,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: validation.userFacing }, { status: 400 });
     }
 
-    const convex = getServerConvexClient();
+    const convex = getServerConvexClient(convexToken);
     const encrypted = encryptVaultValue(body.apiKey);
     const result = await convex.mutation(api.hosted.rotateManychatCredential, {
       workspaceId: workspaceId as Id<"workspaces">,
-      clerkUserId,
       accountId: accountId as Id<"manychatAccounts">,
       ciphertext: encrypted.ciphertext,
       keyVersion: encrypted.keyVersion,
@@ -50,7 +49,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ ok: true, account: result });
   } catch (error) {
-    if (error instanceof Error && error.message === "Authentication required") {
+    if (error instanceof Error && (error.message === "Authentication required" || error.message === "Convex auth token required")) {
       return unauthorized(error.message);
     }
     return NextResponse.json(

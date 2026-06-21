@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { clientSafeError } from "@/lib/server/api-errors";
-import { requireClerkUser, unauthorized } from "@/lib/server/auth";
+import { requireClerkSession, unauthorized } from "@/lib/server/auth";
 import { getServerConvexClient } from "@/lib/server/convex";
 import { rateLimitAllow } from "@/lib/server/rate-limit";
 
@@ -16,16 +16,15 @@ export async function POST(request: NextRequest, context: RouteContext) {
   }
 
   try {
-    const clerkUserId = await requireClerkUser();
+    const { convexToken } = await requireClerkSession();
     const { workspaceId } = await context.params;
-    const convex = getServerConvexClient();
+    const convex = getServerConvexClient(convexToken);
     const result = await convex.mutation(api.hosted.revokeAllWorkspaceMcpTokens, {
       workspaceId: workspaceId as Id<"workspaces">,
-      clerkUserId,
     });
     return NextResponse.json({ ok: true, revokedCount: result.revokedCount });
   } catch (error) {
-    if (error instanceof Error && error.message === "Authentication required") {
+    if (error instanceof Error && (error.message === "Authentication required" || error.message === "Convex auth token required")) {
       return unauthorized(error.message);
     }
     return NextResponse.json(

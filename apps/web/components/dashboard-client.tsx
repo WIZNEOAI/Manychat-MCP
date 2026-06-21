@@ -4,8 +4,24 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { offerTiers, operatorStory } from "@/lib/positioning";
 import { pricingTiers } from "@/lib/site-data";
 
+const dashboardPositioning = {
+  eyebrow: "Revenue Operator",
+  title: "Turn connected rails into a real response system.",
+  body:
+    "Hosted mode keeps the OSS runtime intact while adding the operator layer: credential vault, lead routing, handoff, follow-up, and visibility so leads do not go cold. ManyChat is a rail; the paid system is the operating layer around it.",
+} as const;
+
+const setupStepCopy = [
+  { label: "Workspace synced", detail: "Operator workspace ready for business routing" },
+  { label: "ManyChat rail connected", detail: "Primary chat rail validated and encrypted" },
+  { label: "Operator token issued", detail: "Agent access scoped without exposing raw credentials" },
+  { label: "Handoff layer ready", detail: "Prepare follow-up and operator rules next" },
+] as const;
+
+const revenueOperatorTier = offerTiers.find((tier) => tier.name === "Revenue Operator");
 type Bundle = "read_only" | "operator" | "messaging_safe" | "admin";
 type WorkspaceToken = {
   _id: string;
@@ -30,6 +46,34 @@ type WorkspaceAuditEvent = {
   metadataJson?: string;
   createdAt: number;
 };
+type LeadSource = "manual" | "manychat" | "meta_ads" | "google_ads" | "whatsapp" | "other";
+type LeadStatus = "new" | "contacted" | "qualified" | "booked" | "won" | "lost";
+
+type OperatorLead = {
+  id: string;
+  source: LeadSource;
+  status: LeadStatus;
+  displayName: string;
+  contactHandle?: string;
+  intent?: string;
+  nextAction?: string;
+  nextActionAt?: number;
+  lastStatusChangedAt: number;
+  createdAt: number;
+  updatedAt: number;
+};
+
+const leadSources: Array<{ value: LeadSource; label: string }> = [
+  { value: "manual", label: "Manual" },
+  { value: "manychat", label: "ManyChat" },
+  { value: "meta_ads", label: "Meta Ads" },
+  { value: "google_ads", label: "Google Ads" },
+  { value: "whatsapp", label: "WhatsApp" },
+  { value: "other", label: "Other" },
+];
+
+const leadStatuses: LeadStatus[] = ["new", "contacted", "qualified", "booked", "won", "lost"];
+const quickLeadStatuses: Exclude<LeadStatus, "new">[] = ["contacted", "qualified", "booked", "won", "lost"];
 
 const MCP_URL = process.env.NEXT_PUBLIC_MCP_HTTP_URL ?? "https://mcp.example.com/mcp";
 const primaryButtonClass = "wiz-button-primary px-4 py-2 text-xs disabled:opacity-50";
@@ -109,6 +153,51 @@ export function DashboardClient() {
   const [rotatingAccountId, setRotatingAccountId] = useState<string | null>(null);
   const [rotateKeyValue, setRotateKeyValue] = useState<Record<string, string>>({});
   const [testTokenInput, setTestTokenInput] = useState("");
+  const [leadError, setLeadError] = useState<string | null>(null);
+  const [leadBusy, setLeadBusy] = useState(false);
+  const [leadStatusBusy, setLeadStatusBusy] = useState<string | null>(null);
+  const [leads, setLeads] = useState<OperatorLead[]>([]);
+  const [leadCounts, setLeadCounts] = useState<Record<LeadStatus, number>>({
+    new: 0,
+    contacted: 0,
+    qualified: 0,
+    booked: 0,
+    won: 0,
+    lost: 0,
+  });
+  const [leadForm, setLeadForm] = useState({
+    displayName: "",
+    contactHandle: "",
+    source: "manual" as LeadSource,
+    intent: "",
+    nextAction: "",
+  });
+
+  async function refreshLeads(workspaceId: string, shouldCommit: () => boolean = () => true) {
+    const response = await fetch(`/api/v1/workspaces/${workspaceId}/leads`);
+    const payload = (await response.json().catch(() => ({}))) as {
+      ok?: boolean;
+      error?: string;
+      leads?: OperatorLead[];
+      counts?: Record<LeadStatus, number>;
+    };
+    if (!response.ok) {
+      throw new Error(payload.error ?? `Lead request failed with ${response.status}.`);
+    }
+    if (!shouldCommit()) return;
+    setLeadError(null);
+    setLeads(payload.leads ?? []);
+    setLeadCounts(
+      payload.counts ?? {
+        new: 0,
+        contacted: 0,
+        qualified: 0,
+        booked: 0,
+        won: 0,
+        lost: 0,
+      },
+    );
+  }
   const [testBusy, setTestBusy] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
   const [revokeAllBusy, setRevokeAllBusy] = useState(false);
@@ -130,32 +219,36 @@ export function DashboardClient() {
   }, [ensureUser]);
 
   const primaryWorkspace = viewer?.workspaces[0];
+  useEffect(() => {
+    if (!primaryWorkspace?._id) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        await refreshLeads(primaryWorkspace._id, () => !cancelled);
+      } catch (error) {
+        if (!cancelled) {
+          setLeadError(error instanceof Error ? error.message : "Failed to load leads");
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [primaryWorkspace?._id]);
   const snippets = issuedSecret ? snippetBlock(issuedSecret) : null;
   const connectedAccountCount = primaryWorkspace?.accounts.length ?? 0;
   const activeTokenCount =
     primaryWorkspace?.tokens.filter((token: WorkspaceToken) => token.revokedAt === null).length ?? 0;
-  const setupSteps = [
-    {
-      label: "Account synced",
-      detail: viewer ? "Clerk and Convex identity are linked" : "Waiting for authenticated session",
-      done: Boolean(viewer),
-    },
-    {
-      label: "Workspace ready",
-      detail: primaryWorkspace ? `${primaryWorkspace.name} · ${primaryWorkspace.plan}` : "Create or load a workspace",
-      done: Boolean(primaryWorkspace),
-    },
-    {
-      label: "ManyChat vault",
-      detail: connectedAccountCount > 0 ? `${connectedAccountCount} encrypted account(s)` : "Save the first API key",
-      done: connectedAccountCount > 0,
-    },
-    {
-      label: "MCP client token",
-      detail: activeTokenCount > 0 ? `${activeTokenCount} active token(s)` : "Issue a scoped token for agents",
-      done: activeTokenCount > 0,
-    },
+  const setupStatuses = [
+    Boolean(viewer),
+    Boolean(primaryWorkspace),
+    connectedAccountCount > 0,
+    activeTokenCount > 0,
   ];
+  const setupSteps = setupStepCopy.map((step, index) => ({
+    ...step,
+    done: setupStatuses[index] ?? false,
+  }));
 
   const sessionLine =
     viewer === undefined
@@ -169,12 +262,17 @@ export function DashboardClient() {
       <section className="card p-8 md:p-10">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="space-y-3">
-            <p className="brand-kicker text-xs">Hosted control plane</p>
-            <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">Workspace dashboard</h1>
-            <p className="max-w-3xl text-lg leading-8 muted">
-              Hosted mode keeps the CLI and MCP runtime intact while adding an encrypted ManyChat vault,
-              workspace-scoped MCP tokens, plan enforcement, and client snippets for AI agents.
+            <p className="brand-kicker text-xs">{dashboardPositioning.eyebrow}</p>
+            <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">{dashboardPositioning.title}</h1>
+            <p className="max-w-3xl text-lg leading-8 muted">{dashboardPositioning.body}</p>
+            <p className="max-w-3xl text-sm leading-6 muted">
+              {operatorStory.title}: {operatorStory.body}
             </p>
+            {revenueOperatorTier ? (
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--primary)]">
+                {revenueOperatorTier.name} · {revenueOperatorTier.setupPrice} setup · {revenueOperatorTier.monthlyPrice}
+              </p>
+            ) : null}
             {bootstrapError ? (
               <p className="status-danger text-sm">Convex: {bootstrapError}</p>
             ) : null}
@@ -242,6 +340,160 @@ export function DashboardClient() {
             <p className="mt-2 text-xs leading-5 muted">{step.detail}</p>
           </article>
         ))}
+      </section>
+
+      <section className="card p-6 md:p-8">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <p className="brand-kicker text-xs">Lead queue</p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight">Keep Revenue Operator leads moving</h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 muted">
+              Track whether Revenue Operator leads are new, contacted, qualified, booked, won, or lost. This is the handoff layer that keeps leads from going cold.
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-xs md:grid-cols-6">
+            {leadStatuses.map((status) => (
+              <div key={status} className="surface-panel px-3 py-2 text-center">
+                <p className="font-semibold capitalize">{status}</p>
+                <p className="mt-1 text-lg font-semibold text-[var(--primary)]">{leadCounts[status] ?? 0}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {primaryWorkspace ? (
+          <>
+            <div className="mt-6 grid gap-3 lg:grid-cols-[1fr_1fr_0.75fr]">
+              <input
+                value={leadForm.displayName}
+                onChange={(event) => setLeadForm((current) => ({ ...current, displayName: event.target.value }))}
+                placeholder="Lead name"
+                className={inputClass}
+              />
+              <input
+                value={leadForm.contactHandle}
+                onChange={(event) => setLeadForm((current) => ({ ...current, contactHandle: event.target.value }))}
+                placeholder="Handle, email, or phone"
+                className={inputClass}
+              />
+              <select
+                value={leadForm.source}
+                onChange={(event) => setLeadForm((current) => ({ ...current, source: event.target.value as LeadSource }))}
+                className={inputClass}
+              >
+                {leadSources.map((source) => (
+                  <option key={source.value} value={source.value}>
+                    {source.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="mt-3 grid gap-3 lg:grid-cols-[1fr_1fr_auto]">
+              <input
+                value={leadForm.intent}
+                onChange={(event) => setLeadForm((current) => ({ ...current, intent: event.target.value }))}
+                placeholder="Intent, e.g. wants pricing"
+                className={inputClass}
+              />
+              <input
+                value={leadForm.nextAction}
+                onChange={(event) => setLeadForm((current) => ({ ...current, nextAction: event.target.value }))}
+                placeholder="Next action"
+                className={inputClass}
+              />
+              <button
+                type="button"
+                disabled={leadBusy}
+                className={primaryButtonTallClass}
+                onClick={async () => {
+                  setLeadBusy(true);
+                  setLeadError(null);
+                  try {
+                    await postJson(`/api/v1/workspaces/${primaryWorkspace._id}/leads`, {
+                      source: leadForm.source,
+                      displayName: leadForm.displayName,
+                      contactHandle: leadForm.contactHandle || undefined,
+                      intent: leadForm.intent || undefined,
+                      nextAction: leadForm.nextAction || undefined,
+                    });
+                    setLeadForm({ displayName: "", contactHandle: "", source: "manual", intent: "", nextAction: "" });
+                    await refreshLeads(primaryWorkspace._id);
+                  } catch (error) {
+                    setLeadError(error instanceof Error ? error.message : "Failed to create lead");
+                  } finally {
+                    setLeadBusy(false);
+                  }
+                }}
+              >
+                {leadBusy ? "Adding..." : "Add lead"}
+              </button>
+            </div>
+            {leadError ? <p className="status-danger mt-3 text-sm">{leadError}</p> : null}
+
+            <div className="mt-6 grid gap-3">
+              {leads.length === 0 ? (
+                <p className="surface-panel p-4 text-sm muted">
+                  Add a lead manually while ManyChat/ads ingestion is being wired.
+                </p>
+              ) : (
+                leads.map((lead) => (
+                  <article key={lead.id} className="surface-panel p-4">
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="font-semibold">{lead.displayName}</h3>
+                          <span className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] muted">
+                            {lead.status}
+                          </span>
+                          <span className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] muted">
+                            {lead.source}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-xs muted">
+                          {lead.contactHandle ? `${lead.contactHandle} · ` : ""}
+                          {lead.intent ?? "No intent captured yet"}
+                        </p>
+                        <p className="mt-1 text-xs muted">
+                          Next action: {lead.nextAction ?? "Set manually after contact"}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {quickLeadStatuses.map((status) => (
+                          <button
+                            key={status}
+                            type="button"
+                            disabled={leadStatusBusy === lead.id || lead.status === status}
+                            className={secondaryButtonSmallClass}
+                            onClick={async () => {
+                              setLeadStatusBusy(lead.id);
+                              setLeadError(null);
+                              try {
+                                await postJson(
+                                  `/api/v1/workspaces/${primaryWorkspace._id}/leads/${lead.id}/status`,
+                                  { status },
+                                  "PATCH",
+                                );
+                                await refreshLeads(primaryWorkspace._id);
+                              } catch (error) {
+                                setLeadError(error instanceof Error ? error.message : "Failed to update lead");
+                              } finally {
+                                setLeadStatusBusy(null);
+                              }
+                            }}
+                          >
+                            {status}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </article>
+                ))
+              )}
+            </div>
+          </>
+        ) : (
+          <p className="mt-6 text-sm muted">Sign in and create a workspace to start tracking leads.</p>
+        )}
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">

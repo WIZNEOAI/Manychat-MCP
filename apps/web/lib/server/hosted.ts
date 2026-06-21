@@ -84,6 +84,34 @@ export function hashHostedToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
 
+/**
+ * Shape returned by the control-plane `resolve-token` endpoint. Convex `Id` values are
+ * serialized as plain strings over HTTP, so ids are typed as `string` here.
+ */
+export type GatewayTokenRecord = {
+  tokenId: string;
+  tokenHash: string;
+  bundle: "read_only" | "operator" | "messaging_safe" | "admin";
+  workspaceId: string;
+  workspaceName: string;
+  plan: "free" | "supporter" | "pro";
+  accountId: string | null;
+  accountName: string;
+  ciphertext: string;
+  keyVersion: string;
+  limits: {
+    maxAccounts: number;
+    dailyRequests: number;
+    monthlyRequests: number;
+    maxConcurrentSessions: number;
+    maxTokens: number;
+  };
+  usage: {
+    dailyRequestCount: number;
+    monthlyRequestCount: number;
+  };
+};
+
 export function safeEqualHex(left: string, right: string): boolean {
   const leftBuffer = Buffer.from(left, "hex");
   const rightBuffer = Buffer.from(right, "hex");

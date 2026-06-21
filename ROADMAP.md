@@ -1,12 +1,14 @@
 # Roadmap
 
-Near-term focus: **beta-quality hosted MCP** plus a strong **OSS self-host** story.
+Near-term focus: **Revenue Operator** as the paid AI Revenue Ops System,
+while preserving a strong **OSS self-host runtime** for CLI and MCP users.
 
 ## In progress / beta
 
-- Dashboard: ManyChat key validation before vault, disconnect, token test, usage and audit
+- OSS runtime: CLI, MCP local/remote, and self-host deployment guides stay broadly usable
+- Revenue Operator: dashboard, ManyChat vault, handoff/routing playbooks, reporting baseline
 - Gateway: `hosted_token` mode with resolve / authorize / record
-- Docs: production deploy guides (Vercel, Convex, Railway/VPS)
+- Docs: production deploy guides (Vercel, Convex, Railway/VPS) plus operator product framing
 
 ## Next
 

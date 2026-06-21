@@ -23,22 +23,29 @@ export const ensureCurrentUser = mutation({
       throw new Error("ensureCurrentUser called without authentication");
     }
 
-    const existing = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_user", (q) => q.eq("clerkUserId", identity.subject))
-      .unique();
+    const identityKey = identity.tokenIdentifier;
+    const existing =
+      (await ctx.db
+        .query("users")
+        .withIndex("by_clerk_user", (q) => q.eq("clerkUserId", identityKey))
+        .unique()) ??
+      (await ctx.db
+        .query("users")
+        .withIndex("by_clerk_user", (q) => q.eq("clerkUserId", identity.subject))
+        .unique());
 
     let userId;
     if (existing) {
       userId = existing._id;
       await ctx.db.patch(existing._id, {
+        clerkUserId: identityKey,
         email: identity.email ?? undefined,
         name: identity.name ?? undefined,
         imageUrl: identity.pictureUrl ?? undefined,
       });
     } else {
       userId = await ctx.db.insert("users", {
-        clerkUserId: identity.subject,
+        clerkUserId: identityKey,
         email: identity.email ?? undefined,
         name: identity.name ?? undefined,
         imageUrl: identity.pictureUrl ?? undefined,
