@@ -21,7 +21,7 @@ const setupStepCopy = [
   { label: "Handoff layer ready", detail: "Prepare follow-up and operator rules next" },
 ] as const;
 
-const revenueOperatorTier = offerTiers.find((tier) => tier.name === "Revenue Operator");
+const proTier = offerTiers.find((tier) => tier.name === "Pro");
 type Bundle = "read_only" | "operator" | "messaging_safe" | "admin";
 type WorkspaceToken = {
   _id: string;
@@ -268,9 +268,9 @@ export function DashboardClient() {
             <p className="max-w-3xl text-sm leading-6 muted">
               {operatorStory.title}: {operatorStory.body}
             </p>
-            {revenueOperatorTier ? (
+            {proTier ? (
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--primary)]">
-                {revenueOperatorTier.name} · {revenueOperatorTier.setupPrice} setup · {revenueOperatorTier.monthlyPrice}
+                {proTier.name} · {proTier.monthlyPrice} · {proTier.annualPrice}
               </p>
             ) : null}
             {bootstrapError ? (

@@ -1,18 +1,21 @@
 @import "tailwindcss";
 
+/* Operator Terminal — control-room aesthetic for agent operations.
+   Single electric cyan-teal accent on warm charcoal. Distinct from
+   Depadoc (clinical) and Elderhermit (mystic green). */
 :root {
-  --background: #070807;
-  --foreground: #f4f7f2;
-  --card: #101310;
-  --surface: #151915;
-  --surface-raised: #1b211b;
-  --muted: #a4afa7;
-  --border: rgba(244, 247, 242, 0.1);
-  --border-strong: rgba(0, 255, 136, 0.34);
-  --primary: #00e37a;
-  --primary-strong: #00b865;
-  --primary-ink: #02110a;
-  --secondary: #3d453f;
+  --background: #0c0d0f;
+  --foreground: #e8ecea;
+  --card: #14161a;
+  --surface: #16191e;
+  --surface-raised: #1b1f25;
+  --muted: #8a938e;
+  --border: rgba(232, 236, 234, 0.1);
+  --border-strong: rgba(45, 226, 192, 0.32);
+  --primary: #2de2c0;
+  --primary-strong: #14b8a6;
+  --primary-ink: #04130f;
+  --secondary: #2a3138;
   --danger: #fb7185;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
@@ -39,9 +42,9 @@ html {
 
 body {
   background:
-    radial-gradient(circle at 12% 8%, rgba(0, 255, 136, 0.12), transparent 28%),
-    radial-gradient(circle at 84% 18%, rgba(110, 231, 183, 0.08), transparent 34%),
-    linear-gradient(180deg, rgba(29, 36, 31, 0.72), transparent 34%),
+    radial-gradient(circle at 12% 8%, rgba(45, 226, 192, 0.1), transparent 28%),
+    radial-gradient(circle at 84% 18%, rgba(45, 226, 192, 0.055), transparent 34%),
+    linear-gradient(180deg, rgba(20, 24, 28, 0.72), transparent 34%),
     var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
@@ -54,41 +57,41 @@ a {
 }
 
 .card {
-  background: linear-gradient(180deg, rgba(21, 25, 21, 0.96), rgba(12, 15, 13, 0.98));
+  background: linear-gradient(180deg, rgba(20, 22, 26, 0.96), rgba(11, 13, 16, 0.98));
   border: 1px solid var(--border);
   border-radius: 1.75rem;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 28px 90px rgba(0, 0, 0, 0.28);
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 28px 90px rgba(0, 0, 0, 0.32);
 }
 
 .premium-shell {
-  border: 1px solid rgba(244, 247, 242, 0.11);
+  border: 1px solid rgba(232, 236, 234, 0.11);
   border-radius: 2rem;
   background:
-    linear-gradient(180deg, rgba(244, 247, 242, 0.06), rgba(244, 247, 242, 0.018)),
-    rgba(255, 255, 255, 0.025);
+    linear-gradient(180deg, rgba(232, 236, 234, 0.05), rgba(232, 236, 234, 0.015)),
+    rgba(255, 255, 255, 0.02);
   padding: 0.42rem;
-  box-shadow: 0 26px 80px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 26px 80px rgba(0, 0, 0, 0.24);
 }
 
 .premium-core {
-  border: 1px solid rgba(244, 247, 242, 0.09);
+  border: 1px solid rgba(232, 236, 234, 0.08);
   border-radius: calc(2rem - 0.42rem);
   background:
-    radial-gradient(circle at 20% 0%, rgba(0, 255, 136, 0.1), transparent 38%),
-    linear-gradient(180deg, rgba(16, 20, 17, 0.98), rgba(8, 10, 9, 0.98));
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.08);
+    radial-gradient(circle at 20% 0%, rgba(45, 226, 192, 0.09), transparent 38%),
+    linear-gradient(180deg, rgba(20, 22, 26, 0.98), rgba(9, 11, 13, 0.98));
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.07);
 }
 
 .terminal-window {
   overflow: hidden;
-  border: 1px solid rgba(244, 247, 242, 0.11);
+  border: 1px solid rgba(232, 236, 234, 0.11);
   border-radius: 1.5rem;
   background:
-    radial-gradient(circle at 20% 0%, rgba(0, 255, 136, 0.12), transparent 32%),
-    rgba(3, 7, 5, 0.92);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    radial-gradient(circle at 20% 0%, rgba(45, 226, 192, 0.11), transparent 32%),
+    rgba(8, 10, 12, 0.92);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .cta-orb {
@@ -98,7 +101,7 @@ a {
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.14);
   transition:
     transform 180ms var(--ease-out),
     background-color 180ms var(--ease-out);
@@ -106,7 +109,7 @@ a {
 
 .group:hover .cta-orb {
   transform: translate(3px, -1px) scale(1.04);
-  background: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .muted {
@@ -126,7 +129,7 @@ a {
 }
 
 .brand-link:hover {
-  color: #6ee7b7;
+  color: #5eead4;
 }
 
 .brand-badge {
@@ -134,19 +137,19 @@ a {
   align-items: center;
   border-radius: 999px;
   border: 1px solid var(--border-strong);
-  background: rgba(16, 185, 129, 0.12);
+  background: rgba(45, 226, 192, 0.1);
   color: var(--primary);
 }
 
 .surface-panel {
   border: 1px solid var(--border);
   border-radius: 1.25rem;
-  background: linear-gradient(180deg, rgba(31, 31, 35, 0.88), rgba(17, 17, 20, 0.94));
+  background: linear-gradient(180deg, rgba(27, 31, 37, 0.88), rgba(18, 20, 24, 0.94));
 }
 
 .surface-soft {
-  border: 1px solid rgba(244, 244, 245, 0.1);
-  background: rgba(244, 244, 245, 0.04);
+  border: 1px solid rgba(232, 236, 234, 0.1);
+  background: rgba(232, 236, 234, 0.04);
 }
 
 .pricing-grid {
@@ -157,14 +160,14 @@ a {
 
 @media (min-width: 1024px) {
   .pricing-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
 
 .surface-dashed {
-  border: 1px dashed rgba(244, 244, 245, 0.16);
-  background: rgba(244, 244, 245, 0.03);
+  border: 1px dashed rgba(232, 236, 234, 0.16);
+  background: rgba(232, 236, 234, 0.03);
 }
 
 .wiz-button-primary,
@@ -196,25 +199,25 @@ a {
 }
 
 .wiz-button-primary {
-  border: 1px solid rgba(16, 185, 129, 0.35);
-  background: linear-gradient(180deg, #34d399, #10b981);
+  border: 1px solid rgba(45, 226, 192, 0.35);
+  background: linear-gradient(180deg, #2de2c0, #14b8a6);
   color: var(--primary-ink);
-  box-shadow: 0 10px 32px rgba(16, 185, 129, 0.16);
+  box-shadow: 0 10px 32px rgba(45, 226, 192, 0.18);
 }
 
 .wiz-button-primary:hover {
-  background: linear-gradient(180deg, #6ee7b7, #10b981);
+  background: linear-gradient(180deg, #5eead4, #14b8a6);
 }
 
 .wiz-button-secondary {
-  border: 1px solid rgba(244, 244, 245, 0.14);
-  background: rgba(244, 244, 245, 0.03);
+  border: 1px solid rgba(232, 236, 234, 0.14);
+  background: rgba(232, 236, 234, 0.03);
   color: var(--foreground);
 }
 
 .wiz-button-secondary:hover {
-  border-color: rgba(16, 185, 129, 0.22);
-  background: rgba(16, 185, 129, 0.07);
+  border-color: rgba(45, 226, 192, 0.24);
+  background: rgba(45, 226, 192, 0.07);
 }
 
 .wiz-button-danger {
@@ -228,48 +231,48 @@ a {
 }
 
 .wiz-input {
-  border: 1px solid rgba(244, 244, 245, 0.14);
+  border: 1px solid rgba(232, 236, 234, 0.14);
   border-radius: 0.9rem;
-  background: rgba(244, 244, 245, 0.03);
+  background: rgba(232, 236, 234, 0.03);
   color: var(--foreground);
 }
 
 .wiz-input::placeholder {
-  color: #71717a;
+  color: #6b746f;
 }
 
 .wiz-input:focus {
   outline: none;
-  border-color: rgba(16, 185, 129, 0.5);
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  border-color: rgba(45, 226, 192, 0.5);
+  box-shadow: 0 0 0 3px rgba(45, 226, 192, 0.12);
 }
 
 .wiz-callout-success {
-  border: 1px solid rgba(16, 185, 129, 0.28);
-  background: rgba(16, 185, 129, 0.1);
-  color: #d1fae5;
+  border: 1px solid rgba(45, 226, 192, 0.28);
+  background: rgba(45, 226, 192, 0.1);
+  color: #ccfbf1;
 }
 
 .wiz-callout-neutral {
-  border: 1px solid rgba(244, 244, 245, 0.12);
-  background: rgba(244, 244, 245, 0.03);
+  border: 1px solid rgba(232, 236, 234, 0.12);
+  background: rgba(232, 236, 234, 0.03);
 }
 
 .wiz-code-block {
-  border: 1px solid rgba(244, 244, 245, 0.1);
+  border: 1px solid rgba(232, 236, 234, 0.1);
   border-radius: 1rem;
-  background: rgba(3, 7, 18, 0.92);
-  color: #dfffea;
+  background: rgba(8, 10, 12, 0.94);
+  color: #ccfbf1;
 }
 
 .wiz-pre {
-  border: 1px solid rgba(244, 244, 245, 0.1);
+  border: 1px solid rgba(232, 236, 234, 0.1);
   border-radius: 1rem;
-  background: rgba(244, 244, 245, 0.03);
+  background: rgba(232, 236, 234, 0.03);
 }
 
 .status-success {
-  color: #86efac;
+  color: #5eead4;
 }
 
 .status-danger {

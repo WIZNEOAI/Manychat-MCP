@@ -12,12 +12,13 @@ vi.mock("@clerk/nextjs", () => ({
 import HomePage from "./page";
 
 describe("home page", () => {
-  it("renders the Revenue Operator story and pricing", () => {
+  it("renders the builder hero and canonical SaaS pricing", () => {
     const html = renderToStaticMarkup(<HomePage />);
-    expect(html).toContain("Your leads already exist. The problem is what happens after.");
-    expect(html).toContain("Revenue Operator");
-    expect(html).toContain("$3,500");
-    expect(html).toContain("$750/mo");
-    expect(html).toContain("Builder OSS");
+    expect(html).toContain("Give your AI agents ManyChat superpowers.");
+    expect(html).toContain("Supporter");
+    expect(html).toContain("$20/mo");
+    expect(html).toContain("Pro");
+    expect(html).toContain("$79/mo");
+    expect(html).not.toContain("$3,500");
   });
 });

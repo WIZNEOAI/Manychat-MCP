@@ -17,7 +17,7 @@ import {
 import { REPO_TREE_BASE } from "@/lib/repo";
 
 export default function Home() {
-  const operatorTier = offerTiers.find((tier) => tier.name === "Revenue Operator");
+  const operatorTier = offerTiers.find((tier) => tier.name === "Pro");
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-24 px-4 py-12 md:px-6 md:py-20">
@@ -160,11 +160,11 @@ export default function Home() {
                   <div>
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] muted">{tier.name}</p>
                     <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-2">
-                      <h3 className="text-5xl font-semibold tracking-tight">{tier.setupPrice ?? "Free"}</h3>
-                      {tier.monthlyPrice ? <p className="text-sm font-medium text-[var(--primary)]">{tier.monthlyPrice}</p> : null}
+                      <h3 className="text-5xl font-semibold tracking-tight">{tier.monthlyPrice}</h3>
+                      {tier.annualPrice !== tier.monthlyPrice ? <p className="text-sm font-medium text-[var(--primary)]">{tier.annualPrice}</p> : null}
                     </div>
                   </div>
-                  <PricingBadge>{tier.badge ?? tier.cta}</PricingBadge>
+                  {tier.badge ? <PricingBadge>{tier.badge}</PricingBadge> : null}
                 </div>
                 <p className="text-base leading-7 muted">{tier.audience}</p>
                 <ul className="grid gap-3 text-sm leading-6 muted">
@@ -209,7 +209,7 @@ export default function Home() {
             <div>
               <p className="brand-kicker text-xs">Revenue Operator offer</p>
               <h2 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">
-                Book the implementation layer, not just access to software.
+                Hosted plans that scale from solo builder to multi-brand agency.
               </h2>
             </div>
             <p className="text-lg leading-8 muted">{operatorStory.body}</p>
@@ -221,10 +221,10 @@ export default function Home() {
               ))}
             </div>
             <div className="surface-dashed rounded-3xl px-5 py-5 text-sm leading-6 muted">
-              Setup: {operatorTier?.setupPrice ?? "—"} · Retainer: {operatorTier?.monthlyPrice ?? "—"}
+              {operatorTier?.name ?? "Pro"}: {operatorTier?.monthlyPrice ?? "—"} · {operatorTier?.annualPrice ?? "—"}
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
-              <CtaLink href="#operator-offer">{operatorTier?.cta ?? "Contact sales"}</CtaLink>
+              <CtaLink href="#operator-offer">Compare plans</CtaLink>
               <CtaLink href="/docs#product" variant="secondary">
                 See hosted control plane
               </CtaLink>

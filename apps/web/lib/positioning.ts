@@ -1,67 +1,62 @@
 import { docsLinks, pricingTiers, productSurfaces } from "./site-data-shared";
 
 export const heroContent = {
-  eyebrow: "Revenue Operator System",
-  title: "Your leads already exist. The problem is what happens after.",
+  eyebrow: "Open-source · ManyChat MCP",
+  title: "Give your AI agents ManyChat superpowers.",
   body:
-    "We build an AI Revenue Ops System so your social, chat, and ad leads do not go cold, get routed correctly, and turn into real booked conversations.",
-  primaryCta: "Book strategy call",
-  secondaryCta: "See how the system works",
+    "An MCP that lets Claude, Cursor, and Codex operate your ManyChat — with a policy guard that stops them from breaking Meta's rules and getting your page flagged. Open-source. Bring your own API key.",
+  primaryCta: "Install in 60 seconds",
+  secondaryCta: "See the safety layer",
   railLabels: [
-    "ManyChat",
-    "WhatsApp / Capso",
-    "n8n",
-    "Meta Ads",
-    "Google Ads",
-    "Human Handoff",
+    "Claude",
+    "Cursor",
+    "Codex",
+    "CLI",
+    "MCP",
+    "Self-host",
   ],
 } as const;
 
 export const buyerPainCards = [
   {
-    title: "Lead response dies in the gap",
+    title: "Raw API tools get accounts flagged",
     body:
-      "Clicks and DMs come in, but nobody owns the first five minutes, so high-intent leads sit too long and the conversation cools off.",
+      "An agent wired straight to the ManyChat API will happily message outside the 24-hour window. Meta flags the page, and the number that drives your revenue goes cold.",
   },
   {
-    title: "Channels break the handoff",
+    title: "Every other integration is a thin wrapper",
     body:
-      "ManyChat, WhatsApp, forms, and ad campaigns each do part of the job, but the follow-up logic and reporting live in different places.",
+      "The existing ManyChat MCPs hand an agent naked tools with zero Meta-policy awareness, no structure, and no safety. Powerful and dangerous in the same breath.",
   },
   {
-    title: "Operators cannot trust the system",
+    title: "Connecting agents should take a minute",
     body:
-      "Without clear routing, guardrails, and human takeover points, teams either spam too early or miss qualified buyers entirely.",
+      "Paste one snippet, install the skill, and your agent operates ManyChat correctly — validating every send against policy before it goes out.",
   },
 ] as const;
 
-export const offerTiers: Array<{
+// Single pricing source: derive the landing offer cards from the canonical
+// SaaS tiers (Free / Supporter / Pro) so the landing, dashboard, and docs never
+// drift from the prices Stripe actually charges.
+export type OfferTier = {
   name: string;
-  setupPrice: string | null;
-  monthlyPrice: string | null;
+  monthlyPrice: string;
+  annualPrice: string;
   audience: string;
-  bullets: string[];
+  bullets: readonly string[];
   cta: string;
   badge?: string;
-}> = [
-  {
-    name: "Builder OSS",
-    setupPrice: null,
-    monthlyPrice: null,
-    audience: "Developers, operators, and internal agent workflows.",
-    bullets: ["Open-source CLI", "MCP server", "Self-host docs", "Bring-your-own infra"],
-    cta: "Use the OSS core",
-  },
-  {
-    name: "Revenue Operator",
-    setupPrice: "$3,500",
-    monthlyPrice: "$750/mo",
-    audience: "One business that needs faster response, cleaner handoff, and fewer lost leads.",
-    bullets: ["1 workspace", "ManyChat rail", "WhatsApp handoff", "Reporting baseline"],
-    cta: "Book Operator setup",
-    badge: "Recommended",
-  },
-] as const;
+};
+
+export const offerTiers: readonly OfferTier[] = pricingTiers.map((tier) => ({
+  name: tier.name,
+  monthlyPrice: tier.monthlyPrice,
+  annualPrice: tier.annualPrice,
+  audience: tier.tagline,
+  bullets: tier.limits,
+  cta: tier.cta,
+  badge: tier.name === "Supporter" ? "Recommended" : undefined,
+}));
 
 export const ossStory = {
   title: "Builder OSS",
