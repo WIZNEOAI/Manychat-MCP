@@ -11,15 +11,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npm ci --prefix apps/web
-      - run: npm run lint
-      - run: npm run build
-      - run: npm test
-      - run: npm run web:lint
-      - run: npm run web:test
-      - run: npm run web:build
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run lint
+      - run: pnpm run build
+      - run: pnpm test
+      - run: pnpm run web:lint
+      - run: pnpm run web:test
+      - run: pnpm run web:build
