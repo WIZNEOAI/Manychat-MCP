@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { getPriceId, getTierFromPriceId } from "./stripeTiers.js";
+import { getPriceId, getTierFromPriceId, resolvePaidTier } from "./stripeTiers.js";
 
 const ENV_KEYS = [
   "STRIPE_SUPPORTER_MONTHLY_PRICE_ID",
@@ -40,5 +40,21 @@ describe("stripeTiers", () => {
 
   it("returns null for an unknown price id", () => {
     expect(getTierFromPriceId("price_unknown")).toBeNull();
+  });
+
+  describe("resolvePaidTier", () => {
+    it("resolves from the price id when known", () => {
+      expect(resolvePaidTier({ priceId: "price_pro_m" })).toBe("pro");
+      expect(resolvePaidTier({ priceId: "price_sup_y" })).toBe("supporter");
+    });
+
+    it("falls back to metadata tier when the price is unmapped", () => {
+      expect(resolvePaidTier({ priceId: "price_unknown", metadataTier: "pro" })).toBe("pro");
+    });
+
+    it("defaults to supporter (never over-grants) when nothing resolves", () => {
+      expect(resolvePaidTier({ priceId: "price_unknown" })).toBe("supporter");
+      expect(resolvePaidTier({})).toBe("supporter");
+    });
   });
 });

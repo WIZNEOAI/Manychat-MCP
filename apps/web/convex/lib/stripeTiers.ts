@@ -42,3 +42,20 @@ export function getTierFromPriceId(priceId: string): PaidTier | null {
   }
   return null;
 }
+
+/**
+ * Resolve the paid tier for an active subscription. Prefers the price id;
+ * falls back to the `tier` stamped into subscription metadata at checkout;
+ * defaults to the lower paid tier so an unmapped price never over-grants.
+ */
+export function resolvePaidTier(opts: {
+  priceId?: string | null;
+  metadataTier?: string | null;
+}): PaidTier {
+  const fromPrice = opts.priceId ? getTierFromPriceId(opts.priceId) : null;
+  if (fromPrice) return fromPrice;
+  if (opts.metadataTier === "supporter" || opts.metadataTier === "pro") {
+    return opts.metadataTier;
+  }
+  return "supporter";
+}

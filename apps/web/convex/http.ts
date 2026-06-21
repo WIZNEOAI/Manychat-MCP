@@ -4,18 +4,30 @@ import { components, internal } from "./_generated/api";
 import { httpAction } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { constantTimeEqual } from "./hosted";
+import { resolvePaidTier } from "./lib/stripeTiers";
+
+type SubscriptionEventObject = {
+  metadata?: Record<string, string> | null;
+  status: string;
+  customer: string | { id?: string } | null;
+  items?: { data?: Array<{ price?: { id?: string | null } | null } | null> } | null;
+};
 
 async function syncWorkspacePlanFromSubscription(
   ctx: GenericActionCtx<GenericDataModel>,
-  sub: { metadata?: Record<string, string> | null; status: string; customer: string | { id?: string } | null },
+  sub: SubscriptionEventObject,
 ) {
   const workspaceId = sub.metadata?.workspaceId;
   if (!workspaceId || typeof workspaceId !== "string") {
     return;
   }
-  const status = sub.status;
-  const plan =
-    status === "active" || status === "trialing" ? ("pro" as const) : ("free" as const);
+  const active = sub.status === "active" || sub.status === "trialing";
+  const plan: "free" | "supporter" | "pro" = active
+    ? resolvePaidTier({
+        priceId: sub.items?.data?.[0]?.price?.id,
+        metadataTier: sub.metadata?.tier,
+      })
+    : "free";
   let customerId: string | undefined;
   if (typeof sub.customer === "string") {
     customerId = sub.customer;
