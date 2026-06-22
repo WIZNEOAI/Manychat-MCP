@@ -32,7 +32,7 @@ pnpm run convex:dev   # convex dev server
 ```
 src/
 ├── index.ts              # CLI entry (shebang), routes "mcp serve" to HTTP
-├── server.ts             # MCP server factory: 24 tools (incl. validate_message wedge) + 6 prompts + 8 resources
+├── server.ts             # MCP server factory: 28 tools (incl. validate_message wedge) + 6 prompts + 8 resources
 ├── product.ts            # Version constant
 ├── cli/app.ts            # CLI router (1,254 lines): doctor|page|tags|fields|flows|subscribers|send|raw
 ├── auth/
