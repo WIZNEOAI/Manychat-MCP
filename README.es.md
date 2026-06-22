@@ -70,12 +70,12 @@ Los modos remoto (HTTP) y hosted-token están en [`docs/connect/mcp-clients.md`]
 
 ## Qué obtiene tu agente
 
-**24 tools** — toda la superficie de operación:
+**28 tools** — toda la superficie de operación:
 
 | Grupo | Tools |
 |---|---|
-| Página y política | `get_page_info`, `validate_message` (el wedge de política), `list_bot_fields`, `set_bot_field`, `list_growth_tools`, `list_otn_topics` |
-| Suscriptores | `get_subscriber`, `create_subscriber`, `update_subscriber`, `add_tag_to_subscriber`(`_by_name`), `remove_tag_from_subscriber`(`_by_name`) |
+| Página y política | `get_page_info`, `validate_message` (el wedge de política), `health_check`, `list_bot_fields`, `set_bot_field`, `list_growth_tools`, `list_otn_topics` |
+| Suscriptores | `get_subscriber`, `find_subscriber_by_email`, `find_subscriber_by_phone`, `find_subscriber_by_name`, `create_subscriber`, `update_subscriber`, `add_tag_to_subscriber`(`_by_name`), `remove_tag_from_subscriber`(`_by_name`) |
 | Tags | `list_tags`, `create_tag` |
 | Custom fields | `list_custom_fields`, `create_custom_field`, `set_custom_field`(`_by_name`), `set_custom_fields_bulk` |
 | Flows | `list_flows`, `send_flow` |
