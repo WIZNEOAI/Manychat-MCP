@@ -29,7 +29,7 @@ export default function SignUpPage() {
               Supporter plan at $20/month through the official Convex Stripe component.
             </div>
             <div className="surface-soft rounded-2xl px-4 py-4">
-              Railway hosts the MCP gateway while Vercel serves the app and API routes.
+              EasyPanel/VPS hosts the MCP gateway while Vercel serves the app and API routes.
             </div>
           </div>
         </section>
