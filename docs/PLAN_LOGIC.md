@@ -69,5 +69,5 @@ Independent of customer count (only paid once at scale):
 ## 5. Notes / guardrails
 
 - Free tier is a deliberate loss-leader; the 250/day · 3,000/mo cap bounds its cost. Watch abuse (multiple free workspaces per identity).
-- The done-for-you **Revenue Operator** engagement (~$3,500) is a **secondary CTA outside self-serve** — not a tier here. Do **not** reintroduce the old high-ticket self-serve model.
+- The done-for-you **Revenue Operator** managed service is **$3,500 USD/month** (month-to-month), sold via payment link/invoice after a call — a **secondary CTA outside self-serve**, not a tier here. Post-payment: confirmation email + Cal.com kickoff booking. See [`launch/PRODUCT_ARCHITECTURE.md`](launch/PRODUCT_ARCHITECTURE.md). This managed service is distinct from the old prohibited "$3,500 setup + $750/mo self-serve high-ticket tier" (still do not reintroduce *that*).
 - These are estimates; revisit if Convex usage per active workspace turns out higher than expected (usage/audit writes are the main driver).
