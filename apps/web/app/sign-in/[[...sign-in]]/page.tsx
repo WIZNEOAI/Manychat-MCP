@@ -18,7 +18,7 @@ export default function SignInPage() {
           </h1>
           <p className="mt-4 max-w-2xl text-lg leading-8 muted">
             Clerk handles account access, Convex stores the workspace state, and
-            the hosted MCP gateway on Railway uses product tokens so your AI
+            the hosted MCP gateway on EasyPanel/VPS uses product tokens so your AI
             clients never need the raw ManyChat API key.
           </p>
           <div className="mt-6 grid gap-3 text-sm leading-6 muted">

@@ -52,7 +52,7 @@ export function HomeAuthCard() {
             </SignInButton>
             <div className="surface-soft rounded-2xl px-4 py-4 text-sm leading-6 muted">
               Use the dashboard to connect Clerk, Convex, Stripe, and the hosted
-              Railway MCP gateway. The OSS CLI still works with no account.
+              EasyPanel/VPS MCP gateway. The OSS CLI still works with no account.
             </div>
           </div>
         ) : (
