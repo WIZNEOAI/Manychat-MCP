@@ -9,3 +9,4 @@ package-lock.json
 apps/web/playwright/
 apps/web/test-results/
 apps/web/playwright-report/
+.gstack/
