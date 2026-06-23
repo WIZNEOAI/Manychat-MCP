@@ -11,7 +11,7 @@ Modeled on the `czlonkowski/n8n-mcp` pattern (OSS server + a free hosted instanc
 |---|---|---|---|
 | **1. OSS wedge — "ManyChat MCP"** | The public repo. Devs self-host, bring their own ManyChat key, connect their own local agent (stdio). Free forever. | Builders who want to run it themselves; SEO/discovery via MCP directories. | $0 directly — it's distribution. Feeds layers 2 & 3. |
 | **2. Hosted instance — the connect endpoint** | Sign in, paste your ManyChat key once (encrypted vault), and connect Codex / Claude Code / Cursor **via OAuth — zero config, no server to run.** | Builders who don't want to self-host. The "no configurás ni verga" path. | Free / Supporter / Pro subscriptions. |
-| **3. Revenue Operator — the service/brand** | Not "the ManyChat MCP". Agents that operate a client's **social + business**, leveraging the whole stack (Composio, ManyChat, voice, content). ManyChat MCP is **connector #1**. | Operators/agencies who want outcomes, not tools. | Subscriptions + the **done-for-you (~$3,500)** high-ticket. |
+| **3. Revenue Operator — the service/brand** | Not "the ManyChat MCP". Agents that operate a client's **social + business**, leveraging the whole stack (Composio, ManyChat, voice, content). ManyChat MCP is **connector #1**. | Operators/agencies who want outcomes, not tools. | Subscriptions + the **done-for-you ($3,500/mo)** high-ticket. |
 
 **The funnel:** OSS brings devs → the hosted instance hooks them (zero setup) → Revenue Operator upsells them to "agents that run my business." Aligns to the $10k/mo target: OSS = inbound, hosted = conversion, done-for-you = high-ticket.
 
@@ -53,9 +53,31 @@ Value axis evolves from "ManyChat accounts" → **connectors + agent operations 
 | Accounts / limits | 1 · low | 3 · high | 20 · max | — |
 | Governance | — | audit + policy-guard logging | team seats + RBAC + multi-workspace | managed by us |
 | Agent ops | hosted connect | daily use | agency scale | we build & run the agents |
-| Price | $0 | $20 / $209 | $79 / $790 | ~$3,500 |
+| Price | $0 | $20 / $209 | $79 / $790 | **$3,500/mo** |
 
 (Canonical limits stay in `apps/web/lib/site-data-shared.ts`; economics in [`PLAN_LOGIC.md`](../PLAN_LOGIC.md).)
+
+## Revenue Operator — Done-for-You ($3,500/mo)
+
+The high-ticket, fully-managed offer. **$3,500 USD / month**, month-to-month. Not self-serve checkout — sold via a payment link / invoice we send after a call.
+
+**What it includes (DRAFT — confirm with Ulises):**
+- **Initial kickoff session** — we map your funnel, accounts, and goals.
+- **We build + run the agents** that operate your social + business — hands-off for you.
+- **ManyChat fully automated, policy-safe** (no account flags): capture → qualify → nurture → recover.
+- **Multi-connector via Composio** (DMs, IG, email, CRM, calendar) wired to your agents.
+- **Voice (ElevenLabs) + content** assist where it fits.
+- **Hosted Pro tier included** (vault, tokens, multi-workspace, full audit).
+- **Weekly optimization + monthly performance report.**
+- **Direct/priority support** line.
+
+**Post-payment flow (the fulfillment):**
+1. Client pays the $3,500/mo (Stripe payment link / invoice).
+2. **Confirmation email** sent (Resend).
+3. **Booking link for the initial session** (Cal.com — a "Revenue Operator kickoff" event) so they schedule with Ulises.
+- MVP wiring: Stripe payment link → after-payment **redirect to the Cal kickoff** + Stripe's receipt. Richer: Stripe webhook → Resend custom email + Cal link.
+
+> Note: this **$3,500/mo managed service** is distinct from — and supersedes — the old prohibited "$3,500 setup + $750/mo self-serve high-ticket *tier*". It's a service, not a self-serve plan; the SaaS tiers (Free/Supporter/Pro) stay as-is.
 
 ## Legal posture (brand)
 
