@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
+    "e2e": "playwright test",
     "convex:dev": "convex dev",
     "convex:deploy": "convex deploy",
     "convex:codegen": "convex codegen"
