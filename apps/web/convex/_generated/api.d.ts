@@ -14,6 +14,7 @@ import type * as emails from "../emails.js";
 import type * as hosted from "../hosted.js";
 import type * as http from "../http.js";
 import type * as leads from "../leads.js";
+import type * as lib_stripeTiers from "../lib/stripeTiers.js";
 import type * as stripeActions from "../stripeActions.js";
 import type * as users from "../users.js";
 
@@ -30,6 +31,7 @@ declare const fullApi: ApiFromModules<{
   hosted: typeof hosted;
   http: typeof http;
   leads: typeof leads;
+  "lib/stripeTiers": typeof lib_stripeTiers;
   stripeActions: typeof stripeActions;
   users: typeof users;
 }>;
