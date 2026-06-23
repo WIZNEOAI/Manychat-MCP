@@ -19,6 +19,8 @@ describe("home page", () => {
     expect(html).toContain("$20/mo");
     expect(html).toContain("Pro");
     expect(html).toContain("$79/mo");
-    expect(html).not.toContain("$3,500");
+    // Done-for-you managed service (Revenue Operator) is intentionally on the landing.
+    expect(html).toContain("$3,500");
+    expect(html).toContain("Done-for-you");
   });
 });

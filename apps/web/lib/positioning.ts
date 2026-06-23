@@ -70,3 +70,26 @@ export const operatorStory = {
     "The paid layer is not generic hosting. It is an implementation and accountability layer around real lead response, routing, and booked-conversation outcomes.",
   bullets: [productSurfaces[3].name, pricingTiers[1].name, docsLinks[3].title],
 } as const;
+
+// Done-for-you managed service (Revenue Operator). The CTA points at the live
+// Stripe payment link; paying redirects to the kickoff booking. Public URL, not a secret.
+export const doneForYou = {
+  eyebrow: "Done-for-you · Revenue Operator",
+  title: "Don't want to run it? We operate your revenue for you.",
+  price: "$3,500",
+  cadence: "/mo",
+  body:
+    "Fully managed, month-to-month. We build and run the agents that operate your social and business — ManyChat automated and policy-safe, with the rest of your stack wired in. You configure nothing.",
+  includes: [
+    "Kickoff session — we map your funnel, accounts, and goals",
+    "We build and run the agents — hands-off for you",
+    "ManyChat automated, policy-safe: capture → qualify → nurture → recover",
+    "Multi-connector via Composio: DMs, email, CRM, calendar",
+    "Voice and content where it moves the number",
+    "Hosted Pro included: vault, tokens, multi-workspace, full audit",
+    "Weekly optimization, monthly report, and a direct support line",
+  ],
+  cta: "Start — $3,500/mo",
+  ctaHref: "https://buy.stripe.com/9B6eVcfLOcl22jI9fkbbG0a",
+  note: "Pay and book your kickoff call in the same flow. Cancel anytime.",
+} as const;
