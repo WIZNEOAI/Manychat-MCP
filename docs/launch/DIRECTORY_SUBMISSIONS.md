@@ -91,7 +91,7 @@ Largest by raw count. **Manual submit.** Required info: server name, one-sentenc
   - Name: **ManyChat MCP**
   - Description: *Give your AI agents ManyChat superpowers, with a built-in Meta policy-validation guard.*
   - Tools: **28** · Transports: **stdio + Streamable HTTP** · License: **AGPL-3.0**
-  - Repo: `https://github.com/WIZNEOAI/Manychat-MCP` · Homepage: `https://manychat.wizneo.org` (after E)
+  - Repo: `https://github.com/WIZNEOAI/Manychat-MCP` · Homepage: `https://revenueoperator.wizneo.org` (after E)
 - No npm/deploy strictly needed, but a live homepage (E) makes a stronger listing.
 
 ## 6. awesome-mcp-servers (punkpeye)
