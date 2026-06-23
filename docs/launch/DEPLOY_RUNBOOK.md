@@ -1,4 +1,4 @@
-# Deploy runbook — production (`manychat.wizneo.org`)
+# Deploy runbook — production (`revenueoperator.wizneo.org`)
 
 > **Prep doc — nothing here is executed yet.** Every step marked **[GATE]** needs Ulises' explicit OK
 > (deploy, DNS, Stripe LIVE, secrets). Builds on the per-component docs in [`docs/deploy/`](../deploy/);
@@ -7,10 +7,10 @@
 ## Topology
 
 ```
-Agent client ──Bearer mcp_live_…──▶  Gateway (EasyPanel/VPS)         mcp.manychat.wizneo.org
+Agent client ──Bearer mcp_live_…──▶  Gateway (EasyPanel/VPS)         mcp.wizneo.org
                                        │  hosted_token mode
                                        ▼  x-manychat-internal-secret
-                                     Next.js app (Vercel, apps/web)   manychat.wizneo.org
+                                     Next.js app (Vercel, apps/web)   revenueoperator.wizneo.org
                                        │  x-control-plane-secret
                                        ▼
                                      Convex prod (.cloud / .site)     <prod>.convex.cloud
@@ -19,15 +19,17 @@ Agent client ──Bearer mcp_live_…──▶  Gateway (EasyPanel/VPS)        
                                      Stripe LIVE  ·  Clerk prod
 ```
 
-- **App** (landing/docs/dashboard) → Vercel, root dir `apps/web`, domain `manychat.wizneo.org`.
-- **Gateway** (multi-tenant MCP resolver) → EasyPanel/VPS container, domain `mcp.manychat.wizneo.org`. **Railway retired.**
+- **App** (landing/docs/dashboard) → Vercel, root dir `apps/web`, domain `revenueoperator.wizneo.org`.
+- **Gateway** (multi-tenant MCP resolver) → EasyPanel/VPS container, domain `mcp.wizneo.org`. **Railway retired.**
 - **Backend** → new **Convex prod** deployment. Stripe **LIVE**, Clerk **prod** instance.
 
-## Decisions to confirm before starting
+## Decisions (resolved — see [`PRODUCT_ARCHITECTURE.md`](./PRODUCT_ARCHITECTURE.md))
 
-1. Gateway subdomain: **`mcp.manychat.wizneo.org`** (proposed). OK?
-2. Brand of the public surface under wizneo.org: keep **Operator Terminal** theme (charcoal/cyan) or adopt WIZNEO Matrix `#00FF88`? (Open question from the kickoff.)
-3. Artifact for npm/official-registry later (milestone D): re-publish `manychat` to npm, or remote-only.
+1. **Domains:** landing/app = `revenueoperator.wizneo.org`, gateway/MCP endpoint = `mcp.wizneo.org`. ✅
+2. **Brand:** keep **Operator Terminal** (charcoal/cyan); switch to WIZNEO Matrix only on Ulises' call. ✅
+3. **Brand/legal:** product = **Revenue Operator** (ours); "ManyChat" used descriptively only. ✅
+
+Still open: artifact for npm/official-registry later (milestone D) — re-publish `manychat` to npm, or remote-only.
 
 ## ⚠️ Footgun: one shared secret, three names
 
@@ -57,7 +59,7 @@ The gateway↔app↔Convex internal hops use **the same secret value** under **d
    - `CLERK_JWT_ISSUER_DOMAIN` = Clerk **prod** issuer host (Step 2).
    - `MCP_INTERNAL_SHARED_SECRET` = **S**.
    - `VAULT_MASTER_KEY`.
-   - `PUBLIC_APP_URL` = `https://manychat.wizneo.org`.
+   - `PUBLIC_APP_URL` = `https://revenueoperator.wizneo.org`.
    - **Stripe LIVE**: `STRIPE_SECRET_KEY` (sk_live), `STRIPE_WEBHOOK_SECRET` (whsec live), and the **4 LIVE price IDs**:
      `STRIPE_SUPPORTER_MONTHLY_PRICE_ID`, `STRIPE_SUPPORTER_ANNUAL_PRICE_ID`, `STRIPE_PRO_MONTHLY_PRICE_ID`, `STRIPE_PRO_ANNUAL_PRICE_ID`.
      ⚠️ These are the **live** prices, NOT the sandbox `price_1Tko…` ones used in dev. (See the dev-side bug we already fixed — same class of mistake, mirror it correctly for live.)
@@ -66,7 +68,7 @@ The gateway↔app↔Convex internal hops use **the same secret value** under **d
 ### Step 2 — Clerk prod instance **[GATE]**
 1. Create/confirm the **production** Clerk instance.
 2. JWT template named **`convex`** → copy issuer domain into Convex `CLERK_JWT_ISSUER_DOMAIN`.
-3. Allowed origins/redirects: `https://manychat.wizneo.org` (+ localhost for dev).
+3. Allowed origins/redirects: `https://revenueoperator.wizneo.org` (+ localhost for dev).
 4. Get `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (pk_live) + `CLERK_SECRET_KEY` (sk_live) for Vercel.
 
 ### Step 3 — Stripe LIVE **[GATE — Ulises]**
@@ -82,8 +84,8 @@ The gateway↔app↔Convex internal hops use **the same secret value** under **d
    - `NEXT_PUBLIC_CONVEX_URL` = `https://<prod>.convex.cloud`.
    - `MCP_INTERNAL_SHARED_SECRET` = **S**.
    - `VAULT_MASTER_KEY`.
-   - `NEXT_PUBLIC_MCP_HTTP_URL` = `https://mcp.manychat.wizneo.org/mcp` ← **don't forget this** (dashboard copy-snippets fall back to `mcp.example.com` if unset — this exact gap bit a prior deploy).
-3. Add domain `manychat.wizneo.org`. Deploy. Confirm `● Ready` in Vercel before calling it done.
+   - `NEXT_PUBLIC_MCP_HTTP_URL` = `https://mcp.wizneo.org/mcp` ← **don't forget this** (dashboard copy-snippets fall back to `mcp.example.com` if unset — this exact gap bit a prior deploy).
+3. Add domain `revenueoperator.wizneo.org`. Deploy. Confirm `● Ready` in Vercel before calling it done.
 
 ### Step 5 — DNS Hostinger (wizneo.org) **[GATE]**
 Draft records (apply via `/hostinger-dns` skill or the Hostinger API token in `/root/.hermes/.env`, never printing it):
@@ -100,8 +102,8 @@ Build from the repo `Dockerfile` (pnpm, Node 22, exposes :3000, `CMD node dist/m
 ```
 NODE_ENV=production
 MCP_REMOTE_AUTH=hosted_token
-MCP_BASE_URL=https://mcp.manychat.wizneo.org
-HOSTED_CONTROL_PLANE_URL=https://manychat.wizneo.org
+MCP_BASE_URL=https://mcp.wizneo.org
+HOSTED_CONTROL_PLANE_URL=https://revenueoperator.wizneo.org
 HOSTED_CONTROL_PLANE_SECRET=<S>          # same value as app/convex MCP_INTERNAL_SHARED_SECRET
 PORT=3000
 ```
@@ -109,9 +111,9 @@ PORT=3000
 - Forward `POST/GET/DELETE /mcp` + `GET /health`; do not cache `/mcp`.
 
 ### Step 7 — Verify **[GATE-free once deployed]**
-1. `curl -fsS https://mcp.manychat.wizneo.org/health` → 200.
+1. `curl -fsS https://mcp.wizneo.org/health` → 200.
 2. MCP handshake against prod gateway (hosted token): `initialize` + `tools/list` → 28 tools.
-3. App: `/`, `/docs`, `/sign-in`, `/dashboard` load; dashboard snippet shows `mcp.manychat.wizneo.org` (not example.com).
+3. App: `/`, `/docs`, `/sign-in`, `/dashboard` load; dashboard snippet shows `mcp.wizneo.org` (not example.com).
 4. Billing live: one real subscription (Ulises / real card) → confirm `workspace.plan` flips → refund. (We already proved the webhook path E2E in sandbox.)
 5. `gstack` smoke on the public app.
 
