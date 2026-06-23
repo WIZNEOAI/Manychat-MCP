@@ -18,6 +18,7 @@
     "web:start": "pnpm -C apps/web run start",
     "web:lint": "pnpm -C apps/web run lint",
     "web:test": "pnpm -C apps/web run test",
+    "web:e2e": "pnpm -C apps/web run e2e",
     "convex:dev": "pnpm -C apps/web run convex:dev",
     "convex:deploy": "pnpm -C apps/web run convex:deploy",
     "dev": "tsx src/index.ts",
