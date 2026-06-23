@@ -47,6 +47,10 @@ MANYCHAT_API_KEY=mc_...
 MANYCHAT_MCP_TOKEN=your-issued-bearer-token
 ```
 
+> **Hosted (Revenue Operator):** use `MANYCHAT_MCP_URL=https://mcp.wizneo.org/mcp` and the
+> `MANYCHAT_MCP_TOKEN` you issue from the dashboard. `mcp.example.com` is the generic
+> placeholder for **self-hosted** gateways — replace it with your own domain.
+
 For the hosted SaaS path, `MANYCHAT_MCP_TOKEN` is the main client credential.
 The ManyChat API key stays in the hosted vault and is never pasted into Claude,
 Cursor, or Codex.
