@@ -9,6 +9,7 @@ import {
 } from "@/components/landing-primitives";
 import {
   buyerPainCards,
+  doneForYou,
   heroContent,
   offerTiers,
   operatorStory,
@@ -182,6 +183,43 @@ export default function Home() {
               </div>
             </AccentCard>
           ))}
+        </div>
+      </section>
+
+      <section id="done-for-you" className="space-y-8">
+        <SectionHeader
+          eyebrow={doneForYou.eyebrow}
+          title={doneForYou.title}
+          body={doneForYou.body}
+          align="split"
+        />
+        <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+          <AccentCard>
+            <div className="flex h-full flex-col justify-between gap-8 p-7 md:p-9">
+              <div>
+                <PricingBadge>Highest leverage</PricingBadge>
+                <div className="mt-6 flex items-baseline gap-2">
+                  <h3 className="text-6xl font-semibold tracking-tight">{doneForYou.price}</h3>
+                  <span className="text-lg muted">{doneForYou.cadence}</span>
+                </div>
+                <p className="mt-5 text-base leading-7 muted">{doneForYou.note}</p>
+              </div>
+              <ExternalCta href={doneForYou.ctaHref} target="_blank" rel="noreferrer">
+                {doneForYou.cta}
+              </ExternalCta>
+            </div>
+          </AccentCard>
+          <div className="card p-7 md:p-9">
+            <p className="brand-kicker text-xs">What it includes</p>
+            <ul className="mt-6 grid gap-3 text-sm leading-6">
+              {doneForYou.includes.map((item) => (
+                <li key={item} className="surface-soft flex gap-3 rounded-2xl px-4 py-4">
+                  <span className="text-[var(--primary)]">—</span>
+                  <span className="text-[var(--foreground)]">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </section>
 
