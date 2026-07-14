@@ -74,6 +74,6 @@ export const leadStatusUpdateBodySchema = z.object({
   nextActionAt: z.number().int().positive().optional(),
 });
 export function schemaErrorMessage(error: z.ZodError): string {
-  const first = error.errors[0];
+  const first = error.issues[0];
   return first ? `${first.path.join(".")}: ${first.message}` : "Invalid request body.";
 }
