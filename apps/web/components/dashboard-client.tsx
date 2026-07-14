@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { DashboardLoadedView } from "@/components/dashboard-loaded-view";
 import { offerTiers, operatorStory } from "@/lib/positioning";
 import { pricingTiers } from "@/lib/site-data";
 
@@ -258,7 +259,7 @@ export function DashboardClient() {
         : viewer.email ?? viewer.name ?? viewer.clerkUserId;
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-12">
+    <DashboardLoadedView>
       <section className="card p-8 md:p-10">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="space-y-3">
@@ -1056,6 +1057,6 @@ export function DashboardClient() {
           </div>
         </article>
       </section>
-    </div>
+    </DashboardLoadedView>
   );
 }
