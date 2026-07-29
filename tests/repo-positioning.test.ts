@@ -6,14 +6,24 @@ function readRepoFile(path: string) {
 }
 
 describe("repo positioning docs", () => {
-  it("describes the repo as OSS wedge plus Revenue Ops product", () => {
+  // Guards the positioning, not the wording. Assert the claims the README has to
+  // keep making; leave the copy free to change. The earlier version pinned exact
+  // sentences and went stale the first time the README was rewritten.
+  it("describes the repo as OSS runtime plus paid Revenue Operator", () => {
     const readme = readRepoFile("README.md");
 
-    expect(readme).toContain("Revenue Ops System");
-    expect(readme).toContain("keep the OSS runtime broadly usable");
+    // The paid product exists and is named.
     expect(readme).toContain("Revenue Operator");
-    expect(readme).toContain("## OSS vs paid product");
-    expect(readme).toContain("- Paid product: operator dashboard, vault, playbooks, routing, handoff, reporting");
+    expect(readme).toContain("## Hosted (Revenue Operator)");
+
+    // The OSS runtime stays free and self-hostable — not a gated demo.
+    expect(readme).toMatch(/self-host/i);
+    expect(readme).toContain("The OSS runtime is never a gated demo.");
+    expect(readme).toContain("## Self-host the gateway");
+
+    // The differentiator we actually defend.
+    expect(readme).toContain("## The policy wedge");
+    expect(readme).toMatch(/validate_message/);
   });
 
   it("keeps contribution guidance explicit about the OSS story", () => {
