@@ -1,24 +1,20 @@
 import { z } from "zod";
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 
 export function registerPrompts(server: McpServer) {
-  server.prompt(
-    "onboard_subscriber",
-    "Step-by-step onboarding for a new lead. Guides the agent through tagging, setting custom fields, and triggering the right flow.",
-    {
-      subscriber_id: z.string().describe("The subscriber ID to onboard"),
-      context: z
-        .string()
-        .optional()
-        .describe("Additional context about the lead (source, interests, etc.)"),
-    },
-    ({ subscriber_id, context }) => ({
-      messages: [
-        {
-          role: "user" as const,
-          content: {
-            type: "text" as const,
-            text: `You are a ManyChat automation specialist. Onboard subscriber ${subscriber_id} step by step:
+  server.registerPrompt("onboard_subscriber", { description: "Step-by-step onboarding for a new lead. Guides the agent through tagging, setting custom fields, and triggering the right flow.", argsSchema: z.object({
+              subscriber_id: z.string().describe("The subscriber ID to onboard"),
+              context: z
+                .string()
+                .optional()
+                .describe("Additional context about the lead (source, interests, etc.)"),
+            }) }, ({ subscriber_id, context }) => ({
+              messages: [
+                {
+                  role: "user" as const,
+                  content: {
+                    type: "text" as const,
+                    text: `You are a ManyChat automation specialist. Onboard subscriber ${subscriber_id} step by step:
 
 1. First, use get_subscriber to retrieve their current profile
 2. Analyze their data: tags, custom fields, subscription date, channels
@@ -30,25 +26,20 @@ export function registerPrompts(server: McpServer) {
 5. Summarize what was done
 
 Be methodical — fetch data before making changes.`,
-          },
-        },
-      ],
-    }),
-  );
+                  },
+                },
+              ],
+            }));
 
-  server.prompt(
-    "recover_lead",
-    "Reactivate an inactive subscriber with personalized re-engagement strategy",
-    {
-      subscriber_id: z.string().describe("The subscriber ID to recover"),
-    },
-    ({ subscriber_id }) => ({
-      messages: [
-        {
-          role: "user" as const,
-          content: {
-            type: "text" as const,
-            text: `You are a lead recovery specialist. Re-engage subscriber ${subscriber_id}:
+  server.registerPrompt("recover_lead", { description: "Reactivate an inactive subscriber with personalized re-engagement strategy", argsSchema: z.object({
+              subscriber_id: z.string().describe("The subscriber ID to recover"),
+            }) }, ({ subscriber_id }) => ({
+              messages: [
+                {
+                  role: "user" as const,
+                  content: {
+                    type: "text" as const,
+                    text: `You are a lead recovery specialist. Re-engage subscriber ${subscriber_id}:
 
 1. Use get_subscriber to check their profile, last interaction, and tags
 2. Analyze how long they've been inactive and what channels they're opted into
@@ -59,31 +50,26 @@ Be methodical — fetch data before making changes.`,
 4. Tag them appropriately (e.g., "re-engagement-attempt", date tag)
 5. Update relevant custom fields (e.g., "last_recovery_attempt")
 6. Execute the plan and report results`,
-          },
-        },
-      ],
-    }),
-  );
+                  },
+                },
+              ],
+            }));
 
-  server.prompt(
-    "send_campaign",
-    "Orchestrate sending a targeted campaign to a segment of subscribers",
-    {
-      campaign_description: z
-        .string()
-        .describe("Description of the campaign and its goal"),
-      target_tag: z
-        .string()
-        .optional()
-        .describe("Tag name to target (if targeting by tag)"),
-    },
-    ({ campaign_description, target_tag }) => ({
-      messages: [
-        {
-          role: "user" as const,
-          content: {
-            type: "text" as const,
-            text: `You are a ManyChat campaign manager. Plan and execute this campaign:
+  server.registerPrompt("send_campaign", { description: "Orchestrate sending a targeted campaign to a segment of subscribers", argsSchema: z.object({
+              campaign_description: z
+                .string()
+                .describe("Description of the campaign and its goal"),
+              target_tag: z
+                .string()
+                .optional()
+                .describe("Tag name to target (if targeting by tag)"),
+            }) }, ({ campaign_description, target_tag }) => ({
+              messages: [
+                {
+                  role: "user" as const,
+                  content: {
+                    type: "text" as const,
+                    text: `You are a ManyChat campaign manager. Plan and execute this campaign:
 
 Campaign: "${campaign_description}"
 ${target_tag ? `Target: subscribers with tag "${target_tag}"` : "Target: to be determined based on campaign goals"}
@@ -97,25 +83,20 @@ Steps:
 6. Report results
 
 Important: Always confirm before bulk-sending. Respect rate limits (20 RPS for flows, 25 RPS for content).`,
-          },
-        },
-      ],
-    }),
-  );
+                  },
+                },
+              ],
+            }));
 
-  server.prompt(
-    "analyze_subscriber",
-    "Deep analysis of a subscriber's profile, behavior, and engagement",
-    {
-      subscriber_id: z.string().describe("The subscriber ID to analyze"),
-    },
-    ({ subscriber_id }) => ({
-      messages: [
-        {
-          role: "user" as const,
-          content: {
-            type: "text" as const,
-            text: `You are a subscriber analytics expert. Provide a deep analysis of subscriber ${subscriber_id}:
+  server.registerPrompt("analyze_subscriber", { description: "Deep analysis of a subscriber's profile, behavior, and engagement", argsSchema: z.object({
+              subscriber_id: z.string().describe("The subscriber ID to analyze"),
+            }) }, ({ subscriber_id }) => ({
+              messages: [
+                {
+                  role: "user" as const,
+                  content: {
+                    type: "text" as const,
+                    text: `You are a subscriber analytics expert. Provide a deep analysis of subscriber ${subscriber_id}:
 
 1. Use get_subscriber to pull their full profile
 2. Analyze:
@@ -129,27 +110,22 @@ Important: Always confirm before bulk-sending. Respect rate limits (20 RPS for f
    - Recommended next actions
    - Potential segmentation improvements
 4. Format as a clear, actionable report`,
-          },
-        },
-      ],
-    }),
-  );
+                  },
+                },
+              ],
+            }));
 
-  server.prompt(
-    "segment_audience",
-    "Create smart audience segments based on tags, custom fields, and behavior patterns",
-    {
-      goal: z
-        .string()
-        .describe("What you want to achieve with this segmentation"),
-    },
-    ({ goal }) => ({
-      messages: [
-        {
-          role: "user" as const,
-          content: {
-            type: "text" as const,
-            text: `You are an audience segmentation strategist. Create smart segments for this goal:
+  server.registerPrompt("segment_audience", { description: "Create smart audience segments based on tags, custom fields, and behavior patterns", argsSchema: z.object({
+              goal: z
+                .string()
+                .describe("What you want to achieve with this segmentation"),
+            }) }, ({ goal }) => ({
+              messages: [
+                {
+                  role: "user" as const,
+                  content: {
+                    type: "text" as const,
+                    text: `You are an audience segmentation strategist. Create smart segments for this goal:
 
 Goal: "${goal}"
 
@@ -165,31 +141,26 @@ Steps:
    - Suggest the tag(s) to create
    - Recommend automation flows to assign subscribers
 5. Provide an implementation plan with ManyChat actions`,
-          },
-        },
-      ],
-    }),
-  );
+                  },
+                },
+              ],
+            }));
 
-  server.prompt(
-    "diagnose_automation",
-    "Debug and diagnose issues with a ManyChat automation or flow",
-    {
-      issue_description: z
-        .string()
-        .describe("Description of the automation issue"),
-      flow_ns: z
-        .string()
-        .optional()
-        .describe("The flow namespace if known"),
-    },
-    ({ issue_description, flow_ns }) => ({
-      messages: [
-        {
-          role: "user" as const,
-          content: {
-            type: "text" as const,
-            text: `You are a ManyChat automation debugger. Diagnose this issue:
+  server.registerPrompt("diagnose_automation", { description: "Debug and diagnose issues with a ManyChat automation or flow", argsSchema: z.object({
+              issue_description: z
+                .string()
+                .describe("Description of the automation issue"),
+              flow_ns: z
+                .string()
+                .optional()
+                .describe("The flow namespace if known"),
+            }) }, ({ issue_description, flow_ns }) => ({
+              messages: [
+                {
+                  role: "user" as const,
+                  content: {
+                    type: "text" as const,
+                    text: `You are a ManyChat automation debugger. Diagnose this issue:
 
 Issue: "${issue_description}"
 ${flow_ns ? `Flow: ${flow_ns}` : ""}
@@ -205,9 +176,8 @@ Steps:
    - Is it a channel problem? (opt-in status, delivery)
 5. Provide specific, actionable recommendations
 6. If fixable via API, offer to make the corrections`,
-          },
-        },
-      ],
-    }),
-  );
+                  },
+                },
+              ],
+            }));
 }

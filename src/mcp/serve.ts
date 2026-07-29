@@ -1,6 +1,6 @@
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
+import { isInitializeRequest } from "@modelcontextprotocol/server";
+import { NodeStreamableHTTPServerTransport } from "@modelcontextprotocol/node";
+import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
 import express from "express";
 import { randomUUID } from "node:crypto";
 import { createServer } from "../server.js";
@@ -123,7 +123,7 @@ async function startHttp(config: HttpRuntimeConfig) {
   const sessions: Record<
     string,
     {
-      transport: StreamableHTTPServerTransport;
+      transport: NodeStreamableHTTPServerTransport;
       hostedSession?: HostedResolvedSession;
     }
   > = {};
@@ -223,7 +223,7 @@ async function startHttp(config: HttpRuntimeConfig) {
     let reservedHostedSlot = false;
     try {
       const sessionId = headerValue(req.headers["mcp-session-id"]);
-      let transport: StreamableHTTPServerTransport;
+      let transport: NodeStreamableHTTPServerTransport;
       let initializedThisRequest = false;
 
       if (sessionId && sessions[sessionId]) {
@@ -258,7 +258,7 @@ async function startHttp(config: HttpRuntimeConfig) {
           reservedHostedSlot = true;
         }
 
-        transport = new StreamableHTTPServerTransport({
+        transport = new NodeStreamableHTTPServerTransport({
           sessionIdGenerator: () => randomUUID(),
           onsessioninitialized: (sid) => {
             sessions[sid] = { transport, hostedSession };
