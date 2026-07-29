@@ -1,16 +1,41 @@
 import { z } from "zod";
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
+
+/** Built once at module load — see the note in src/tools/tags.ts. */
+const SCHEMA = {
+  onboard_subscriber: z.object({
+    subscriber_id: z.string().describe("The subscriber ID to onboard"),
+    context: z
+      .string()
+      .optional()
+      .describe("Additional context about the lead (source, interests, etc.)"),
+  }),
+  recover_lead: z.object({
+    subscriber_id: z.string().describe("The subscriber ID to recover"),
+  }),
+  send_campaign: z.object({
+    campaign_description: z.string().describe("Description of the campaign and its goal"),
+    target_tag: z.string().optional().describe("Tag name to target (if targeting by tag)"),
+  }),
+  analyze_subscriber: z.object({
+    subscriber_id: z.string().describe("The subscriber ID to analyze"),
+  }),
+  segment_audience: z.object({
+    goal: z.string().describe("What you want to achieve with this segmentation"),
+  }),
+  diagnose_automation: z.object({
+    issue_description: z.string().describe("Description of the automation issue"),
+    flow_ns: z.string().optional().describe("The flow namespace if known"),
+  }),
+};
 
 export function registerPrompts(server: McpServer) {
-  server.prompt(
+  server.registerPrompt(
     "onboard_subscriber",
-    "Step-by-step onboarding for a new lead. Guides the agent through tagging, setting custom fields, and triggering the right flow.",
     {
-      subscriber_id: z.string().describe("The subscriber ID to onboard"),
-      context: z
-        .string()
-        .optional()
-        .describe("Additional context about the lead (source, interests, etc.)"),
+      description:
+        "Step-by-step onboarding for a new lead. Guides the agent through tagging, setting custom fields, and triggering the right flow.",
+      argsSchema: SCHEMA.onboard_subscriber,
     },
     ({ subscriber_id, context }) => ({
       messages: [
@@ -36,11 +61,11 @@ Be methodical — fetch data before making changes.`,
     }),
   );
 
-  server.prompt(
+  server.registerPrompt(
     "recover_lead",
-    "Reactivate an inactive subscriber with personalized re-engagement strategy",
     {
-      subscriber_id: z.string().describe("The subscriber ID to recover"),
+      description: "Reactivate an inactive subscriber with personalized re-engagement strategy",
+      argsSchema: SCHEMA.recover_lead,
     },
     ({ subscriber_id }) => ({
       messages: [
@@ -65,17 +90,11 @@ Be methodical — fetch data before making changes.`,
     }),
   );
 
-  server.prompt(
+  server.registerPrompt(
     "send_campaign",
-    "Orchestrate sending a targeted campaign to a segment of subscribers",
     {
-      campaign_description: z
-        .string()
-        .describe("Description of the campaign and its goal"),
-      target_tag: z
-        .string()
-        .optional()
-        .describe("Tag name to target (if targeting by tag)"),
+      description: "Orchestrate sending a targeted campaign to a segment of subscribers",
+      argsSchema: SCHEMA.send_campaign,
     },
     ({ campaign_description, target_tag }) => ({
       messages: [
@@ -103,11 +122,11 @@ Important: Always confirm before bulk-sending. Respect rate limits (20 RPS for f
     }),
   );
 
-  server.prompt(
+  server.registerPrompt(
     "analyze_subscriber",
-    "Deep analysis of a subscriber's profile, behavior, and engagement",
     {
-      subscriber_id: z.string().describe("The subscriber ID to analyze"),
+      description: "Deep analysis of a subscriber's profile, behavior, and engagement",
+      argsSchema: SCHEMA.analyze_subscriber,
     },
     ({ subscriber_id }) => ({
       messages: [
@@ -135,13 +154,12 @@ Important: Always confirm before bulk-sending. Respect rate limits (20 RPS for f
     }),
   );
 
-  server.prompt(
+  server.registerPrompt(
     "segment_audience",
-    "Create smart audience segments based on tags, custom fields, and behavior patterns",
     {
-      goal: z
-        .string()
-        .describe("What you want to achieve with this segmentation"),
+      description:
+        "Create smart audience segments based on tags, custom fields, and behavior patterns",
+      argsSchema: SCHEMA.segment_audience,
     },
     ({ goal }) => ({
       messages: [
@@ -171,17 +189,11 @@ Steps:
     }),
   );
 
-  server.prompt(
+  server.registerPrompt(
     "diagnose_automation",
-    "Debug and diagnose issues with a ManyChat automation or flow",
     {
-      issue_description: z
-        .string()
-        .describe("Description of the automation issue"),
-      flow_ns: z
-        .string()
-        .optional()
-        .describe("The flow namespace if known"),
+      description: "Debug and diagnose issues with a ManyChat automation or flow",
+      argsSchema: SCHEMA.diagnose_automation,
     },
     ({ issue_description, flow_ns }) => ({
       messages: [

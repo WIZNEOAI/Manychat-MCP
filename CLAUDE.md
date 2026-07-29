@@ -41,9 +41,9 @@ src/
 │   ├── oauth-routes.ts     # Express: .well-known, /register, /authorize, /token, /revoke
 │   └── oauth-store.ts      # MemoryOAuthStore + RedisOAuthStore
 ├── mcp/
-│   ├── serve.ts            # Express HTTP server, session mgmt, dual auth (header/OAuth)
-│   ├── http-entry.ts       # Production HTTP entry
-│   └── sse.ts              # SSE transport
+│   ├── serve.ts            # Express + createMcpHandler (stateless), per-request credential resolution
+│   ├── cache-hints.ts      # ttlMs/cacheScope per cacheable method (SEP-2549)
+│   └── http-entry.ts       # Production HTTP entry
 ├── tools/                  # MCP tool groups
 │   ├── subscribers.ts      # get, find, create, update
 │   ├── tags.ts             # list, create, add/remove
@@ -60,7 +60,9 @@ tests/
 ├── cli.test.ts             # 5 tests: CLI commands with mocked API
 ├── manychat-client.test.ts # 3 tests: retry on 429, error handling
 ├── mcp-http-config.test.ts # 4 tests: HTTP config, localhost, prod OAuth, Railway
-└── oauth.test.ts           # 3 tests: full OAuth flow (register→authorize→token→refresh→revoke)
+├── oauth.test.ts           # 3 tests: full OAuth flow (register→authorize→token→refresh→revoke)
+├── stateless-multi-instance.test.ts # 3 processes behind round-robin, no sticky routing
+└── mcp-2026-conformance.test.ts     # ttlMs/cacheScope, resultType, serverInfo _meta, error codes
 
 apps/web/                   # Next.js 16 + React 19 + Tailwind 4
 ├── middleware.ts           # Clerk auth, protects /dashboard
@@ -75,6 +77,13 @@ skills/                     # Codex skills (manychat-mcp-ops)
 
 ## Key Conventions
 
+- **MCP protocol revision `2026-07-28`**, served from `@modelcontextprotocol/server@2.0.0`
+  (pinned exact) via `createMcpHandler`. 2025-era clients keep working through the
+  handler's default `legacy: 'stateless'` leg; there are no protocol sessions and no
+  `Mcp-Session-Id`, so `GET`/`DELETE /mcp` answer `405`.
+- **Every request builds its own `McpServer`** from the credential resolved for that
+  request. Nothing may be cached across requests except immutable registry data —
+  tool/prompt schemas are hoisted to module scope for exactly that reason.
 - **ESM-only** — `"type": "module"`, `NodeNext` module resolution
 - **Strict TypeScript** — `strict: true`, target ES2022
 - **stdout = machine-readable JSON** — diagnostics go to stderr only
@@ -88,7 +97,7 @@ skills/                     # Codex skills (manychat-mcp-ops)
 |----------|---------|---------|
 | `MANYCHAT_API_KEY` | API authentication | required |
 | `MCP_TRANSPORT` | stdio or http | stdio |
-| `MCP_REMOTE_AUTH` | manychat_header or oauth | manychat_header |
+| `MCP_REMOTE_AUTH` | manychat_header, oauth or hosted_token | manychat_header |
 | `MCP_BASE_URL` | HTTP server base URL | — |
 | `PORT` | HTTP server port | 3000 |
 | `OAUTH_STORE` | memory or redis | memory |
@@ -115,6 +124,10 @@ skills/                     # Codex skills (manychat-mcp-ops)
 
 - Don't assume messages can be sent outside ManyChat channel policy windows
 - Don't use OAuth/Redis paths for new features — those are legacy compatibility
+- Don't introduce state that outlives a request in `src/mcp/serve.ts`; cross-call state
+  must be a server-minted handle passed as a tool argument (2026-07-28 statelessness)
+- Don't emit JSON-RPC codes in `-32000..-32019` (legacy sub-range) or `-32020..-32099`
+  (reserved for the spec) from our own code
 - Don't modify `apps/web` without reading `apps/web/AGENTS.md` first (Next.js 16 breaking changes)
 - Don't add dependencies without checking both root and apps/web package.json
 - Don't log secrets — `lib/logger.ts` has redaction, use it
