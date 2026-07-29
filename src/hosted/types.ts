@@ -3,7 +3,6 @@ export type HostedPlan = "free" | "supporter" | "pro";
 export type CapabilityBundle = "read_only" | "operator" | "messaging_safe" | "admin";
 
 export interface HostedPlanLimits {
-  maxWorkspaces: number;
   maxAccounts: number;
   dailyRequests: number;
   monthlyRequests: number;
