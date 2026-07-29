@@ -17,6 +17,7 @@ import {
 } from "@/lib/positioning";
 import { REPO_TREE_BASE } from "@/lib/repo";
 import { WaitlistForm } from "@/components/waitlist-form";
+import { ConnectAgent } from "@/components/connect-agent";
 
 export default function Home() {
   const operatorTier = offerTiers.find((tier) => tier.name === "Pro");
@@ -270,6 +271,15 @@ export default function Home() {
             </div>
           </div>
         </AccentCard>
+      </section>
+
+      <section id="connect" className="space-y-8">
+        <SectionHeader
+          eyebrow="Connect your agent"
+          title="Your agent talks to ManyChat in one command."
+          body="Pick the client you already use. The server runs locally on your own ManyChat key — 28 tools across subscribers, tags, custom fields, flows and messaging."
+        />
+        <ConnectAgent />
       </section>
 
       <section id="waitlist" className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
