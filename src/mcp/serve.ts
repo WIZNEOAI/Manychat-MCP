@@ -1,6 +1,6 @@
-import { isInitializeRequest } from "@modelcontextprotocol/server";
-import { NodeStreamableHTTPServerTransport } from "@modelcontextprotocol/node";
-import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
+import { createMcpHandler, type McpHttpHandler } from "@modelcontextprotocol/server";
+import { serveStdio } from "@modelcontextprotocol/server/stdio";
+import { toNodeHandler } from "@modelcontextprotocol/node";
 import express from "express";
 import { randomUUID } from "node:crypto";
 import { createServer } from "../server.js";
@@ -14,6 +14,25 @@ import {
   HostedControlPlaneError,
 } from "../hosted/control-plane-client.js";
 import type { HostedResolvedSession } from "../hosted/types.js";
+import type { McpCacheProfile } from "./cache-hints.js";
+
+/**
+ * JSON-RPC error codes this gateway emits itself.
+ *
+ * MCP 2026-07-28 claims `-32020..-32099` for the specification and marks
+ * `-32000..-32019` as a legacy sub-range new implementations SHOULD NOT use at
+ * all, so gateway-specific failures live outside JSON-RPC's reserved
+ * `-32768..-32000` band. The spec-defined protocol codes — `-32020` header
+ * mismatch, `-32021` missing client capability, `-32022` unsupported protocol
+ * version and `-32602` invalid params — are emitted by the SDK's own
+ * validation ladder once the request reaches the handler, never from here.
+ */
+const JSON_RPC_PARSE_ERROR = -32700;
+const JSON_RPC_INTERNAL_ERROR = -32603;
+/** Gateway-specific: the request carried no usable ManyChat execution credential. */
+const MCP_UNAUTHORIZED = -31001;
+/** Gateway-specific: the hosted control plane refused the request (plan limits, revoked token). */
+const MCP_REQUEST_NOT_AUTHORIZED = -31002;
 
 export async function startLegacyMcpServer(args: string[] = []) {
   const transportFlag = getFlagValue(args, "--transport");
@@ -34,10 +53,13 @@ export async function startProductionHttpServer(
 }
 
 async function startStdio() {
-  const server = createServer();
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-  log.info("ManyChat MCP compatibility server running on stdio");
+  // `serveStdio` owns the era decision for the connection: a 2026-07-28 client
+  // opens with `server/discover`, a 2025-era one with `initialize`, and both are
+  // served from the same factory.
+  serveStdio(() => createServer(undefined, { cacheProfile: "single_tenant" }), {
+    onerror: (error) => log.error("mcp_stdio_error", { error: error.message }),
+  });
+  log.info("ManyChat MCP server running on stdio");
 }
 
 type HttpMcpAuthMode = "manychat_header" | "oauth" | "hosted_token";
@@ -89,6 +111,20 @@ export function resolveHttpRuntimeConfig(
   };
 }
 
+/** What credential resolution hands to the per-request server factory. */
+interface ResolvedExecutionCredential {
+  apiKey: string;
+  source: string;
+  hostedSession?: HostedResolvedSession;
+}
+
+/** The per-request credential, carried to the factory on `AuthInfo.extra`. */
+interface McpAuthExtra {
+  manychatApiKey: string;
+  credentialSource: string;
+  hostedSession?: HostedResolvedSession;
+}
+
 async function startHttp(config: HttpRuntimeConfig) {
   const app = express();
   app.disable("x-powered-by");
@@ -120,39 +156,32 @@ async function startHttp(config: HttpRuntimeConfig) {
     app.use(createOAuthRouter(config.baseUrl));
   }
 
-  const sessions: Record<
-    string,
-    {
-      transport: NodeStreamableHTTPServerTransport;
-      hostedSession?: HostedResolvedSession;
-    }
-  > = {};
-  const workspaceSessionCounts = new Map<string, number>();
+  const cacheProfile: McpCacheProfile =
+    config.authMode === "hosted_token" ? "multi_tenant" : "single_tenant";
+
   const hostedControlPlaneClient =
-    config.authMode === "hosted_token" && process.env.HOSTED_CONTROL_PLANE_URL && process.env.HOSTED_CONTROL_PLANE_SECRET
+    config.authMode === "hosted_token" &&
+    process.env.HOSTED_CONTROL_PLANE_URL &&
+    process.env.HOSTED_CONTROL_PLANE_SECRET
       ? new HostedControlPlaneClient({
           baseUrl: normalizeUrl(process.env.HOSTED_CONTROL_PLANE_URL),
           sharedSecret: process.env.HOSTED_CONTROL_PLANE_SECRET,
         })
       : null;
 
-  async function resolveExecutionApiKey(
-    req: express.Request,
-  ): Promise<{
-    apiKey?: string;
-    source?: string;
+  async function resolveExecutionApiKey(req: express.Request): Promise<{
+    credential?: ResolvedExecutionCredential;
     error?: string;
     statusCode?: number;
-    hostedSession?: HostedResolvedSession;
   }> {
     const headerKey = headerValue(req.headers["x-manychat-api-key"]);
     if (headerKey) {
-      return { apiKey: headerKey, source: "x-manychat-api-key" };
+      return { credential: { apiKey: headerKey, source: "x-manychat-api-key" } };
     }
 
     const envKey = process.env.MANYCHAT_API_KEY?.trim();
     if (envKey) {
-      return { apiKey: envKey, source: "MANYCHAT_API_KEY" };
+      return { credential: { apiKey: envKey, source: "MANYCHAT_API_KEY" } };
     }
 
     if (config.authMode === "oauth") {
@@ -161,7 +190,7 @@ async function startHttp(config: HttpRuntimeConfig) {
         const token = authHeader.slice(7).trim();
         const key = token ? await resolveApiKeyFromToken(token) : null;
         if (key) {
-          return { apiKey: key, source: "oauth_access_token" };
+          return { credential: { apiKey: key, source: "oauth_access_token" } };
         }
 
         return {
@@ -180,8 +209,7 @@ async function startHttp(config: HttpRuntimeConfig) {
       const authHeader = headerValue(req.headers.authorization);
       if (!authHeader?.startsWith("Bearer ")) {
         return {
-          error:
-            "Missing hosted MCP token. Provide Authorization: Bearer <mcp_token>.",
+          error: "Missing hosted MCP token. Provide Authorization: Bearer <mcp_token>.",
         };
       }
 
@@ -196,195 +224,152 @@ async function startHttp(config: HttpRuntimeConfig) {
       try {
         const hostedSession = await hostedControlPlaneClient.resolveSession(token);
         return {
-          apiKey: hostedSession.apiKey,
-          source: "hosted_product_token",
-          hostedSession,
+          credential: {
+            apiKey: hostedSession.apiKey,
+            source: "hosted_product_token",
+            hostedSession,
+          },
         };
       } catch (error) {
         return {
           error:
-            error instanceof Error
-              ? error.message
-              : "Invalid hosted MCP bearer token.",
-          statusCode:
-            error instanceof HostedControlPlaneError ? error.status : 401,
+            error instanceof Error ? error.message : "Invalid hosted MCP bearer token.",
+          statusCode: error instanceof HostedControlPlaneError ? error.status : 401,
         };
       }
     }
 
     return {
       error:
-        "Missing execution credential. Provide X-ManyChat-API-Key on the initialize request or configure MANYCHAT_API_KEY on the server.",
+        "Missing execution credential. Provide X-ManyChat-API-Key on the request or configure MANYCHAT_API_KEY on the server.",
     };
   }
 
-  app.post("/mcp", async (req, res) => {
-    let hostedSession: HostedResolvedSession | undefined;
-    let reservedHostedSlot = false;
+  // One handler for the process. `legacy` is deliberately left unset: its
+  // default, 'stateless', keeps answering 2025-era clients from the same
+  // factory (a fresh instance per request, no session ids) and answers GET and
+  // DELETE — the removed 2025 session operations — with 405.
+  const handler: McpHttpHandler = createMcpHandler(
+    (ctx) => {
+      const extra = ctx.authInfo?.extra as McpAuthExtra | undefined;
+      return createServer(extra?.manychatApiKey, {
+        capabilityBundle: extra?.hostedSession?.capabilityBundle ?? "admin",
+        cacheProfile,
+      });
+    },
+    {
+      onerror: (error) => log.error("mcp_handler_error", { error: error.message }),
+    },
+  );
+
+  const nodeHandler = toNodeHandler(handler, {
+    onerror: (error) => log.error("mcp_node_adapter_error", { error: error.message }),
+  });
+
+  app.all("/mcp", async (req, res) => {
+    // GET and DELETE were the 2025 session operations. There is no session to
+    // resume or terminate any more, so the handler answers them with 405 and we
+    // do not demand a credential first.
+    if (req.method !== "POST") {
+      await nodeHandler(req, res);
+      return;
+    }
+
     try {
-      const sessionId = headerValue(req.headers["mcp-session-id"]);
-      let transport: NodeStreamableHTTPServerTransport;
-      let initializedThisRequest = false;
-
-      if (sessionId && sessions[sessionId]) {
-        transport = sessions[sessionId].transport;
-        hostedSession = sessions[sessionId].hostedSession;
-      } else if (!sessionId && isInitializeRequest(req.body)) {
-        const credential = await resolveExecutionApiKey(req);
-        if (!credential.apiKey) {
-          writeJsonRpcError(
-            res,
-            credential.statusCode ?? 401,
-            requestIdFromBody(req.body),
-            credential.error!,
-          );
-          return;
-        }
-        hostedSession = credential.hostedSession;
-        initializedThisRequest = true;
-
-        if (hostedSession) {
-          const active = workspaceSessionCounts.get(hostedSession.workspaceId) ?? 0;
-          if (active >= hostedSession.limits.maxConcurrentSessions) {
-            writeJsonRpcError(
-              res,
-              429,
-              requestIdFromBody(req.body),
-              `Workspace session cap reached (${hostedSession.limits.maxConcurrentSessions}).`,
-            );
-            return;
-          }
-          workspaceSessionCounts.set(hostedSession.workspaceId, active + 1);
-          reservedHostedSlot = true;
-        }
-
-        transport = new NodeStreamableHTTPServerTransport({
-          sessionIdGenerator: () => randomUUID(),
-          onsessioninitialized: (sid) => {
-            sessions[sid] = { transport, hostedSession };
-          },
+      const resolved = await resolveExecutionApiKey(req);
+      if (!resolved.credential) {
+        writeJsonRpcError(res, {
+          statusCode: resolved.statusCode ?? 401,
+          code: MCP_UNAUTHORIZED,
+          id: requestIdFromBody(req.body),
+          message: resolved.error!,
         });
-
-        transport.onclose = () => {
-          const sid = transport.sessionId;
-          if (sid) delete sessions[sid];
-          if (hostedSession) {
-            releaseWorkspaceSlot(workspaceSessionCounts, hostedSession.workspaceId);
-            void hostedControlPlaneClient?.recordEvent({
-              type: "session_end",
-              tokenId: hostedSession.tokenId,
-              workspaceId: hostedSession.workspaceId,
-              accountId: hostedSession.accountId,
-            });
-          }
-        };
-
-        const server = createServer(credential.apiKey, {
-          capabilityBundle: hostedSession?.capabilityBundle ?? "admin",
-        });
-        await server.connect(transport);
-      } else {
-        writeJsonRpcError(
-          res,
-          400,
-          requestIdFromBody(req.body),
-          "No valid session. Send an initialize request first.",
-        );
         return;
       }
 
-      if (hostedSession && hostedControlPlaneClient) {
+      const { credential } = resolved;
+
+      if (credential.hostedSession && hostedControlPlaneClient) {
         try {
           await hostedControlPlaneClient.authorizeRequest({
-            workspaceId: hostedSession.workspaceId,
-            tokenId: hostedSession.tokenId,
-            accountId: hostedSession.accountId,
+            workspaceId: credential.hostedSession.workspaceId,
+            tokenId: credential.hostedSession.tokenId,
+            accountId: credential.hostedSession.accountId,
           });
         } catch (error) {
-          const statusCode =
-            error instanceof HostedControlPlaneError ? error.status : 401;
-          writeJsonRpcError(
-            res,
-            statusCode,
-            requestIdFromBody(req.body),
-            error instanceof Error
-              ? error.message
-              : "Hosted request authorization failed.",
-          );
+          writeJsonRpcError(res, {
+            statusCode: error instanceof HostedControlPlaneError ? error.status : 401,
+            code: MCP_REQUEST_NOT_AUTHORIZED,
+            id: requestIdFromBody(req.body),
+            message:
+              error instanceof Error
+                ? error.message
+                : "Hosted request authorization failed.",
+          });
           return;
         }
       }
 
-      await transport.handleRequest(req, res, req.body);
+      // `toNodeHandler` forwards `req.auth` to the factory as pass-through
+      // `authInfo` and verifies nothing itself. This is how the credential
+      // resolved above reaches `createServer` for this one request.
+      const extra: McpAuthExtra = {
+        manychatApiKey: credential.apiKey,
+        credentialSource: credential.source,
+        hostedSession: credential.hostedSession,
+      };
+      (req as express.Request & { auth?: unknown }).auth = {
+        token: "",
+        clientId: credential.hostedSession?.tokenId ?? credential.source,
+        scopes: [],
+        extra,
+      };
 
-      if (hostedSession) {
-        if (initializedThisRequest) {
-          await hostedControlPlaneClient?.recordEvent({
-            type: "session_start",
-            tokenId: hostedSession.tokenId,
-            workspaceId: hostedSession.workspaceId,
-            accountId: hostedSession.accountId,
-            metadata: {
-              capabilityBundle: hostedSession.capabilityBundle,
-              accountName: hostedSession.accountName,
-            },
-          });
-        }
-      }
+      await nodeHandler(req, res, req.body);
     } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message.includes("Workspace session cap reached")
-      ) {
-        log.warn("hosted_session_cap_reached", {
-          error: error.message,
-        });
-      }
       log.error("mcp_http_request_failed", {
         path: req.path,
         method: req.method,
         error: error instanceof Error ? error.message : String(error),
       });
-      if (reservedHostedSlot && hostedSession) {
-        releaseWorkspaceSlot(workspaceSessionCounts, hostedSession.workspaceId);
+      if (!res.headersSent) {
+        writeJsonRpcError(res, {
+          statusCode: 500,
+          code: JSON_RPC_INTERNAL_ERROR,
+          id: requestIdFromBody(req.body),
+          message: "Failed to process MCP HTTP request.",
+        });
       }
-      writeJsonRpcError(
-        res,
-        500,
-        requestIdFromBody(req.body),
-        "Failed to process MCP HTTP request.",
-      );
     }
   });
 
-  app.get("/mcp", async (req, res) => {
-    const sessionId = headerValue(req.headers["mcp-session-id"]);
-    if (!sessionId || !sessions[sessionId]) {
-      res.status(400).json({ error: "Invalid or missing session" });
-      return;
-    }
-    await sessions[sessionId].transport.handleRequest(req, res);
-  });
-
-  app.delete("/mcp", async (req, res) => {
-    const sessionId = headerValue(req.headers["mcp-session-id"]);
-    if (!sessionId || !sessions[sessionId]) {
-      res.status(400).json({ error: "Invalid or missing session" });
-      return;
-    }
-    await sessions[sessionId].transport.handleRequest(req, res);
-  });
-
-  if (config.nodeEnv === "production") {
-    log.warn("mcp_http_sessions_are_process_local", {
-      warning:
-        "HTTP MCP sessions live in process memory. Run a single replica and expect clients to reconnect after restarts.",
-    });
-  }
+  // A body that never parsed cannot carry a JSON-RPC id, so it answers the
+  // standard parse error rather than Express's default HTML page.
+  app.use(
+    (
+      error: Error & { status?: number; type?: string },
+      _req: express.Request,
+      res: express.Response,
+      next: express.NextFunction,
+    ) => {
+      if (res.headersSent) {
+        next(error);
+        return;
+      }
+      const isBodyParserFailure =
+        error.type === "entity.parse.failed" || error.type === "entity.too.large";
+      writeJsonRpcError(res, {
+        statusCode: isBodyParserFailure ? (error.status ?? 400) : 500,
+        code: isBodyParserFailure ? JSON_RPC_PARSE_ERROR : JSON_RPC_INTERNAL_ERROR,
+        id: null,
+        message: isBodyParserFailure ? error.message : "Unhandled server error.",
+      });
+    },
+  );
 
   await new Promise<void>((resolve, reject) => {
     const server = app.listen(config.port, () => {
-      log.info("ManyChat MCP compatibility server running", {
+      log.info("ManyChat MCP server running", {
         url: `http://0.0.0.0:${config.port}`,
         baseUrl: config.baseUrl,
         authMode: config.authMode,
@@ -442,10 +427,7 @@ function resolveAuthMode(rawValue: string | undefined): HttpMcpAuthMode {
   throw new Error("MCP_REMOTE_AUTH must be 'manychat_header', 'oauth', or 'hosted_token'.");
 }
 
-function resolveBaseUrl(
-  env: NodeJS.ProcessEnv,
-  port: number,
-): string {
+function resolveBaseUrl(env: NodeJS.ProcessEnv, port: number): string {
   const configuredRailwayUrl = env.RAILWAY_STATIC_URL
     ? normalizeRailwayPublicUrl(env.RAILWAY_STATIC_URL)
     : undefined;
@@ -503,15 +485,6 @@ function headerValue(rawHeader: string | string[] | undefined): string | undefin
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
-function releaseWorkspaceSlot(counts: Map<string, number>, workspaceId: string): void {
-  const current = counts.get(workspaceId) ?? 0;
-  if (current <= 1) {
-    counts.delete(workspaceId);
-    return;
-  }
-  counts.set(workspaceId, current - 1);
-}
-
 function requestIdFromBody(body: unknown): unknown {
   if (body && typeof body === "object" && "id" in body) {
     return (body as { id?: unknown }).id ?? null;
@@ -522,16 +495,14 @@ function requestIdFromBody(body: unknown): unknown {
 
 function writeJsonRpcError(
   res: express.Response,
-  statusCode: number,
-  id: unknown,
-  message: string,
+  error: { statusCode: number; code: number; id: unknown; message: string },
 ): void {
-  res.status(statusCode).json({
+  res.status(error.statusCode).json({
     jsonrpc: "2.0",
     error: {
-      code: -32000,
-      message,
+      code: error.code,
+      message: error.message,
     },
-    id,
+    id: error.id,
   });
 }
