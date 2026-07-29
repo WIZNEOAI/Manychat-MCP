@@ -1,4 +1,6 @@
+import type { z } from "zod";
 import { log } from "../lib/logger.js";
+import { hostedResolvedSessionSchema } from "./types.js";
 import type { HostedGatewayEvent, HostedResolvedSession } from "./types.js";
 
 interface HostedControlPlaneClientOptions {
@@ -37,7 +39,22 @@ export class HostedControlPlaneClient {
       );
     }
 
-    return (await res.json()) as HostedResolvedSession;
+    const payload = await res.json().catch(() => undefined);
+    const parsed = hostedResolvedSessionSchema.safeParse(payload);
+    if (!parsed.success) {
+      // The gateway and the control plane version independently, so a shape it
+      // no longer honours has to fail loudly here. Casting instead would hand
+      // `undefined` to code whose type says otherwise, several frames away.
+      const detail = describeContractViolation(parsed.error);
+      log.error("hosted_control_plane_contract_violation", { detail });
+      throw new HostedControlPlaneError(
+        `Hosted control plane returned an unusable session (${detail}). ` +
+          `Gateway and control plane are out of contract.`,
+        502,
+      );
+    }
+
+    return parsed.data;
   }
 
   async recordEvent(event: HostedGatewayEvent): Promise<void> {
@@ -81,6 +98,22 @@ export class HostedControlPlaneClient {
       );
     }
   }
+}
+
+/**
+ * Renders a Zod failure as a short, greppable summary.
+ *
+ * Deliberately built from field paths and validation messages only — never from
+ * received values. The resolve payload carries a decrypted ManyChat API key, and
+ * this string reaches the logs.
+ */
+function describeContractViolation(error: z.ZodError): string {
+  const issues = error.issues.slice(0, 3).map((issue) => {
+    const path = issue.path.length > 0 ? issue.path.join(".") : "<root>";
+    return `${path}: ${issue.message}`;
+  });
+  const extra = error.issues.length - issues.length;
+  return extra > 0 ? `${issues.join("; ")} (+${extra} more)` : issues.join("; ");
 }
 
 async function safeErrorText(res: Response): Promise<string | null> {
