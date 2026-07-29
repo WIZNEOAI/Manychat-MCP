@@ -151,8 +151,8 @@ export default function Home() {
       <section id="operator-offer" className="space-y-8">
         <SectionHeader
           eyebrow="Offer ladder"
-          title="Choose the OSS core or buy the Revenue Operator layer around it."
-          body="The copy and prices come from shared positioning data so docs, dashboard, and sales surfaces can mirror the same promise."
+          title="Run the OSS core today. The Revenue Operator layer opens next."
+          body="The copy and prices come from shared positioning data so docs, dashboard, and sales surfaces can mirror the same promise. Hosted plans are not open for signup yet — the waitlist is the way in."
           align="split"
         />
         <div className="pricing-grid">
@@ -264,7 +264,8 @@ export default function Home() {
               {operatorTier?.name ?? "Pro"}: {operatorTier?.monthlyPrice ?? "—"} · {operatorTier?.annualPrice ?? "—"}
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
-              <CtaLink href="#operator-offer">Compare plans</CtaLink>
+              {/* Waitlist is the only conversion CTA while hosted signup is closed. */}
+              <CtaLink href="#waitlist">Join the waitlist</CtaLink>
               <CtaLink href="/docs#product" variant="secondary">
                 See hosted control plane
               </CtaLink>

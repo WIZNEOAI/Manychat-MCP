@@ -31,7 +31,10 @@ export const pricingTiers = [
     monthlyPrice: "$0",
     annualPrice: "$0",
     annualSavings: null,
-    tagline: "Try hosted MCP with safe daily limits and no credit card.",
+    // No "no credit card" / "start free" framing while hosted access is closed:
+    // the only public entry is the waitlist. Restore the immediate-signup copy
+    // when Convex prod exists (not `dusty-lobster-832`) and `/dashboard` is 200.
+    tagline: "Safe daily limits for evaluation, from the day hosted access opens.",
     limits: [
       "1 workspace",
       "1 connected ManyChat account",

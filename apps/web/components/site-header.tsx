@@ -1,22 +1,18 @@
 "use client";
 
-import {
-  SignInButton,
-  SignUpButton,
-  useAuth,
-  UserButton,
-} from "@clerk/nextjs";
+import { useAuth, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { REPO_TREE_BASE } from "@/lib/repo";
 
+// Waitlist-only public entry. Sign-in / sign-up / dashboard are unlinked from
+// the public nav because registering today lands on a 404 dashboard backed by a
+// Convex *dev* deployment. The routes stay reachable by direct URL for testing.
+// Revert this (restore the auth buttons + the Dashboard nav item) when a Convex
+// prod deployment exists (not `dusty-lobster-832`) and `/dashboard` returns 200.
 const navItems = [
   { href: "/", label: "Home" },
   { href: "/docs", label: "Docs" },
-  { href: "/dashboard", label: "Dashboard" },
 ] as const;
-
-const authButtonClass =
-  "wiz-button-secondary px-3 py-1.5 text-sm font-medium";
 
 export function SiteHeader() {
   const { isSignedIn, isLoaded } = useAuth();
@@ -50,9 +46,7 @@ export function SiteHeader() {
           >
             GitHub
           </a>
-          {!isLoaded ? (
-            <span className="px-3 py-1.5 text-xs muted">...</span>
-          ) : isSignedIn ? (
+          {isLoaded && isSignedIn ? (
             <>
               <Link
                 href="/dashboard"
@@ -67,24 +61,12 @@ export function SiteHeader() {
               />
             </>
           ) : (
-            <>
-              <SignInButton mode="modal">
-                <button
-                  type="button"
-                  className={authButtonClass}
-                >
-                  Sign in
-                </button>
-              </SignInButton>
-              <SignUpButton mode="modal">
-                <button
-                  type="button"
-                  className="wiz-button-primary px-3 py-1.5 text-sm font-medium"
-                >
-                  Create account
-                </button>
-              </SignUpButton>
-            </>
+            <Link
+              href="/#waitlist"
+              className="wiz-button-primary px-3 py-1.5 text-sm font-medium"
+            >
+              Join the waitlist
+            </Link>
           )}
         </nav>
       </div>
