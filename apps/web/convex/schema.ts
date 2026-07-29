@@ -14,7 +14,8 @@ export default defineSchema({
     name: v.string(),
     slug: v.string(),
     ownerUserId: v.id("users"),
-    // "supporter" is legacy, treated identically to "pro"
+    // Each tier has its own row in convex/lib/planLimits.ts — see that file
+    // before adding a value here.
     plan: v.union(v.literal("free"), v.literal("supporter"), v.literal("pro")),
     stripeCustomerId: v.optional(v.string()),
     operatorLeadStatusCounts: v.optional(
