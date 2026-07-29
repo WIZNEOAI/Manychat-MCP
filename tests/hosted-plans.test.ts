@@ -15,7 +15,6 @@ describe("hosted plan limits", () => {
 
   it("resolves supporter to the supporter allowance, not pro", () => {
     expect(resolveHostedPlanLimits("supporter")).toEqual({
-      maxWorkspaces: 1,
       maxAccounts: 3,
       dailyRequests: 5000,
       monthlyRequests: 100000,
@@ -26,14 +25,12 @@ describe("hosted plan limits", () => {
 
   it("keeps free and pro unchanged", () => {
     expect(resolveHostedPlanLimits("free")).toEqual({
-      maxWorkspaces: 1,
       maxAccounts: 1,
       dailyRequests: 250,
       monthlyRequests: 3000,
       maxTokens: 2,
     });
     expect(resolveHostedPlanLimits("pro")).toEqual({
-      maxWorkspaces: 5,
       maxAccounts: 20,
       dailyRequests: 100000,
       monthlyRequests: 1000000,
@@ -44,6 +41,30 @@ describe("hosted plan limits", () => {
   it("exposes no session ceiling", () => {
     for (const plan of ALL_PLANS) {
       expect(resolveHostedPlanLimits(plan)).not.toHaveProperty("maxConcurrentSessions");
+    }
+  });
+
+  /**
+   * There is no create-workspace path: `users.ensureCurrentUser` mints exactly one
+   * "Personal" workspace and only when the owner has none, so a workspace ceiling
+   * has nothing to guard. The control plane's resolve payload never carried the
+   * field either, which made it `undefined` behind a `number` type.
+   */
+  it("exposes no workspace ceiling", () => {
+    for (const plan of ALL_PLANS) {
+      expect(resolveHostedPlanLimits(plan)).not.toHaveProperty("maxWorkspaces");
+    }
+  });
+
+  /** The gateway row must stay field-for-field what the control plane sends. */
+  it("carries exactly the four enforced ceilings", () => {
+    for (const plan of ALL_PLANS) {
+      expect(Object.keys(resolveHostedPlanLimits(plan)).sort()).toEqual([
+        "dailyRequests",
+        "maxAccounts",
+        "maxTokens",
+        "monthlyRequests",
+      ]);
     }
   });
 });
