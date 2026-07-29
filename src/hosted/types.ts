@@ -7,7 +7,6 @@ export interface HostedPlanLimits {
   maxAccounts: number;
   dailyRequests: number;
   monthlyRequests: number;
-  maxConcurrentSessions: number;
   maxTokens: number;
 }
 
