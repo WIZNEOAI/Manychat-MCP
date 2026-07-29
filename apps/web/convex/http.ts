@@ -4,41 +4,21 @@ import { components, internal } from "./_generated/api";
 import { httpAction } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { constantTimeEqual } from "./hosted";
-import { resolvePaidTier } from "./lib/stripeTiers";
-
-type SubscriptionEventObject = {
-  metadata?: Record<string, string> | null;
-  status: string;
-  customer: string | { id?: string } | null;
-  items?: { data?: Array<{ price?: { id?: string | null } | null } | null> } | null;
-};
+import {
+  planSyncFromDeletedSubscription,
+  planSyncFromSubscription,
+  type SubscriptionEventObject,
+} from "./lib/subscriptionPlan";
 
 async function syncWorkspacePlanFromSubscription(
   ctx: GenericActionCtx<GenericDataModel>,
   sub: SubscriptionEventObject,
 ) {
-  const workspaceId = sub.metadata?.workspaceId;
-  if (!workspaceId || typeof workspaceId !== "string") {
+  const instruction = planSyncFromSubscription(sub);
+  if (!instruction) {
     return;
   }
-  const active = sub.status === "active" || sub.status === "trialing";
-  const plan: "free" | "supporter" | "pro" = active
-    ? resolvePaidTier({
-        priceId: sub.items?.data?.[0]?.price?.id,
-        metadataTier: sub.metadata?.tier,
-      })
-    : "free";
-  let customerId: string | undefined;
-  if (typeof sub.customer === "string") {
-    customerId = sub.customer;
-  } else if (sub.customer && typeof sub.customer === "object" && "id" in sub.customer && sub.customer.id) {
-    customerId = sub.customer.id;
-  }
-  await ctx.runMutation(internal.billing.setWorkspacePlanFromStripe, {
-    workspaceIdString: workspaceId,
-    plan,
-    ...(customerId ? { stripeCustomerId: customerId } : {}),
-  });
+  await ctx.runMutation(internal.billing.setWorkspacePlanFromStripe, instruction);
 }
 
 const http = httpRouter();
@@ -53,15 +33,11 @@ registerRoutes(http, components.stripe as unknown as StripeComponent, {
       await syncWorkspacePlanFromSubscription(ctx, event.data.object);
     },
     "customer.subscription.deleted": async (ctx, event) => {
-      const sub = event.data.object;
-      const workspaceId = sub.metadata?.workspaceId;
-      if (!workspaceId || typeof workspaceId !== "string") {
+      const instruction = planSyncFromDeletedSubscription(event.data.object);
+      if (!instruction) {
         return;
       }
-      await ctx.runMutation(internal.billing.setWorkspacePlanFromStripe, {
-        workspaceIdString: workspaceId,
-        plan: "free",
-      });
+      await ctx.runMutation(internal.billing.setWorkspacePlanFromStripe, instruction);
     },
   },
 });
