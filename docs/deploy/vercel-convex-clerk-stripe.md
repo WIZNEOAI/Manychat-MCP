@@ -39,9 +39,15 @@
 
 ## Stripe
 
-1. Create products/prices for monthly and annual Pro tiers.
-2. Put price IDs in Convex env as `STRIPE_PRO_MONTHLY_PRICE_ID` and `STRIPE_PRO_ANNUAL_PRICE_ID`.
-3. Webhook URL: use the URL provided by `@convex-dev/stripe` (Convex-hosted), not Vercel.
+1. Create products/prices for monthly and annual **Supporter and Pro** tiers.
+2. Put all four price IDs in Convex env: `STRIPE_SUPPORTER_MONTHLY_PRICE_ID`,
+   `STRIPE_SUPPORTER_ANNUAL_PRICE_ID`, `STRIPE_PRO_MONTHLY_PRICE_ID`,
+   `STRIPE_PRO_ANNUAL_PRICE_ID`.
+3. Webhook URL: `https://<deployment>.convex.site/stripe/webhook` (Convex-hosted,
+   not Vercel). Copy its signing secret to Convex as `STRIPE_WEBHOOK_SECRET`.
+
+Full configuration order, the test-mode rehearsal, and the checklist to run
+before charging anyone: [docs/billing-runbook.md](../billing-runbook.md).
 
 ## Internal MCP API
 
