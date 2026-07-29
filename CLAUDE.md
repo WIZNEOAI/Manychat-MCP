@@ -118,7 +118,7 @@ skills/                     # Codex skills (manychat-mcp-ops)
 - ManyChatClient tests verify retry logic and error classification
 - OAuth tests cover full PKCE flow lifecycle
 - CLI tests mock API and verify stdout JSON output
-- **The full gate must pass before any commit**: root `pnpm test` (59) + `pnpm run web:test` (55), plus lint + build on both
+- **The full gate must pass before any commit**: root `pnpm test` (87) + `pnpm run web:test` (118), plus lint + build on both. There is no CI on PRs — see [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## What NOT to do
 
