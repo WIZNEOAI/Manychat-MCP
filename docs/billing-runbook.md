@@ -199,25 +199,31 @@ npx convex run hosted:authorizeGatewayRequest '{"workspaceId":"…","tokenId":"�
 # → ok at the limit, throws "Daily request limit reached" one past it
 ```
 
-### Known gap — Supporter is entitled as Pro
+### Plan limits
 
-`normalizePlan()` in `convex/hosted.ts` and `convex/dashboard.ts` maps
-`"supporter" → "pro"`, so a $20 Supporter workspace receives the full Pro
-allowance (20 accounts, 50 tokens, 100k requests/day) while
-`site-data-shared.ts` advertises 3 accounts and 3 sessions. There is no
-Supporter row in `planLimits` at all.
+`convex/lib/planLimits.ts` holds one row per tier and is the only copy the
+control plane reads (`hosted.ts` for the account/token caps and the gateway
+authorizer, `dashboard.ts` for the usage panel). It is a
+`Record<WorkspacePlan, PlanLimits>`, so a plan added to the schema without its
+own row fails to compile — there is no normalization step that can fold one tier
+into another.
 
-This under-charges rather than over-charges, so it is not a correctness bug for
-the customer — but the advertised Supporter limits are currently unenforced.
-Closing it means adding a real `supporter` entry to `planLimits` in **both**
-files (and `src/hosted/plans.ts`, which keeps a third copy for the gateway).
-The limit numbers are a product decision, not a code cleanup.
+| | free | supporter | pro |
+|---|---|---|---|
+| `maxAccounts` | 1 | 3 | 20 |
+| `dailyRequests` | 250 | 5,000 | 100,000 |
+| `monthlyRequests` | 3,000 | 100,000 | 1,000,000 |
+| `maxTokens` | 2 | 10 | 50 |
 
-### Concurrent sessions are not enforced
+`src/hosted/plans.ts` mirrors these for the gateway package and adds
+`maxWorkspaces`, which nothing enforces yet.
 
-`maxConcurrentSessions` appears in `planLimits` and in pricing copy, but nothing
-reads it since the stateless MCP migration removed sessions. Either drop it from
-the tier copy or re-express the ceiling as a rate limit.
+The landing copy in `apps/web/lib/site-data-shared.ts` must state exactly these
+numbers — `apps/web/lib/pricing-copy.test.ts` fails the build if it drifts.
+
+`maxConcurrentSessions` was removed in the same change: the stateless MCP
+migration deleted protocol sessions, so the field was advertised but unread.
+Request ceilings are the only rate control.
 
 ---
 
