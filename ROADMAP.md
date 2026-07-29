@@ -24,4 +24,7 @@ while preserving a strong **OSS self-host runtime** for CLI and MCP users.
 - OAuth as the primary CLI auth story
 - Promising message delivery outside ManyChat / Meta policy windows
 
-See [docs/open-source-saas-blueprint.md](docs/open-source-saas-blueprint.md) for product framing.
+Product framing for the hosted half now lives with the control plane, in its own private
+repository. What stays true here: this runtime works standalone, and the policy wedge stays
+in the OSS layer. See [docs/control-plane-contract.md](docs/control-plane-contract.md) for
+where the two halves meet.

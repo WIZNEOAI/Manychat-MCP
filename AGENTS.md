@@ -14,9 +14,10 @@ Primary product:
 Compatibility and secondary surfaces:
 - `manychat mcp serve` for MCP clients
 - remote MCP over HTTP for self-hosted deployments
-- `apps/web` for the web shell / hosted control-plane direction
 
-Treat the CLI as the source of truth. MCP and web layers should reuse the same execution model rather than redefining product behavior.
+Treat the CLI as the source of truth. The MCP layer should reuse the same execution model rather than redefining product behavior.
+
+The hosted control plane moved to its own private repository on 2026-07-29. It is reachable only over the HTTP contract in `docs/control-plane-contract.md`, and only under `MCP_REMOTE_AUTH=hosted_token`.
 
 ## Read this first
 
@@ -32,7 +33,7 @@ Read in this order before making product or architecture changes:
 Helpful supplemental context:
 - `CLAUDE.md` for repo-specific command and architecture notes
 - `docs/deploy/*.md` for hosting behavior
-- `docs/product/*.md` for hosted control-plane direction
+- `docs/control-plane-contract.md` for the seam to the hosted control plane
 
 ## Core rules
 
@@ -59,12 +60,6 @@ Helpful supplemental context:
 - `src/prompts/index.ts` — MCP prompts
 - `src/lib/logger.ts` — structured logging and secret redaction
 - `src/types/manychat.ts` — shared API types
-
-### Web app
-
-- `apps/web/` — Next.js 16 + React 19 + Tailwind 4 + Clerk + Convex
-
-If you touch anything under `apps/web`, **read `apps/web/AGENTS.md` first** and follow its Next.js-specific constraints.
 
 ### Tests
 
@@ -93,16 +88,6 @@ npm run build
 npm start
 npm run start:mcp:stdio
 npm run start:mcp:http
-```
-
-### Web
-
-```bash
-npm run web:dev
-npm run web:build
-npm run web:lint
-npm run convex:dev
-npm run convex:deploy
 ```
 
 ## Primary CLI surface
@@ -176,20 +161,14 @@ Most commonly relevant:
 - Reuse the same behavior as the CLI wherever possible.
 - Do not let MCP-only abstractions become the primary domain model.
 
-### Web / control plane changes
-
-- The web app is important, but it is not the runtime source of truth for ManyChat execution.
-- Read `apps/web/AGENTS.md` before editing web code.
-- Follow Convex schema/function rules when touching the Convex backend.
-
 ## Validation expectations
 
 Choose the smallest relevant validation set for the area you changed:
 
-- root TypeScript changes: `npm run lint && npm test && npm run build`
+- TypeScript changes: `pnpm run lint && pnpm test && pnpm run build`
 - MCP transport or auth changes: always run tests
-- web-only changes: `npm run web:lint && npm run web:build`
-- Convex-facing web changes: run the relevant web checks and validate generated types / schema usage
+- changes to `src/hosted/`: run tests — that is the contract with the control plane, and a
+  break there surfaces as a 502 in production, not a failed build
 
 ## Non-goals for v1
 

@@ -1,7 +1,11 @@
-packages:
-  - 'apps/*'
+# Not a workspace any more — this file now only carries pnpm settings.
+#
+# `esbuild` runs an install script, which pnpm blocks unless listed here. Without
+# it Vitest cannot transform TypeScript and the suite fails to collect. The other
+# three entries that used to be here (`@clerk/shared`, `sharp`, `unrs-resolver`)
+# belonged to the web app and moved with it to WIZNEOAI/revenue-operator.
+#
+# Keep the file: the Dockerfile copies it next to package.json, so removing it
+# breaks the container build, not just local installs.
 allowBuilds:
-  '@clerk/shared': true
   esbuild: true
-  sharp: true
-  unrs-resolver: true

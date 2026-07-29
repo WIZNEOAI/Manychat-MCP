@@ -32,8 +32,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Zod schemas, so validator and type cannot drift. Fields no gateway code reads (`workspaceName`,
   `accountName`, `plan`, `limits`) are typed optional — they were promising values nobody had checked for.
 
+- **This repository is now the OSS runtime only** — CLI, MCP server, and gateway. The hosted
+  control plane (`apps/web`: dashboard, vault, billing, plan limits) moved to its own private
+  repository with the 31 commits of history that touched it. Nothing here imported it; the
+  only coupling was, and remains, the HTTP contract in `docs/control-plane-contract.md`,
+  reached only under `MCP_REMOTE_AUTH=hosted_token`.
+- No longer a pnpm workspace. `pnpm-workspace.yaml` survives carrying only the `allowBuilds`
+  entry for `esbuild` — the Dockerfile copies it, so deleting it breaks the container build.
+- The README names the hosted tiers but states **no prices or quotas**. The test that guarded
+  that copy against the enforced limits shipped with the control plane, and an unguarded
+  number is a promise waiting to rot. `repo-positioning.test.ts` now fails if a figure
+  reappears.
+
 ### Removed
 
+- `web:*` and `convex:*` scripts, and the `apps/web` entries in `.gitleaksignore` — which were
+  stale anyway, pinning lines 17/83/97 while the fixtures had drifted to 19/85/99, each listed
+  twice.
 - `src/hosted/plans.ts` and its test. The table was never read by production code: plan ceilings are
   enforced control-plane side, which answers `429` before the gateway sees a session. A second copy of
   the paid tiers in the OSS package could only drift or lie.

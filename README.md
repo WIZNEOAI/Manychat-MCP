@@ -126,15 +126,11 @@ Output contract: JSON on `stdout`, diagnostics on `stderr`. Exit codes: `0` ok �
 
 ## Hosted (Revenue Operator)
 
-Don't want to self-host? The hosted control plane lets you paste a ManyChat key once (stored encrypted), issue MCP tokens, and connect any agent without managing a server — plus usage, audit, and team features.
+Don't want to self-host? The hosted control plane lets you paste a ManyChat key once (stored encrypted), issue MCP tokens, and connect any agent without managing a server — plus usage and audit.
 
-| Plan | Price | For |
-|---|---|---|
-| **Free** | $0 | evaluation / personal — 1 account, 3,000 req/mo |
-| **Supporter** | $20/mo · $209/yr | builders running agents on ManyChat daily |
-| **Pro** | $79/mo · $790/yr | agencies / multi-brand operators |
+Three tiers — **Free** for evaluation, **Supporter** for builders running agents daily, **Pro** for agencies and multi-brand operators. Current prices and per-tier limits live on the product page, which is the single source of truth for them; this README deliberately does not restate numbers it cannot enforce.
 
-Full limits and our unit economics: [`docs/PLAN_LOGIC.md`](docs/PLAN_LOGIC.md). Plan limits live in `apps/web/lib/site-data-shared.ts`.
+The control plane is a separate, proprietary codebase. Nothing here depends on it: the gateway talks to it over the three endpoints in [`docs/control-plane-contract.md`](docs/control-plane-contract.md), and only when you set `MCP_REMOTE_AUTH=hosted_token`. Every other mode runs standalone.
 
 ## Self-host the gateway
 
@@ -143,14 +139,13 @@ For a persistent multi-tenant remote MCP, deploy the gateway (`src/`, Dockerfile
 ## Development
 
 ```bash
+pnpm install
 pnpm run lint     # tsc --noEmit
 pnpm run build    # tsc
-pnpm test         # vitest
-pnpm run web:lint && pnpm run web:test && pnpm run web:build   # apps/web
-pnpm run convex:dev   # Convex backend (from repo root)
+pnpm test         # vitest — 91
 ```
 
-This is a pnpm workspace (root CLI/MCP + `apps/web`). See [`CLAUDE.md`](CLAUDE.md) and [`AGENTS.md`](AGENTS.md).
+All three must pass before a commit; there is no CI on pull requests. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for what we look for in a change, plus [`CLAUDE.md`](CLAUDE.md) and [`AGENTS.md`](AGENTS.md).
 
 ## Safety
 

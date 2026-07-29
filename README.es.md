@@ -126,15 +126,11 @@ Contrato de salida: JSON en `stdout`, diagnósticos en `stderr`. Exit codes: `0`
 
 ## Hosted (Revenue Operator)
 
-¿No querés self-hostear? El control plane hosted te deja pegar una key de ManyChat una vez (guardada cifrada), emitir MCP tokens, y conectar cualquier agente sin manejar un servidor — más usage, audit y features de equipo.
+¿No querés self-hostear? El control plane hosted te deja pegar una key de ManyChat una vez (guardada cifrada), emitir MCP tokens, y conectar cualquier agente sin manejar un servidor — más usage y audit.
 
-| Plan | Precio | Para quién |
-|---|---|---|
-| **Free** | $0 | evaluación / personal — 1 cuenta, 3.000 req/mes |
-| **Supporter** | $20/mes · $209/año | builders que corren agentes en ManyChat a diario |
-| **Pro** | $79/mes · $790/año | agencias / operadores multi-marca |
+Tres tiers: **Free** para evaluar, **Supporter** para builders que corren agentes a diario, y **Pro** para agencias y operadores multi-marca. Los precios y los límites por tier viven en la página del producto, que es la única fuente de verdad; este README a propósito no repite números que no puede hacer cumplir.
 
-Límites completos y nuestra unit economics: [`docs/PLAN_LOGIC.md`](docs/PLAN_LOGIC.md). Los límites de plan viven en `apps/web/lib/site-data-shared.ts`.
+El control plane es un codebase separado y propietario. Nada de acá depende de él: el gateway le habla por los tres endpoints de [`docs/control-plane-contract.md`](docs/control-plane-contract.md), y sólo si seteás `MCP_REMOTE_AUTH=hosted_token`. Todos los demás modos corren solos.
 
 ## Self-host del gateway
 
@@ -143,14 +139,13 @@ Para un MCP remoto multi-tenant persistente, deployá el gateway (`src/`, Docker
 ## Desarrollo
 
 ```bash
+pnpm install
 pnpm run lint     # tsc --noEmit
 pnpm run build    # tsc
-pnpm test         # vitest
-pnpm run web:lint && pnpm run web:test && pnpm run web:build   # apps/web
-pnpm run convex:dev   # backend Convex (desde el root del repo)
+pnpm test         # vitest — 91
 ```
 
-Esto es un workspace pnpm (CLI/MCP root + `apps/web`). Ver [`CLAUDE.md`](CLAUDE.md) y [`AGENTS.md`](AGENTS.md).
+Los tres tienen que pasar antes de un commit; no hay CI en los pull requests. Ver [`CONTRIBUTING.md`](CONTRIBUTING.md) para qué miramos en un cambio, más [`CLAUDE.md`](CLAUDE.md) y [`AGENTS.md`](AGENTS.md).
 
 ## Seguridad
 

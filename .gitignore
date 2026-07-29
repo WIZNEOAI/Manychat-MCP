@@ -6,6 +6,8 @@ dist/
 *.tsbuildinfo
 package-lock.json
 .worktrees/
+.claude/worktrees/
+.planning/
 apps/web/playwright/
 apps/web/test-results/
 apps/web/playwright-report/
