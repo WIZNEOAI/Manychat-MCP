@@ -215,8 +215,10 @@ into another.
 | `monthlyRequests` | 3,000 | 100,000 | 1,000,000 |
 | `maxTokens` | 2 | 10 | 50 |
 
-`src/hosted/plans.ts` mirrors these for the gateway package and adds
-`maxWorkspaces`, which nothing enforces yet.
+`src/hosted/plans.ts` mirrors these for the gateway package, field for field.
+The resolve payload is cast rather than parsed, so a key the gateway declares
+but the control plane never sends reads as `undefined` behind a `number` type —
+add a ceiling there only once the control plane sends and enforces it.
 
 The landing copy in `apps/web/lib/site-data-shared.ts` must state exactly these
 numbers — `apps/web/lib/pricing-copy.test.ts` fails the build if it drifts.
@@ -224,6 +226,12 @@ numbers — `apps/web/lib/pricing-copy.test.ts` fails the build if it drifts.
 `maxConcurrentSessions` was removed in the same change: the stateless MCP
 migration deleted protocol sessions, so the field was advertised but unread.
 Request ceilings are the only rate control.
+
+`maxWorkspaces` was removed for the same reason. `users.ensureCurrentUser` is
+the only `insert("workspaces", …)` in the codebase and it runs only when the
+owner has none, so every account holds exactly one workspace on every tier.
+There is no second-workspace path to cap, and the landing no longer sells one.
+Reintroducing a workspace ceiling means shipping workspace creation first.
 
 ---
 

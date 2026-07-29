@@ -86,7 +86,7 @@ export const doneForYou = {
     "ManyChat automated, policy-safe: capture → qualify → nurture → recover",
     "Multi-connector via Composio: DMs, email, CRM, calendar",
     "Voice and content where it moves the number",
-    "Hosted Pro included: vault, tokens, multi-workspace, full audit",
+    "Hosted Pro included: vault, tokens, full audit",
     "Weekly optimization, monthly report, and a direct support line",
   ],
   cta: "Start — $3,500/mo",

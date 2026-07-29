@@ -10,7 +10,6 @@
 |---|---|---|---|
 | **Price** | $0 | $20/mo · $209/yr | $79/mo · $790/yr |
 | **Annual savings** | — | Save $31/yr | Save $158/yr |
-| Workspaces | 1 | 1 | up to 5 |
 | Connected ManyChat accounts | 1 | up to 3 | up to 20 |
 | Request limits | 250/day · 3,000/mo | 5,000/day · 100,000/mo | 100,000/day · 1,000,000/mo |
 | Active MCP tokens | 2 | 10 | 50 |

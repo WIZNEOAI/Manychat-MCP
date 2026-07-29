@@ -49,6 +49,18 @@ describe("pricing copy matches enforced plan limits", () => {
         expect(line).not.toMatch(/fair use/i);
       }
     });
+
+    /**
+     * Workspaces are not a sold dimension. `users.ensureCurrentUser` mints one
+     * "Personal" workspace per owner and only when they have none — there is no
+     * second-workspace path to cap, so "Up to 5 workspaces" was copy the product
+     * could not honour rather than a ceiling anyone could hit.
+     */
+    it(`advertises no workspace ceiling for ${tier.name}`, () => {
+      for (const line of tier.limits) {
+        expect(line).not.toMatch(/workspace/i);
+      }
+    });
   }
 
   it("keeps Supporter strictly below Pro on the landing, not just in code", () => {
