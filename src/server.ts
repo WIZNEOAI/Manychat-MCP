@@ -1,4 +1,4 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer } from "@modelcontextprotocol/server";
 import { ManyChatClient } from "./auth/manychat-client.js";
 import { registerSubscriberTools } from "./tools/subscribers.js";
 import { registerTagTools } from "./tools/tags.js";
