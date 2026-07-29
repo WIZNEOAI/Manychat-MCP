@@ -16,6 +16,7 @@ import {
   ossStory,
 } from "@/lib/positioning";
 import { REPO_TREE_BASE } from "@/lib/repo";
+import { WaitlistForm } from "@/components/waitlist-form";
 
 export default function Home() {
   const operatorTier = offerTiers.find((tier) => tier.name === "Pro");
@@ -269,6 +270,24 @@ export default function Home() {
             </div>
           </div>
         </AccentCard>
+      </section>
+
+      <section id="waitlist" className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+        <div className="space-y-4">
+          <p className="brand-kicker text-xs">Early access</p>
+          <h2 className="text-3xl font-semibold tracking-tight text-balance md:text-4xl md:leading-[1.08]">
+            Hosted access opens soon.
+          </h2>
+          <p className="text-lg leading-8 muted">
+            The gateway is running in private validation while we harden it against the new MCP
+            revision. Join the list and you get the connection details the day it opens.
+          </p>
+          <p className="text-sm leading-7 muted">
+            Self-hosting instead? The CLI and the MCP server run on your own key today — start from
+            the docs.
+          </p>
+        </div>
+        <WaitlistForm />
       </section>
     </div>
   );
