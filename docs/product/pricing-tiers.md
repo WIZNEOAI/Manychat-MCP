@@ -31,7 +31,6 @@ Best for:
 
 Recommended limits:
 
-- 1 workspace
 - 1 connected ManyChat account
 - 250 requests/day, 3,000/month
 - 2 active MCP tokens
@@ -73,7 +72,6 @@ Best for:
 
 Recommended limits:
 
-- up to 5 workspaces
 - up to 20 connected ManyChat accounts
 - 100,000 requests/day, 1,000,000/month
 - 50 active MCP tokens

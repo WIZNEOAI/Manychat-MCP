@@ -36,7 +36,6 @@ export const pricingTiers = [
     // when Convex prod exists (not `dusty-lobster-832`) and `/dashboard` is 200.
     tagline: "Safe daily limits for evaluation, from the day hosted access opens.",
     limits: [
-      "1 workspace",
       "1 connected ManyChat account",
       "250 requests/day, 3,000 requests/month",
       "2 active MCP tokens",
@@ -51,7 +50,6 @@ export const pricingTiers = [
     annualSavings: "Save $31/year",
     tagline: "Serious individual usage — and you sustain the open-source core.",
     limits: [
-      "1 workspace",
       "Up to 3 connected ManyChat accounts",
       "5,000 requests/day, 100,000 requests/month",
       "10 active MCP tokens",
@@ -67,7 +65,6 @@ export const pricingTiers = [
     annualSavings: "Save $158/year",
     tagline: "Multi-brand scale with team controls and full audit.",
     limits: [
-      "Up to 5 workspaces",
       "Up to 20 ManyChat accounts",
       "100,000 requests/day, 1,000,000 requests/month",
       "50 active MCP tokens",

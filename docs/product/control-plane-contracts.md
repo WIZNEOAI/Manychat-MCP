@@ -58,7 +58,6 @@ MCP gateway (future `apps/mcp` or current HTTP entry extended) resolves `Bearer 
 
 Align with [`pricing-tiers.md`](./pricing-tiers.md). Example enforcement keys:
 
-- `max_workspaces`
 - `max_manychat_accounts_per_workspace`
 - `max_mcp_tokens`
 - `daily_request_quota`
