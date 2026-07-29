@@ -39,7 +39,6 @@ to the hosted MCP endpoint.
 This credential is responsible for:
 
 - workspace routing
-- concurrency enforcement
 - request quotas
 - auditing
 - billing attribution
@@ -88,17 +87,18 @@ Recommended UX:
 - users select a default account per workspace
 - future MCP tokens may be scoped to one account or a bundle of accounts
 
-## Concurrency model
+## Quota model
 
 Hosted limits should be enforced at the product layer, not improvised in the MCP
-client docs.
+client docs. Serving is stateless — there are no protocol sessions to cap — so
+request volume is the rate control.
 
 Recommended tracked dimensions:
 
 - daily request volume
 - monthly request volume
-- concurrent MCP sessions
 - connected ManyChat accounts
+- active MCP tokens
 - optional team member count
 
 ## Auth modes across deployment models
@@ -142,7 +142,7 @@ It is the packaging layer for:
 - connecting ManyChat API keys
 - issuing MCP credentials
 - showing client-specific connection snippets
-- enforcing pricing tiers and concurrency
+- enforcing pricing tiers and request quotas
 - making the hosted product easier than raw self-hosting
 
 ## Implementation pointers

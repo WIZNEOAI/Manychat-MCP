@@ -2,6 +2,8 @@ import { v } from "convex/values";
 import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
+import { planLimits } from "./lib/planLimits.js";
+import type { WorkspacePlan } from "./lib/subscriptionPlan.js";
 
 const bundleValidator = v.union(
   v.literal("read_only"),
@@ -9,28 +11,6 @@ const bundleValidator = v.union(
   v.literal("messaging_safe"),
   v.literal("admin"),
 );
-
-/** Normalize legacy "supporter" rows to "pro". */
-function normalizePlan(plan: string): "free" | "pro" {
-  return plan === "supporter" ? "pro" : (plan as "free" | "pro");
-}
-
-const planLimits = {
-  free: {
-    maxAccounts: 1,
-    dailyRequests: 250,
-    monthlyRequests: 3000,
-    maxConcurrentSessions: 1,
-    maxTokens: 2,
-  },
-  pro: {
-    maxAccounts: 20,
-    dailyRequests: 100000,
-    monthlyRequests: 1000000,
-    maxConcurrentSessions: 10,
-    maxTokens: 50,
-  },
-} as const;
 
 type HostedCtx = QueryCtx | MutationCtx;
 
@@ -86,7 +66,7 @@ async function requireWorkspaceOwner(
 async function ensureAccountCap(
   ctx: HostedCtx,
   workspaceId: Id<"workspaces">,
-  plan: keyof typeof planLimits,
+  plan: WorkspacePlan,
 ) {
   const existing = await ctx.db
     .query("manychatAccounts")
@@ -100,7 +80,7 @@ async function ensureAccountCap(
 async function ensureTokenCap(
   ctx: HostedCtx,
   workspaceId: Id<"workspaces">,
-  plan: keyof typeof planLimits,
+  plan: WorkspacePlan,
 ) {
   const active = await ctx.db
     .query("mcpTokens")
@@ -140,7 +120,7 @@ export const upsertManychatAccount = mutation({
   }),
   handler: async (ctx, args) => {
     const { workspace, user } = await requireWorkspaceOwner(ctx, args.workspaceId);
-    await ensureAccountCap(ctx, args.workspaceId, normalizePlan(workspace.plan));
+    await ensureAccountCap(ctx, args.workspaceId, workspace.plan);
 
     const now = Date.now();
     const shouldDefault = args.isDefault ?? true;
@@ -299,7 +279,7 @@ export const issueMcpToken = mutation({
   }),
   handler: async (ctx, args) => {
     const { workspace, user } = await requireWorkspaceOwner(ctx, args.workspaceId);
-    await ensureTokenCap(ctx, args.workspaceId, normalizePlan(workspace.plan));
+    await ensureTokenCap(ctx, args.workspaceId, workspace.plan);
 
     if (args.accountId) {
       const account = await ctx.db.get(args.accountId);
@@ -575,7 +555,6 @@ export const getGatewayTokenByPrefix = internalQuery({
         maxAccounts: v.number(),
         dailyRequests: v.number(),
         monthlyRequests: v.number(),
-        maxConcurrentSessions: v.number(),
         maxTokens: v.number(),
       }),
       usage: v.object({
@@ -644,7 +623,7 @@ export const getGatewayTokenByPrefix = internalQuery({
       accountName: account.displayName,
       ciphertext: credential.ciphertext,
       keyVersion: credential.keyVersion,
-      limits: planLimits[normalizePlan(workspace.plan)],
+      limits: planLimits[workspace.plan],
       usage: {
         dailyRequestCount: daily?.requestCount ?? 0,
         monthlyRequestCount: monthly?.requestCount ?? 0,
@@ -765,7 +744,7 @@ export const authorizeGatewayRequest = internalMutation({
     const now = Date.now();
     const day = dateKey(now);
     const month = monthKey(now);
-    const limits = planLimits[normalizePlan(workspace.plan)];
+    const limits = planLimits[workspace.plan];
 
     const daily = await ctx.db
       .query("usageDaily")

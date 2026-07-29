@@ -33,14 +33,14 @@ Recommended limits:
 
 - 1 workspace
 - 1 connected ManyChat account
-- capped daily request allowance
-- 1 concurrent remote client
+- 250 requests/day, 3,000/month
+- 2 active MCP tokens
 - community support only
 
 Recommended product framing:
 
-> Enough to validate the product. Upgrade when you need more daily usage,
-> concurrency, or more than one account.
+> Enough to validate the product. Upgrade when you need more daily usage
+> or more than one account.
 
 ### Supporter — $20/month ($209/year)
 
@@ -52,9 +52,9 @@ Best for:
 
 Recommended limits:
 
-- high request limits under fair-use
+- 5,000 requests/day, 100,000/month
 - up to 3 connected ManyChat accounts
-- up to 3 concurrent MCP sessions
+- 10 active MCP tokens
 - OAuth connect
 - priority support
 - direct support for the open-source project
@@ -75,14 +75,15 @@ Recommended limits:
 
 - up to 5 workspaces
 - up to 20 connected ManyChat accounts
-- highest request and concurrency caps (up to 10 concurrent MCP sessions)
+- 100,000 requests/day, 1,000,000/month
+- 50 active MCP tokens
 - team members and permissions
 - full audit logs
 - richer usage/billing visibility
 
 Commercial positioning:
 
-- self-serve, optimized for account count, concurrency, and team features
+- self-serve, optimized for account count, request volume, and team features
 - the done-for-you **Revenue Operator** engagement (~$3,500) is a separate secondary CTA, **not** part of self-serve
 
 ## Metering model
@@ -91,7 +92,6 @@ The hosted product should meter:
 
 - requests per day
 - requests per month
-- peak concurrent MCP sessions
 - number of connected ManyChat accounts
 - optional future team seats
 
@@ -103,7 +103,7 @@ That means the paid hosted offer sells:
 
 - convenience
 - governance
-- concurrency
+- request headroom
 - account scaling
 - dashboard UX
 
@@ -115,6 +115,6 @@ Recommended simple narrative:
 
 - **Free**: try it with limits
 - **Supporter $20/mo ($209/yr)**: serious personal use + support open source
-- **Pro $79/mo ($790/yr)**: more workspaces/accounts, more concurrency, team controls
+- **Pro $79/mo ($790/yr)**: more workspaces/accounts, far higher request ceilings, team controls
 
 This is short, clear, and easy to remember.

@@ -49,7 +49,7 @@ Prefix: `/api/v1` (future `apps/api`). All responses JSON. Auth: `Authorization:
 | `GET` | `/workspaces/:id/mcp-tokens` | List tokens (masked) |
 | `POST` | `/workspaces/:id/mcp-tokens` | Issue token; returns **full secret once** |
 | `DELETE` | `/workspaces/:id/mcp-tokens/:tokenId` | Revoke |
-| `GET` | `/workspaces/:id/usage` | Aggregates: daily/monthly requests, concurrent sessions |
+| `GET` | `/workspaces/:id/usage` | Aggregates: daily/monthly requests |
 | `GET` | `/workspaces/:id/audit` | Paginated audit (Pro) |
 
 MCP gateway (future `apps/mcp` or current HTTP entry extended) resolves `Bearer <mcp_token>` → workspace + account + injected ManyChat key. That path is **not** the dashboard API.
@@ -60,7 +60,6 @@ Align with [`pricing-tiers.md`](./pricing-tiers.md). Example enforcement keys:
 
 - `max_workspaces`
 - `max_manychat_accounts_per_workspace`
-- `max_concurrent_mcp_sessions`
 - `max_mcp_tokens`
 - `daily_request_quota`
 - `monthly_request_quota`
@@ -100,7 +99,7 @@ Each area should render **four states**: `loading`, `empty`, `ready`, `error`.
    - Show which tools that implies (link to MCP migration map)
 
 7. **Usage & limits**
-   - Bars: daily requests, concurrent sessions vs plan cap
+   - Bars: daily and monthly requests vs plan cap
    - Copy when over limit: upgrade or self-host OSS
 
 ## Webhook / billing hooks (later)

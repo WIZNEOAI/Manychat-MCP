@@ -1,26 +1,5 @@
 import { query } from "./_generated/server";
-
-/** Normalize legacy "supporter" rows to "pro". */
-function normalizePlan(plan: string): "free" | "pro" {
-  return plan === "supporter" ? "pro" : (plan as "free" | "pro");
-}
-
-const planLimits = {
-  free: {
-    dailyRequests: 250,
-    monthlyRequests: 3000,
-    maxConcurrentSessions: 1,
-    maxAccounts: 1,
-    maxTokens: 2,
-  },
-  pro: {
-    dailyRequests: 100000,
-    monthlyRequests: 1000000,
-    maxConcurrentSessions: 10,
-    maxAccounts: 20,
-    maxTokens: 50,
-  },
-} as const;
+import { planLimits } from "./lib/planLimits.js";
 
 export const viewer = query({
   args: {},
@@ -84,7 +63,7 @@ export const viewer = query({
           slug: workspace.slug,
           plan: workspace.plan,
           stripeCustomerId: workspace.stripeCustomerId,
-          limits: planLimits[normalizePlan(workspace.plan)],
+          limits: planLimits[workspace.plan],
           accounts: accounts.map((account) => ({
             _id: account._id,
             displayName: account.displayName,

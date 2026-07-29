@@ -103,7 +103,6 @@ export type GatewayTokenRecord = {
     maxAccounts: number;
     dailyRequests: number;
     monthlyRequests: number;
-    maxConcurrentSessions: number;
     maxTokens: number;
   };
   usage: {
