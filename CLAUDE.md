@@ -11,21 +11,18 @@ CLI-first ManyChat toolkit for agents and operators. Wraps the ManyChat Account 
 
 ## Commands
 
-This is a **pnpm workspace** (root CLI/MCP + `apps/web`). Install once at the root: `pnpm install`.
+Single package. `pnpm install` once.
 
 ```bash
-# Root (CLI + MCP)
 pnpm run lint     # tsc --noEmit
 pnpm run build    # tsc
 pnpm test         # vitest
-
-# Web app (apps/web)
-pnpm run web:dev      # Next.js dev server
-pnpm run web:build    # production build
-pnpm run web:lint     # eslint
-pnpm run web:test     # vitest
-pnpm run convex:dev   # convex dev server
+pnpm run dev      # tsx src/index.ts
 ```
+
+`pnpm-workspace.yaml` is no longer a workspace declaration — it only carries `allowBuilds`
+for `esbuild`, without which Vitest cannot transform TypeScript. The Dockerfile copies it,
+so removing it breaks the container build too.
 
 ## Architecture
 
@@ -64,16 +61,15 @@ tests/
 ├── stateless-multi-instance.test.ts # 3 processes behind round-robin, no sticky routing
 └── mcp-2026-conformance.test.ts     # ttlMs/cacheScope, resultType, serverInfo _meta, error codes
 
-apps/web/                   # Next.js 16 + React 19 + Tailwind 4
-├── middleware.ts           # Clerk auth, protects /dashboard
-└── convex/                 # Convex backend
-    ├── schema.ts           # users (clerkUserId index), workspaces (ownerUserId, plan enum, stripeCustomerId)
-    ├── users.ts, dashboard.ts, billing.ts, stripeActions.ts, http.ts
-    └── auth.config.ts
-
 docs/context/               # Product specs (read order in AGENTS.md)
+docs/control-plane-contract.md  # The HTTP seam to the hosted control plane
 skills/                     # Codex skills (manychat-mcp-ops)
 ```
+
+The hosted control plane (dashboard, vault, billing, plan limits) lived here as
+`apps/web` until 2026-07-29 and is now **WIZNEOAI/revenue-operator**, private. Nothing in
+this repo imports it; the only coupling is the HTTP contract, and only under
+`MCP_REMOTE_AUTH=hosted_token`.
 
 ## Key Conventions
 
@@ -109,7 +105,7 @@ skills/                     # Codex skills (manychat-mcp-ops)
 
 - **Dockerfile**: multi-stage (Node 22-alpine, pnpm), exposes :3000
 - **Gateway host**: EasyPanel/VPS (persistent, multi-tenant; Railway retired). Start `pnpm run start:mcp:http`, health `GET /health`.
-- **apps/web**: Vercel + Convex + Clerk + Stripe.
+- **Hosted control plane**: separate repo (Vercel + Convex + Clerk + Stripe).
 - **Smithery**: schema with baseUrl, useOAuth, manychatApiKey
 
 ## Testing Patterns
@@ -118,7 +114,7 @@ skills/                     # Codex skills (manychat-mcp-ops)
 - ManyChatClient tests verify retry logic and error classification
 - OAuth tests cover full PKCE flow lifecycle
 - CLI tests mock API and verify stdout JSON output
-- **The full gate must pass before any commit**: root `pnpm test` (91) + `pnpm run web:test` (118), plus lint + build on both. There is no CI on PRs — see [CONTRIBUTING.md](CONTRIBUTING.md)
+- **The full gate must pass before any commit**: `pnpm run lint` + `pnpm test` (91) + `pnpm run build`. There is no CI on PRs — see [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## What NOT to do
 
@@ -128,8 +124,10 @@ skills/                     # Codex skills (manychat-mcp-ops)
   must be a server-minted handle passed as a tool argument (2026-07-28 statelessness)
 - Don't emit JSON-RPC codes in `-32000..-32019` (legacy sub-range) or `-32020..-32099`
   (reserved for the spec) from our own code
-- Don't modify `apps/web` without reading `apps/web/AGENTS.md` first (Next.js 16 breaking changes)
-- Don't add dependencies without checking both root and apps/web package.json
+- Don't add a runtime dependency without a reason a stdlib or existing dep can't cover —
+  this package is something people install
+- Don't change a required field of the resolve response without shipping the schema
+  relaxation here first; see `docs/control-plane-contract.md`
 - Don't log secrets — `lib/logger.ts` has redaction, use it
 - Don't add a plan/limits table to the gateway. Ceilings are enforced control-plane
   side; the gateway parses what it is sent per `docs/control-plane-contract.md`

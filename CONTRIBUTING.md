@@ -4,8 +4,8 @@ Thanks for helping improve ManyChat MCP.
 
 ## Before you start
 
-1. Read [AGENTS.md](AGENTS.md) and, for web changes, [apps/web/AGENTS.md](apps/web/AGENTS.md).
-2. Keep the **CLI** as the source of truth: MCP and the dashboard should align with CLI behavior, not redefine it.
+1. Read [AGENTS.md](AGENTS.md).
+2. Keep the **CLI** as the source of truth: MCP should align with CLI behavior, not redefine it.
 3. **Stdout** stays JSON for CLI; diagnostics belong on **stderr**.
 
 ## Contributing focus
@@ -22,49 +22,39 @@ We welcome improvements to the OSS runtime, docs, deployment guides, and safe op
 
 **Out of scope** — please open an issue instead of a PR:
 
-- `apps/web/` is the hosted **control plane** — the paid product (workspaces, vault,
-  billing, plan limits). It is slated to move to its own repository, so changes there
-  will not survive the split. Bug reports about it are welcome; patches are not.
+- The hosted **control plane** — workspaces, vault, billing, plan limits, dashboard.
+  It used to live here as `apps/web` and moved to its own private repository on
+  2026-07-29. Bug reports about the hosted product are welcome; patches cannot land here.
 - Anything that weakens the policy wedge (see below).
 
-Changes to the paid product surfaces should still preserve the self-host story and keep the repo useful for the community.
+This repository must keep working entirely on its own. A change is out of scope if it
+makes the runtime need the hosted product to be useful.
 
 ## Development
 
-This is a **pnpm workspace** (root CLI/MCP + `apps/web`). Install once at the root —
-`pnpm install` aborts without a TTY, so pass `CI=true` in scripts and agent sessions:
+Single package, one install:
 
 ```bash
-CI=true pnpm install --frozen-lockfile
+pnpm install
 ```
 
-Convex: from `apps/web`, run `npx convex dev` for a linked deployment (interactive first time).
+`pnpm-workspace.yaml` is not a workspace declaration any more — it only carries the
+`allowBuilds` entry for `esbuild`, without which Vitest cannot transform TypeScript.
+Do not delete it; the Dockerfile copies it too.
 
 ## The gate
 
 There is **no CI on pull requests** — the gate is local and it is on you to run it.
-All six commands must be green before you open a PR:
+All three commands must be green before you open a PR:
 
 ```bash
-# Root (CLI + MCP runtime)
 pnpm run lint     # tsc --noEmit
 pnpm test         # vitest run
 pnpm run build    # tsc
-
-# Web (control plane — run it even for runtime-only changes; it imports from src/)
-pnpm run web:lint     # eslint
-pnpm run web:test     # vitest run
-pnpm run web:build    # next build
 ```
 
-Expected test counts as of this commit — a PR should raise them, never lower them:
-
-| Command | Tests |
-|---|---|
-| `pnpm test` | 87 |
-| `pnpm run web:test` | 118 |
-
-If a count drops, say so in the PR body and explain which test you deleted and why.
+`pnpm test` is **91** as of this commit. A PR should raise that number, never lower it.
+If it drops, say so in the PR body and explain which test you deleted and why.
 
 ## Rules that PRs may not break
 
@@ -105,10 +95,11 @@ by the spec) from our own code. `tests/mcp-2026-conformance.test.ts` asserts thi
 
 ### Advertise no limit you do not enforce
 
-If the landing, the docs, or a plan row states a ceiling, some code path must reject
-the request that exceeds it. `maxConcurrentSessions` and `maxWorkspaces` were both
-removed rather than left as copy the product could not honour. `pricing-copy.test.ts`
-checks each pricing card against the row the gateway actually reads.
+If the docs state a ceiling, some code path must reject the request that exceeds it.
+`maxConcurrentSessions` and `maxWorkspaces` were both removed rather than left as copy
+the product could not honour. For the same reason the README names the hosted tiers but
+states no numbers: the test that used to guard that copy went to the control-plane repo
+with it, and an unguarded number is a promise waiting to rot.
 
 The gateway keeps **no** plan table of its own. Ceilings are enforced control-plane
 side, which answers `429` before the gateway sees a session; a second copy here
@@ -127,7 +118,8 @@ several frames later.
   ManyChat calls, ever, in any test).
 - Do not log secrets (API keys, MCP tokens, vault material, shared internal secrets).
   `src/lib/logger.ts` redacts — use it.
-- Do not add dependencies without checking both root and `apps/web` `package.json`.
+- Do not add a dependency without saying in the PR body why a stdlib or existing dep
+  cannot do the job. This package is something people install; every dep is theirs too.
 
 ## Security
 

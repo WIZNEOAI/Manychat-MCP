@@ -1,6 +1,10 @@
-apps/web/lib/server/api-schemas.test.ts:generic-api-key:17
-apps/web/lib/server/api-schemas.test.ts:generic-api-key:83
-apps/web/lib/server/api-schemas.test.ts:generic-api-key:97
-apps/web/lib/server/api-schemas.test.ts:generic-api-key:17
-apps/web/lib/server/api-schemas.test.ts:generic-api-key:83
-apps/web/lib/server/api-schemas.test.ts:generic-api-key:97
+# Empty on purpose.
+#
+# The entries that used to live here pointed at
+# `apps/web/lib/server/api-schemas.test.ts`, which moved to
+# WIZNEOAI/revenue-operator on 2026-07-29. They were stale anyway: they pinned
+# lines 17/83/97 while the fixtures had drifted to 19/85/99, so they had quietly
+# stopped matching anything — and all three were listed twice.
+#
+# Prefer an inline `gitleaks:allow` comment on the offending line over a
+# line-numbered fingerprint here: it survives the file being edited.

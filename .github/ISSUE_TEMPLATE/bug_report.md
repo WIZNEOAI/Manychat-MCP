@@ -13,7 +13,7 @@ labels: bug
 - [ ] CLI
 - [ ] MCP (stdio)
 - [ ] MCP (HTTP)
-- [ ] Dashboard / web (`apps/web`)
+- [ ] Hosted control plane (report at the hosted product, not here)
 - [ ] Convex / hosted control plane
 - [ ] Documentation
 

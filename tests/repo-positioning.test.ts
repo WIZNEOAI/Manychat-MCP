@@ -26,15 +26,41 @@ describe("repo positioning docs", () => {
     expect(readme).toMatch(/validate_message/);
   });
 
+  // Same principle as above: assert the claims, not the sentences. This block used to
+  // pin two exact strings, one of which described `apps/web` — a directory that left
+  // for its own repository, which made the assertion outlive the thing it guarded.
   it("keeps contribution guidance explicit about the OSS story", () => {
     const contributing = readRepoFile("CONTRIBUTING.md");
 
-    expect(contributing).toContain(
-      "We welcome improvements to the OSS runtime, docs, deployment guides, and safe operator workflows.",
-    );
-    expect(contributing).toContain(
-      "Changes to the paid product surfaces should still preserve the self-host story and keep the repo useful for the community.",
-    );
+    // Contributions to the runtime are wanted.
+    expect(contributing).toMatch(/We welcome improvements to the OSS runtime/);
+
+    // The paid half is out of scope here, and readers are told where it went.
+    expect(contributing).toMatch(/\*\*Out of scope\*\*/);
+    expect(contributing).toMatch(/control plane/i);
+    expect(contributing).toMatch(/private repository/i);
+
+    // The line that actually protects the project: this repo stands alone.
+    expect(contributing).toContain("This repository must keep working entirely on its own.");
+  });
+
+  // The pricing table used to live in the README, guarded by a test that shipped with
+  // the control plane. An unenforceable number in a public README is a promise that
+  // rots, so the rule is now mechanical: name the tiers, state no figures.
+  it("states no hosted prices or quotas it cannot enforce", () => {
+    for (const file of ["README.md", "README.es.md"]) {
+      const text = readRepoFile(file);
+
+      // No currency amounts.
+      expect(text, `${file} must not quote a price`).not.toMatch(/\$\s?\d/);
+      // No request quotas, in either locale's thousands separator.
+      expect(text, `${file} must not quote a quota`).not.toMatch(
+        /\d[\d.,]*\s*(req|requests)\s*\/?\s*(mo|month|día|day|mes)/i,
+      );
+      // The tiers may still be named — that is positioning, not an enforceable claim.
+      expect(text).toMatch(/Supporter/);
+      expect(text).toMatch(/Pro\b/);
+    }
   });
 
   it("frames the roadmap as OSS core plus paid system", () => {
