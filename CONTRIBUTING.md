@@ -110,9 +110,12 @@ the request that exceeds it. `maxConcurrentSessions` and `maxWorkspaces` were bo
 removed rather than left as copy the product could not honour. `pricing-copy.test.ts`
 checks each pricing card against the row the gateway actually reads.
 
-The mirror rule applies too: `src/hosted/plans.ts` must stay field-for-field identical
-to what the control plane sends, because the resolve payload is cast rather than
-parsed — a key the gateway declares but nobody sends is `undefined` behind a `number`.
+The gateway keeps **no** plan table of its own. Ceilings are enforced control-plane
+side, which answers `429` before the gateway sees a session; a second copy here
+could only ever drift or lie. The gateway parses the resolve payload against
+[`docs/control-plane-contract.md`](docs/control-plane-contract.md) and rejects a
+response that no longer honours it, rather than casting and discovering the gap
+several frames later.
 
 ## Pull requests
 

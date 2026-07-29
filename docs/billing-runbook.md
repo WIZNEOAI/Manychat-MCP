@@ -215,10 +215,11 @@ into another.
 | `monthlyRequests` | 3,000 | 100,000 | 1,000,000 |
 | `maxTokens` | 2 | 10 | 50 |
 
-`src/hosted/plans.ts` mirrors these for the gateway package, field for field.
-The resolve payload is cast rather than parsed, so a key the gateway declares
-but the control plane never sends reads as `undefined` behind a `number` type —
-add a ceiling there only once the control plane sends and enforces it.
+This table is the only copy. The gateway package holds no plan limits: it cannot
+enforce a ceiling — the control plane answers `429` first — so a mirror there
+could only drift. The gateway receives `limits` on the resolve payload for
+observability and parses it as optional. See
+[`control-plane-contract.md`](./control-plane-contract.md).
 
 The landing copy in `apps/web/lib/site-data-shared.ts` must state exactly these
 numbers — `apps/web/lib/pricing-copy.test.ts` fails the build if it drifts.

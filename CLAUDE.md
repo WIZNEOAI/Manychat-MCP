@@ -118,7 +118,7 @@ skills/                     # Codex skills (manychat-mcp-ops)
 - ManyChatClient tests verify retry logic and error classification
 - OAuth tests cover full PKCE flow lifecycle
 - CLI tests mock API and verify stdout JSON output
-- **The full gate must pass before any commit**: root `pnpm test` (87) + `pnpm run web:test` (118), plus lint + build on both. There is no CI on PRs — see [CONTRIBUTING.md](CONTRIBUTING.md)
+- **The full gate must pass before any commit**: root `pnpm test` (91) + `pnpm run web:test` (118), plus lint + build on both. There is no CI on PRs — see [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## What NOT to do
 
@@ -131,3 +131,5 @@ skills/                     # Codex skills (manychat-mcp-ops)
 - Don't modify `apps/web` without reading `apps/web/AGENTS.md` first (Next.js 16 breaking changes)
 - Don't add dependencies without checking both root and apps/web package.json
 - Don't log secrets — `lib/logger.ts` has redaction, use it
+- Don't add a plan/limits table to the gateway. Ceilings are enforced control-plane
+  side; the gateway parses what it is sent per `docs/control-plane-contract.md`
