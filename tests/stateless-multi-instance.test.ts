@@ -151,7 +151,32 @@ async function initialize(target?: string): Promise<{ sessionId?: string; ok: bo
   return { sessionId: res.headers.get("mcp-session-id") ?? undefined, ok: res.ok };
 }
 
+/**
+ * Fail loudly if a port is already taken. Without this the suite silently talks
+ * to whatever is listening — a leftover server from another worktree will make
+ * these tests report on code that is not the code under test. That happened
+ * twice while landing this branch.
+ */
+async function assertPortFree(port: number): Promise<void> {
+  try {
+    const res = await fetch(`http://127.0.0.1:${port}/health`, {
+      signal: AbortSignal.timeout(1500),
+    });
+    if (res.ok) {
+      throw new Error(
+        `port ${port} is already serving something. Kill it before running this suite — ` +
+          `otherwise these tests measure a foreign server, not this checkout.`,
+      );
+    }
+  } catch (error) {
+    // A refused connection is what we want; only re-throw our own signal.
+    if (error instanceof Error && error.message.includes("already serving")) throw error;
+  }
+}
+
 beforeAll(async () => {
+  await Promise.all(PORTS.map(assertPortFree));
+
   // Local stand-in for the ManyChat API. No request leaves the machine and the
   // real account is never touched.
   mock = createServer((_req, res) => {
@@ -172,6 +197,9 @@ beforeAll(async () => {
         MCP_BASE_URL: `http://localhost:${port}`,
       },
       stdio: "ignore",
+      // Own process group: `npx` wraps `tsx`, so signalling the wrapper alone
+      // leaves the real server alive and holding the port.
+      detached: true,
     }),
   );
 
@@ -179,7 +207,14 @@ beforeAll(async () => {
 }, 60_000);
 
 afterAll(async () => {
-  for (const child of children) child.kill("SIGTERM");
+  for (const child of children) {
+    if (child.pid === undefined) continue;
+    try {
+      process.kill(-child.pid, "SIGTERM"); // negative pid = whole group
+    } catch {
+      child.kill("SIGTERM");
+    }
+  }
   await new Promise<void>((resolve) => mock.close(() => resolve()));
 });
 
