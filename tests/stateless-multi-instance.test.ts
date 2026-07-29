@@ -9,15 +9,14 @@ import { createServer, type Server } from "node:http";
  * land on any instance. This suite runs three independent server processes
  * behind a round-robin dispatcher and drives a normal MCP flow across them.
  *
- * Measured on 2026-07-28 against the current code: 2 of 5 steps pass, and the
- * two that do pass only because the round-robin cursor happens to return to the
- * instance that served `initialize`. Root cause is the in-process `sessions`
- * map in src/mcp/serve.ts.
+ * Measured on 2026-07-28 against the pre-migration code: 2 of 5 steps passed,
+ * and the two that did only because the round-robin cursor happened to return
+ * to the instance that served `initialize`. Root cause was the in-process
+ * `sessions` map in src/mcp/serve.ts.
  *
- * The multi-instance cases below are marked `it.fails` on purpose: they assert
- * the behaviour we do NOT have yet, so the suite stays green today and turns red
- * the moment the migration makes them pass. When that happens, flip them to
- * `it` — do not delete them.
+ * Since the migration to `createMcpHandler` that map is gone: every request is
+ * served by a fresh instance, so the cases below assert the real behaviour and
+ * are plain `it()` again.
  */
 
 const PORTS = [4101, 4102, 4103];
@@ -50,6 +49,37 @@ async function waitForHealth(port: number, timeoutMs = 20_000): Promise<void> {
 
 type RpcResult = { ok: boolean; status: number; body: unknown; servedBy: string };
 
+const NAMED_METHODS = new Set(["tools/call", "resources/read", "prompts/get"]);
+
+/**
+ * SEP-2243 makes `Mcp-Method` (and `Mcp-Name` on the named methods) REQUIRED on
+ * every POST, and a conforming server MUST answer `-32020` when a header and
+ * the body disagree. Mirror the body into headers the way a real client does.
+ */
+function routingHeaders(body: unknown): Record<string, string> {
+  if (!body || typeof body !== "object") return {};
+  const message = body as {
+    method?: string;
+    params?: { name?: string; uri?: string; _meta?: Record<string, unknown> };
+  };
+  if (!message.method) return {};
+
+  const headers: Record<string, string> = { "Mcp-Method": message.method };
+
+  const declaredVersion =
+    message.params?._meta?.["io.modelcontextprotocol/protocolVersion"];
+  if (typeof declaredVersion === "string") {
+    headers["MCP-Protocol-Version"] = declaredVersion;
+  }
+
+  if (NAMED_METHODS.has(message.method)) {
+    const name = message.params?.name ?? message.params?.uri;
+    if (name) headers["Mcp-Name"] = name;
+  }
+
+  return headers;
+}
+
 async function rpc(
   body: unknown,
   sessionId?: string,
@@ -59,6 +89,7 @@ async function rpc(
     "content-type": "application/json",
     accept: "application/json, text/event-stream",
     "x-manychat-api-key": "test-key-not-a-real-secret",
+    ...routingHeaders(body),
   };
   if (sessionId) headers["mcp-session-id"] = sessionId;
 
@@ -163,8 +194,11 @@ describe("statelessness across instances", () => {
 
   it("a single instance serves the whole flow (control)", async () => {
     const target = `http://127.0.0.1:${PORTS[0]}`;
-    const { sessionId } = await initialize(target);
-    expect(sessionId).toBeTruthy();
+    const { sessionId, ok } = await initialize(target);
+    expect(ok).toBe(true);
+    // 2026-07-28 removed protocol-level sessions, and the legacy leg is served
+    // statelessly, so no Mcp-Session-Id is minted any more.
+    expect(sessionId).toBeUndefined();
 
     const list = await rpc(
       { jsonrpc: "2.0", id: 2, method: "tools/list", params: {} },
@@ -181,8 +215,7 @@ describe("statelessness across instances", () => {
     expect(call.ok).toBe(true);
   });
 
-  // Currently fails: the session lives in one process only.
-  it.fails("tools/list succeeds on an instance that did not run initialize", async () => {
+  it("tools/list succeeds on an instance that did not run initialize", async () => {
     const { sessionId } = await initialize(`http://127.0.0.1:${PORTS[0]}`);
     const other = `http://127.0.0.1:${PORTS[1]}`;
 
@@ -194,9 +227,7 @@ describe("statelessness across instances", () => {
     expect(list.ok).toBe(true);
   });
 
-  // Currently fails: only the requests that land back on the initialize
-  // instance succeed, so the flow scores 2/5 rather than 5/5.
-  it.fails("the full flow survives round-robin with no sticky routing", async () => {
+  it("the full flow survives round-robin with no sticky routing", async () => {
     cursor = 0;
     const { sessionId } = await initialize();
 
@@ -213,8 +244,8 @@ describe("statelessness across instances", () => {
     expect(results.filter((r) => r.ok)).toHaveLength(steps.length);
   });
 
-  // Currently fails: `server/discover` is MUST in 2026-07-28 and is not implemented.
-  it.fails("server/discover answers without a prior handshake", async () => {
+  // `server/discover` is a MUST in 2026-07-28.
+  it("server/discover answers without a prior handshake", async () => {
     const res = await rpc({
       jsonrpc: "2.0",
       id: 1,
@@ -229,8 +260,8 @@ describe("statelessness across instances", () => {
     expect(res.ok).toBe(true);
   });
 
-  // Currently fails: a modern client never sends `initialize`.
-  it.fails("a 2026-07-28 client reaches tools/list with no session", async () => {
+  // A modern client never sends `initialize`.
+  it("a 2026-07-28 client reaches tools/list with no session", async () => {
     const res = await rpc({
       jsonrpc: "2.0",
       id: 1,
@@ -245,8 +276,8 @@ describe("statelessness across instances", () => {
     expect(res.ok).toBe(true);
   });
 
-  // Currently fails: the 2025-era session endpoints still answer 400.
-  it.fails("GET and DELETE on /mcp answer 405", async () => {
+  // The 2025-era session endpoints are gone; the handler answers 405.
+  it("GET and DELETE on /mcp answer 405", async () => {
     const base = `http://127.0.0.1:${PORTS[0]}`;
     const get = await fetch(`${base}/mcp`);
     const del = await fetch(`${base}/mcp`, { method: "DELETE" });
