@@ -1,4 +1,4 @@
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { McpServer } from "@modelcontextprotocol/server";
 import type { ManyChatClient } from "../auth/manychat-client.js";
 import type {
   Page,
@@ -11,7 +11,7 @@ import type {
 } from "../types/manychat.js";
 
 export function registerResources(server: McpServer, client: ManyChatClient) {
-  server.resource(
+  server.registerResource(
     "page-info",
     "manychat://page/info",
     { description: "ManyChat page/bot information", mimeType: "application/json" },
@@ -23,7 +23,7 @@ export function registerResources(server: McpServer, client: ManyChatClient) {
     },
   );
 
-  server.resource(
+  server.registerResource(
     "tag-catalog",
     "manychat://tags/all",
     { description: "All tags in the ManyChat account", mimeType: "application/json" },
@@ -35,7 +35,7 @@ export function registerResources(server: McpServer, client: ManyChatClient) {
     },
   );
 
-  server.resource(
+  server.registerResource(
     "custom-fields-catalog",
     "manychat://fields/custom",
     {
@@ -50,7 +50,7 @@ export function registerResources(server: McpServer, client: ManyChatClient) {
     },
   );
 
-  server.resource(
+  server.registerResource(
     "bot-fields",
     "manychat://fields/bot",
     { description: "Bot-level system fields", mimeType: "application/json" },
@@ -62,7 +62,7 @@ export function registerResources(server: McpServer, client: ManyChatClient) {
     },
   );
 
-  server.resource(
+  server.registerResource(
     "flow-catalog",
     "manychat://flows/all",
     {
@@ -79,7 +79,7 @@ export function registerResources(server: McpServer, client: ManyChatClient) {
     },
   );
 
-  server.resource(
+  server.registerResource(
     "otn-topics",
     "manychat://otn/topics",
     {
@@ -94,7 +94,7 @@ export function registerResources(server: McpServer, client: ManyChatClient) {
     },
   );
 
-  server.resource(
+  server.registerResource(
     "subscriber-schema",
     "manychat://schema/subscriber",
     {
@@ -111,7 +111,7 @@ export function registerResources(server: McpServer, client: ManyChatClient) {
     }),
   );
 
-  server.resource(
+  server.registerResource(
     "api-limits",
     "manychat://meta/limits",
     { description: "ManyChat API rate limits reference", mimeType: "text/markdown" },
