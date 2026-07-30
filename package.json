@@ -19,6 +19,8 @@
   ],
   "scripts": {
     "build": "tsc",
+    "build:publish": "rm -rf dist && tsc --sourceMap false",
+    "prepack": "pnpm run build:publish",
     "start": "node dist/index.js",
     "start:mcp:http": "node dist/mcp/http-entry.js",
     "start:mcp:stdio": "node dist/index.js mcp serve --transport stdio",
