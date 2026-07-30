@@ -6,19 +6,32 @@ Security fixes are applied to the default branch (`main`) and released as tagged
 
 ## Reporting a vulnerability
 
-**Please do not** open a public GitHub issue for undisclosed security bugs.
+**Please do not** open a public GitHub issue for an undisclosed security bug.
 
-Instead, email maintainers with:
+Use **[GitHub's private vulnerability reporting](https://github.com/WIZNEOAI/Manychat-MCP/security/advisories/new)**
+— the Security tab of this repository. It is private between you and the maintainers, and it
+does not expose an inbox to scrapers.
 
-- Description of the issue and impact
-- Steps to reproduce (if possible)
-- Affected surface (CLI, MCP HTTP, dashboard, Convex, etc.)
+Include:
 
-We aim to acknowledge reports within a few business days.
+- Description of the issue and its impact
+- Steps to reproduce, if you have them
+- Affected surface (CLI, MCP stdio, MCP HTTP gateway, hosted-token mode)
+
+We aim to acknowledge within a few business days.
+
+A **policy wedge bypass counts as a security issue**: if you find a way to make
+`validate_message` approve a send that Meta's messaging window would reject, report it
+privately rather than opening an issue.
 
 ## Sensitive data
 
 Never paste real **ManyChat API keys**, **hosted MCP tokens**, **VAULT_MASTER_KEY**, or **MCP_INTERNAL_SHARED_SECRET** / **HOSTED_CONTROL_PLANE_SECRET** into issues or public chats.
+
+A ManyChat API key grants full access to the page it belongs to. This software reads it from
+the environment or `~/.manychat/config.json` and sends it nowhere except ManyChat's own API —
+`src/lib/logger.ts` redacts it from logs. If a key is exposed, rotate it in ManyChat
+immediately: generating a new key invalidates the old one.
 
 ## Scope notes
 

@@ -1,11 +1,12 @@
 import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { isAbsolute, join, resolve } from "node:path";
 import {
   DEFAULT_MANYCHAT_API_BASE_URL,
   ManyChatClient,
   ManyChatError,
 } from "../core/manychat-client.js";
+import { buildConnectReport, openInBrowser, renderConnectHints } from "./connect.js";
 
 export interface CliIo {
   stdout: string[];
@@ -59,6 +60,21 @@ export async function runCli(argv: string[], io: CliIo): Promise<number> {
   try {
     if (command.length === 0 || hasBooleanFlag(parsed.flags, "help")) {
       io.stdout.push(`${renderHelp()}\n`);
+      return 0;
+    }
+
+    // Dispatched before resolveConfig on purpose: someone who has not generated
+    // a ManyChat key yet is exactly the person who needs `connect`, and
+    // resolveConfig throws without one.
+    if (command[0] === "connect") {
+      const report = buildConnectReport(resolveEntryPath());
+      if (hasBooleanFlag(parsed.flags, "open")) {
+        openInBrowser(report.connect.hosted.signUp);
+      }
+      if (!hasBooleanFlag(parsed.flags, "quiet")) {
+        io.stderr.push(renderConnectHints(report));
+      }
+      writeJson(io.stdout, success(command, report), hasBooleanFlag(parsed.flags, "pretty"));
       return 0;
     }
 
@@ -584,11 +600,23 @@ function success(command: string[], data: unknown): CliSuccess {
   };
 }
 
+/**
+ * Absolute path to the CLI entry, for the MCP config snippets `connect` prints.
+ * MCP clients resolve `args` relative to their own working directory, so a
+ * relative path here would produce a config that silently fails to start.
+ */
+function resolveEntryPath(): string {
+  const entry = process.argv[1];
+  if (!entry) return "/absolute/path/to/Manychat-MCP/dist/index.js";
+  return isAbsolute(entry) ? entry : resolve(entry);
+}
+
 function renderHelp(): string {
   return [
     "manychat CLI",
     "",
     "Usage:",
+    "  manychat connect [--open]        # start here: get a key, store it, connect an agent",
     "  manychat doctor --api-key <key>",
     "  manychat page info --api-key <key>",
     "  manychat tags list --api-key <key>",
