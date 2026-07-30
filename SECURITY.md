@@ -8,9 +8,15 @@ Security fixes are applied to the default branch (`main`) and released as tagged
 
 **Please do not** open a public GitHub issue for an undisclosed security bug.
 
-Use **[GitHub's private vulnerability reporting](https://github.com/WIZNEOAI/Manychat-MCP/security/advisories/new)**
-— the Security tab of this repository. It is private between you and the maintainers, and it
-does not expose an inbox to scrapers.
+Two ways, both private:
+
+1. **[GitHub private vulnerability reporting](https://github.com/WIZNEOAI/Manychat-MCP/security/advisories/new)**
+   — the Security tab of this repository. Preferred: it threads the whole exchange, tracks a
+   fix, and can issue a CVE.
+2. **contacto@wizneo.org** — if you would rather not use GitHub, or the report does not fit
+   an advisory. Put `SECURITY` in the subject.
+
+Either reaches the maintainers directly.
 
 Include:
 
