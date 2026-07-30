@@ -30,9 +30,9 @@ wedge — do **not** open an issue. Report it privately: see [SECURITY.md](SECUR
 
 ## Enforcement
 
-Report conduct problems to the maintainers through
-[GitHub's private reporting](https://github.com/WIZNEOAI/Manychat-MCP/security/advisories/new),
-which reaches us without a public thread.
+Report conduct problems to **contacto@wizneo.org**, or through
+[GitHub's private reporting](https://github.com/WIZNEOAI/Manychat-MCP/security/advisories/new)
+if you would rather not email. Either reaches us without a public thread.
 
 Maintainers may edit, lock, or delete contributions and comments, and may block accounts.
 We will explain a moderation decision if you ask, but this is a small project and we will not
