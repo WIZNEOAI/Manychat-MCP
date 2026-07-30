@@ -108,6 +108,20 @@ could only ever drift or lie. The gateway parses the resolve payload against
 response that no longer honours it, rather than casting and discovering the gap
 several frames later.
 
+## What ships to npm
+
+`pnpm run build` emits source maps — keep them, they make local debugging work.
+`prepack` rebuilds with `--sourceMap false`, so **the published tarball has none**.
+
+That is deliberate. `tsconfig.json` does not set `inlineSources`, so a map carries only
+a path reference (`../src/foo.ts`) and never the source itself. Shipping the maps without
+`src/` therefore adds ~107 kB of files pointing at code the installer does not have, and a
+debugger fails to resolve them instead of stepping through anything. Publishing without
+them took the tarball from 112 files / 89.5 kB to 78 / 68 kB.
+
+If you ever want maps to work for consumers, add `src` to `files` — do not just re-enable
+the maps.
+
 ## Pull requests
 
 - Small, focused diffs. One concern per PR.
