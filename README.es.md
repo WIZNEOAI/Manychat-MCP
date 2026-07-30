@@ -1,45 +1,106 @@
-# ManyChat MCP
+<p align="center">
+  <img src="docs/assets/cover.png" alt="ManyChat MCP — una terminal corriendo manychat connect y manychat mcp serve, junto a canales de chat, email y comentarios converge en un chequeo de seguridad" width="100%">
+</p>
 
-**Dale a tus agentes de IA superpoderes de ManyChat.**
+<h1 align="center">ManyChat MCP</h1>
 
-[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
-[![Docker](https://img.shields.io/badge/Docker-self--host-ready-2496ED)](docs/deploy/vps-docker.md)
+<p align="center"><strong>Dale a tus agentes de IA superpoderes de ManyChat — sin que le flageen la cuenta.</strong></p>
 
-[English](README.md) · 🌐 **Español**
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL_v3-2DE2C0.svg" alt="Licencia: AGPL v3"></a>
+  <a href="docs/deploy/vps-docker.md"><img src="https://img.shields.io/badge/Docker-self--host-ready-2496ED" alt="Docker self-host listo"></a>
+  <img src="https://img.shields.io/badge/MCP-2026--07--28-0C0D0F" alt="Protocolo MCP 2026-07-28">
+  <img src="https://img.shields.io/badge/tests-103-2DE2C0" alt="103 tests">
+</p>
 
-Un servidor CLI + Model Context Protocol (MCP) que deja a los agentes de IA — Claude, Cursor, Codex, OpenCode — **operar ManyChat**: leer y segmentar suscriptores, manejar tags y custom fields, enviar flows y mensajes, e inspeccionar una página.
+<p align="center"><a href="README.md">English</a> · 🌐 <strong>Español</strong> · <a href="NOTICE.md">Aviso de licencia</a></p>
 
-Lo que lo hace distinto: una **capa de validación de política de Meta** integrada. Antes de que un agente envíe algo, `validate_message` lo verifica contra las reglas de ventana de 24 h de ManyChat — para que tu agente no haga que le flageen la cuenta. **Ningún otro MCP de ManyChat codifica esa política.**
+Un CLI + servidor Model Context Protocol que deja a los agentes de IA — Claude, Cursor, Codex, OpenCode — **operar ManyChat**: leer y segmentar suscriptores, manejar tags y custom fields, enviar flows y mensajes, e inspeccionar una página.
 
-> Open-source y self-hosteable para siempre (CLI + MCP). Un control plane hosted opcional — **Revenue Operator** — agrega un vault cifrado, MCP tokens hosted, usage/audit y billing encima. El runtime OSS nunca es un demo capado.
+Lo que lo hace distinto: una **capa de validación de política de Meta** integrada. Antes de que un agente envíe algo, `validate_message` lo verifica contra las reglas de ventana de 24 h de ManyChat — para que tu agente no haga que le restrinjan la cuenta. **Ningún otro MCP de ManyChat codifica esa política.**
 
 ---
 
-## Instalación en 60 segundos
+## El camino más rápido: el control plane hosted
+
+Sin instalar nada, sin servidor que mantener, sin la key sentada en un archivo de config:
+
+### **→ [manychat.wizneo.org](https://manychat.wizneo.org/sign-up)**
+
+Creás cuenta, pegás tu key de ManyChat una vez (queda cifrada, no se vuelve a mostrar),
+emitís un token MCP revocable, y apuntás cualquier agente ahí. Hay **tier gratis** para probar.
+
+¿Preferís correrlo vos? Todo lo de abajo hace exactamente eso, para siempre, sin ninguna
+feature retenida. **El runtime OSS nunca es un demo capado.**
+
+---
+
+## Self-host en 60 segundos
+
+```bash
+npx mcp-manychat connect
+```
+
+Ese único comando te dice dónde sacar tu API key de ManyChat, cómo guardarla para no
+perderla, e imprime una config lista para pegar en tu agente. Con `--open` te abre también
+la página de registro.
+
+¿Preferís trabajar desde el código?
 
 ```bash
 git clone https://github.com/WIZNEOAI/Manychat-MCP.git
 cd Manychat-MCP
-pnpm install
-pnpm build
+pnpm install && pnpm build
+node dist/index.js connect
 ```
 
-Configurá tu API key de ManyChat ([cómo generarla](https://help.manychat.com/hc/en-us/articles/14959510331420-How-to-generate-a-token-for-the-Manychat-API-and-where-to-get-parameters)):
+### Paso 1 — conseguí tu API key de ManyChat
+
+En ManyChat: **Settings → API → Generate your API Key**. Necesitás cuenta **Pro** de
+ManyChat. ([Instrucciones oficiales](https://help.manychat.com/hc/en-us/articles/14959510331420-How-to-generate-a-token-for-the-Manychat-API-and-where-to-get-parameters).)
+
+> **La key se muestra una sola vez.** Copiala antes de cerrar esa pantalla. Si la perdés
+> tenés que generar una nueva, y eso invalida la anterior y rompe todo lo que la esté
+> usando. La key da acceso total a la página a la que pertenece — tratala como una
+> contraseña.
+
+### Paso 2 — guardala como variable de entorno
 
 ```bash
-export MANYCHAT_API_KEY=mc_...
+export MANYCHAT_API_KEY='mc_tu_key_aca'
 ```
 
-Verificá:
+Eso vive sólo en la terminal actual. Para que quede, agregá esa misma línea a `~/.zshrc`
+(macOS) o `~/.bashrc` (Linux), y abrí una terminal nueva.
+
+¿Manejás más de una cuenta de ManyChat? Usá un archivo de perfiles — `~/.manychat/config.json`:
+
+```json
+{
+  "profiles": {
+    "default":  { "apiKey": "mc_tu_key_aca" },
+    "clienteA": { "apiKey": "mc_otra_key" }
+  }
+}
+```
+
+Después pasás `--profile clienteA` (o seteás `MANYCHAT_PROFILE=clienteA`).
+
+**No hagas esto:** commitear la key a un repo · pasar `--api-key` en una máquina compartida,
+donde queda en el historial de la shell · pegarla en un chat de IA. El servidor MCP la lee
+del entorno; nunca necesita aparecer en un mensaje.
+
+### Paso 3 — verificá
 
 ```bash
-node dist/index.js doctor      # chequea key + conectividad
-node dist/index.js page info   # imprime tu página
+manychat doctor      # chequea la key y la conectividad
+manychat page info   # imprime tu página
 ```
 
 ## Conectá tu agente
 
-El servidor MCP corre local por stdio. Apuntá cualquier cliente MCP a él.
+El servidor MCP corre local por stdio. `manychat connect` te imprime esto ya rellenado con
+tus rutas reales, pero como referencia:
 
 **Claude Desktop / Claude Code** (`claude_desktop_config.json` o `.mcp.json`):
 
@@ -47,8 +108,8 @@ El servidor MCP corre local por stdio. Apuntá cualquier cliente MCP a él.
 {
   "mcpServers": {
     "manychat": {
-      "command": "node",
-      "args": ["/ruta/absoluta/a/Manychat-MCP/dist/index.js", "mcp", "serve", "--transport", "stdio"],
+      "command": "npx",
+      "args": ["-y", "mcp-manychat", "mcp", "serve", "--transport", "stdio"],
       "env": { "MANYCHAT_API_KEY": "mc_..." }
     }
   }
@@ -61,10 +122,14 @@ El servidor MCP corre local por stdio. Apuntá cualquier cliente MCP a él.
 
 ```toml
 [mcp_servers.manychat]
-command = "node"
-args = ["/ruta/absoluta/a/Manychat-MCP/dist/index.js", "mcp", "serve", "--transport", "stdio"]
+command = "npx"
+args = ["-y", "mcp-manychat", "mcp", "serve", "--transport", "stdio"]
 env = { MANYCHAT_API_KEY = "mc_..." }
 ```
+
+¿Trabajás desde un clon en vez de npm? Cambiá `command`/`args` por `"node"` y
+`["/ruta/absoluta/a/dist/index.js", "mcp", "serve", "--transport", "stdio"]` — la ruta tiene
+que ser absoluta, porque los clientes MCP la resuelven desde su propio directorio de trabajo.
 
 Los modos remoto (HTTP) y hosted-token están en [`docs/connect/mcp-clients.md`](docs/connect/mcp-clients.md).
 
@@ -110,6 +175,7 @@ Ver [`docs/connect/agent-skills.md`](docs/connect/agent-skills.md). Las skills v
 La CLI es la fuente de verdad; MCP reusa la misma capa de ejecución.
 
 ```
+manychat connect [--open]      # empezá acá
 manychat doctor
 manychat page info
 manychat tags list|create
@@ -126,7 +192,7 @@ Contrato de salida: JSON en `stdout`, diagnósticos en `stderr`. Exit codes: `0`
 
 ## Hosted (Revenue Operator)
 
-¿No querés self-hostear? El control plane hosted te deja pegar una key de ManyChat una vez (guardada cifrada), emitir MCP tokens, y conectar cualquier agente sin manejar un servidor — más usage y audit.
+Qué agrega la capa de pago encima de este runtime: una **bóveda cifrada de credenciales** para pegar la key de ManyChat una vez y que no se vuelva a mostrar, **tokens MCP revocables** emitidos por agente en vez de repartir la key cruda, **usage y audit** por workspace, y límites de plan aplicados de verdad.
 
 Tres tiers: **Free** para evaluar, **Supporter** para builders que corren agentes a diario, y **Pro** para agencias y operadores multi-marca. Los precios y los límites por tier viven en la página del producto, que es la única fuente de verdad; este README a propósito no repite números que no puede hacer cumplir.
 
@@ -142,7 +208,7 @@ Para un MCP remoto multi-tenant persistente, deployá el gateway (`src/`, Docker
 pnpm install
 pnpm run lint     # tsc --noEmit
 pnpm run build    # tsc
-pnpm test         # vitest — 91
+pnpm test         # vitest — 103
 ```
 
 Los tres tienen que pasar antes de un commit; no hay CI en los pull requests. Ver [`CONTRIBUTING.md`](CONTRIBUTING.md) para qué miramos en un cambio, más [`CLAUDE.md`](CLAUDE.md) y [`AGENTS.md`](AGENTS.md).
@@ -155,8 +221,22 @@ Los tres tienen que pasar antes de un commit; no hay CI en los pull requests. Ve
 
 ## Licencia
 
-[AGPL-3.0-or-later](LICENSE). Self-hosteá libremente; el uso en red debe compartir el código fuente.
+**[AGPL-3.0-or-later](LICENSE).** Usalo, forkealo, vendé servicios construidos encima —
+incluso comercialmente. Lo que la licencia pide a cambio: si corrés una versión
+**modificada** como servicio de red, les debés a sus usuarios el código fuente completo de
+lo que estás corriendo.
+
+Podés hacer negocio con esto. Lo que no podés es hacerlo cerrado.
+
+Aparte, una licencia de copyright no es una licencia de marca: **Gnosix**, **WIZNEO**,
+**Revenue Operator** y nuestra identidad visual quedan reservados. Shipeá tu fork con un
+nombre que sea claramente tuyo.
+
+Resumen en lenguaje claro en inglés y español, incluido cómo se manejan las credenciales:
+**[NOTICE.md](NOTICE.md)**.
 
 ---
 
-Hecho por [Gnosix / WIZNEO](https://wizneo.org). No afiliado a ManyChat.
+Hecho por [Gnosix / WIZNEO](https://wizneo.org). **No afiliado, avalado ni patrocinado por
+ManyChat, Inc.** — "ManyChat" es marca de su titular, usada acá sólo para describir con qué
+habla este software.

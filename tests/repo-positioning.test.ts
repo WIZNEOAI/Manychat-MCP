@@ -5,6 +5,18 @@ function readRepoFile(path: string) {
   return readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 }
 
+/**
+ * Same file, flattened for phrase matching: markdown hard-wraps sentences, and
+ * inside a blockquote the continuation carries a `>` marker — so a phrase can be
+ * split by "\n> " and no whitespace-only pattern will find it. Matching prose
+ * should be about content, not about where the author's line breaks landed.
+ */
+function readProse(path: string) {
+  return readRepoFile(path)
+    .replace(/^\s*>\s?/gm, "")
+    .replace(/\s+/g, " ");
+}
+
 describe("repo positioning docs", () => {
   // Guards the positioning, not the wording. Assert the claims the README has to
   // keep making; leave the copy free to change. The earlier version pinned exact
@@ -69,5 +81,85 @@ describe("repo positioning docs", () => {
     expect(roadmap).toContain("Revenue Operator");
     expect(roadmap).toContain("OSS self-host runtime");
     expect(roadmap).toContain("operator product framing");
+  });
+
+  // The documented install command and the published package name are the same
+  // fact stored in two files. A rename touching only one ships a README whose
+  // very first command fails.
+  it("documents an install command that matches the package name", () => {
+    const pkg = JSON.parse(readRepoFile("package.json")) as {
+      name: string;
+      bin: Record<string, string>;
+    };
+
+    expect(pkg.bin).toHaveProperty(pkg.name);
+
+    for (const file of ["README.md", "README.es.md"]) {
+      const text = readRepoFile(file);
+      expect(text, `${file} must show npx ${pkg.name}`).toContain(`npx ${pkg.name} connect`);
+      expect(text, `${file} agent config must use ${pkg.name}`).toContain(`"${pkg.name}"`);
+    }
+  });
+
+  // The funnel only works if it is read before the install instructions — that is
+  // why it sits above them. A reorder that buries it is a silent regression, not
+  // a style change.
+  it("puts the hosted call to action above the self-host instructions", () => {
+    for (const file of ["README.md", "README.es.md"]) {
+      const text = readRepoFile(file);
+      const hosted = text.indexOf("manychat.wizneo.org/sign-up");
+      const selfHost = text.search(/^## Self-host/m);
+
+      expect(hosted, `${file} must link the hosted sign-up`).toBeGreaterThan(-1);
+      expect(selfHost, `${file} must keep a self-host section`).toBeGreaterThan(-1);
+      expect(hosted, `${file} buries the hosted CTA`).toBeLessThan(selfHost);
+    }
+  });
+
+  // Losing the ManyChat key is the most common way onboarding fails, and "shown
+  // once" is the warning that prevents it.
+  it("warns in both languages that the ManyChat key is shown once", () => {
+    expect(readProse("README.md")).toMatch(/shown once/i);
+    expect(readProse("README.es.md")).toMatch(/una sola vez/i);
+  });
+});
+
+describe("licence notice", () => {
+  // AGPL does not forbid commercial use — it forces source disclosure for network
+  // use, and on its own reserves nothing about trademarks. Both halves have to be
+  // stated, in both languages, or the notice misleads a reader (or us) about what
+  // protection actually exists.
+  it("states the network clause and the trademark reservation in both languages", () => {
+    const notice = readProse("NOTICE.md");
+
+    expect(notice).toMatch(/## English/);
+    expect(notice).toMatch(/## Español/);
+
+    // The network clause — the reason AGPL was chosen over MIT.
+    expect(notice).toMatch(/network\s+service/i);
+    expect(notice).toMatch(/servicio\s+de\s+red/i);
+
+    // Trademarks, reserved separately from copyright.
+    expect(notice).toMatch(/trademark/i);
+    expect(notice).toMatch(/licencia\s+de\s+marca/i);
+    for (const mark of ["Gnosix", "WIZNEO", "Revenue Operator"]) {
+      expect(notice, `${mark} must be reserved`).toContain(mark);
+    }
+
+    // Never claim the licence bans commercial use. It does not.
+    expect(notice).toMatch(/including\s+commercially/i);
+    expect(notice).toMatch(/incluso\s+comercialmente/i);
+
+    // Not legal advice, and the licence text wins on conflict.
+    expect(notice).toMatch(/not\s+legal\s+advice/i);
+    expect(notice).toMatch(/no\s+asesoría\s+legal/i);
+  });
+
+  it("disclaims affiliation with ManyChat where a reader will see it", () => {
+    for (const file of ["README.md", "README.es.md", "NOTICE.md"]) {
+      expect(readProse(file), `${file} must disclaim affiliation`).toMatch(
+        /not affiliated|no afiliado/i,
+      );
+    }
   });
 });

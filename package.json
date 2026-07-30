@@ -1,13 +1,22 @@
 {
-  "name": "manychat",
+  "name": "mcp-manychat",
   "version": "0.1.0",
   "description": "CLI-first ManyChat toolkit for agents and operators, with optional MCP compatibility",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
     "manychat": "dist/index.js",
-    "manychat-mcp": "dist/index.js"
+    "manychat-mcp": "dist/index.js",
+    "mcp-manychat": "dist/index.js"
   },
+  "files": [
+    "dist",
+    "skills",
+    "README.md",
+    "README.es.md",
+    "NOTICE.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
