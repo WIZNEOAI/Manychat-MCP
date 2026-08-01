@@ -53,7 +53,7 @@ pnpm test         # vitest run
 pnpm run build    # tsc
 ```
 
-`pnpm test` is **91** as of this commit. A PR should raise that number, never lower it.
+`pnpm test` is **108** as of this commit. A PR should raise that number, never lower it.
 If it drops, say so in the PR body and explain which test you deleted and why.
 
 ## Rules that PRs may not break
@@ -121,6 +121,32 @@ them took the tarball from 112 files / 89.5 kB to 78 / 68 kB.
 
 If you ever want maps to work for consumers, add `src` to `files` — do not just re-enable
 the maps.
+
+## Using AI to write your contribution
+
+Use it. This project exists to give agents hands; pretending nobody codes with them
+would be silly. Claude, Codex, Cursor — whatever gets you there.
+
+What we ask is that **you** show up in the pull request, because the review is a
+conversation with a person:
+
+- **Run it before you send it.** The full gate above, on your machine. A PR whose tests
+  were never executed is the single fastest way to get closed.
+- **Read every line you are asking us to merge.** If a reviewer asks "why this?" and the
+  answer is "that is what it generated", the PR is not ready. You do not have to have
+  typed it; you do have to stand behind it.
+- **Keep it to what was asked.** An issue about a flag is not an invitation to reformat
+  the file, rename variables, restructure imports, or add three abstractions nobody
+  requested. Unrequested rewrites get closed without a line-by-line review — not out of
+  spite, but because reviewing them costs more than the change is worth.
+- **Write the PR body yourself, in your own words.** Two honest sentences on *why* beat
+  a generated wall of text restating the diff. We can already read the diff.
+- **No invented facts.** Do not cite a ManyChat endpoint, a Meta policy window, or an MCP
+  spec detail without checking it against the real documentation. A confidently wrong
+  policy claim in the wedge is worse than no claim at all.
+
+None of this is anti-AI. It is the same bar a hand-written PR has to clear; agents just
+make it easier to miss by volume.
 
 ## Pull requests
 
