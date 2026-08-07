@@ -10,7 +10,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL_v3-2DE2C0.svg" alt="Licencia: AGPL v3"></a>
   <a href="docs/deploy/vps-docker.md"><img src="https://img.shields.io/badge/Docker-self--host-ready-2496ED" alt="Docker self-host listo"></a>
   <img src="https://img.shields.io/badge/MCP-2026--07--28-0C0D0F" alt="Protocolo MCP 2026-07-28">
-  <img src="https://img.shields.io/badge/tests-103-2DE2C0" alt="103 tests">
+  <img src="https://img.shields.io/badge/tests-108-2DE2C0" alt="108 tests">
 </p>
 
 <p align="center"><a href="README.md">English</a> · 🌐 <strong>Español</strong> · <a href="NOTICE.md">Aviso de licencia</a></p>
@@ -208,10 +208,10 @@ Para un MCP remoto multi-tenant persistente, deployá el gateway (`src/`, Docker
 pnpm install
 pnpm run lint     # tsc --noEmit
 pnpm run build    # tsc
-pnpm test         # vitest — 103
+pnpm test         # vitest — 108
 ```
 
-Los tres tienen que pasar antes de un commit; no hay CI en los pull requests. Ver [`CONTRIBUTING.md`](CONTRIBUTING.md) para qué miramos en un cambio, más [`CLAUDE.md`](CLAUDE.md) y [`AGENTS.md`](AGENTS.md).
+Los tres tienen que pasar antes de un commit. CI también los corre en pull requests y pushes a `main`. Ver [`CONTRIBUTING.md`](CONTRIBUTING.md) para qué miramos en un cambio, más [`CLAUDE.md`](CLAUDE.md) y [`AGENTS.md`](AGENTS.md).
 
 ## Seguridad
 

@@ -44,8 +44,7 @@ Do not delete it; the Dockerfile copies it too.
 
 ## The gate
 
-There is **no CI on pull requests** — the gate is local and it is on you to run it.
-All three commands must be green before you open a PR:
+There is a GitHub Actions workflow (`.github/workflows/ci.yml`) that runs `lint`, `test`, and `build` on pull requests and pushes to `main`. **That does not replace the local gate** — you still run it before opening a PR:
 
 ```bash
 pnpm run lint     # tsc --noEmit
