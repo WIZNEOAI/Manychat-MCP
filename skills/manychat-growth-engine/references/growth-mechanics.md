@@ -27,6 +27,35 @@ Trigger: a story link, ad, or button opens Messenger with a pre-set ref. Opt-in 
 
 A ManyChat ref URL in the bio/link hub opens the bot with a known entry point. Tag by entry. Lower intent than comment/keyword — qualify harder before nurturing.
 
+## Paid ads (Meta) → Messenger/IG
+
+Ads are a **capture source**, not a different skill set. Requirements that usually matter:
+
+1. Click-to-Messenger / IG destination configured in Ads Manager + ManyChat entry.
+2. Capture `ref` / UTM-like context into a custom field (`campaign`, `adset`) for attribution.
+3. First message still **delivers + qualifies** — ad traffic is noisier than comment keywords.
+4. Outside messaging windows, cold promo still needs recovery or WA templates — ads do not grant a permanent send free-pass.
+5. Keep creative promises aligned with the first DM (mismatch = blocks/reports).
+
+Tag: `source:ad` + campaign field. Measure cost-per-qualified-lead, not only cost-per-conversation.
+
+## Organic content loop (simple)
+
+1. Publish content with **one** clear keyword or CTA.  
+2. Capture → qualify → tag interest.  
+3. Nurture only those with intent signals.  
+4. Feed objections back into next content pillar.  
+
+Agents help operate steps 2–3; humans still own creative taste.
+
+## Telegram and non-ManyChat rails
+
+This MCP does not send Telegram messages. If the business also runs Telegram:
+
+- Use ManyChat for IG/Messenger/WA rails you connect here.
+- Bridge identity/intent to CRM/Sheet when the same lead appears on Telegram.
+- Do not invent a “ManyChat Telegram tool” — say the gap plainly.
+
 ## What "qualify" means at capture
 
 The first auto-reply asks the single most decision-relevant question (budget, role, need, timeline — pick one). Map the answer to a tag (`interest:*`, `lead:qualified`) and/or a custom field. A capture that doesn't set at least one tag is incomplete.

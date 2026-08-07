@@ -10,7 +10,7 @@ Thanks for helping improve ManyChat MCP.
 
 ## Contributing focus
 
-We welcome improvements to the OSS runtime, docs, deployment guides, and safe operator workflows.
+We welcome improvements to the OSS runtime, docs, deployment guides, agent skills, and safe operator workflows.
 
 **In scope** — this is where contributions land:
 
@@ -19,6 +19,9 @@ We welcome improvements to the OSS runtime, docs, deployment guides, and safe op
 | `src/` | CLI, MCP server, ManyChat client, tools, prompts, resources, policy wedge |
 | `tests/` | Vitest suites for everything under `src/` |
 | `docs/` | Deployment guides, CLI spec, product context, runbooks |
+| `skills/` | Agent playbooks: operator, growth, lead-reply, follow-up, setup-coach, mcp-ops |
+
+Marketing/ops skills are welcome when they teach **safe** ManyChat usage (funnels, replies, hygiene) and never bypass the policy wedge. See [`skills/README.md`](skills/README.md).
 
 **Out of scope** — please open an issue instead of a PR:
 
