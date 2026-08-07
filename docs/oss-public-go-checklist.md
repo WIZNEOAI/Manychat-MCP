@@ -29,3 +29,15 @@ Local prep for making the OSS runtime public. **Do not execute side-effect steps
 - Marketing blast
 
 Those belong to **Track B — hosted prod** and need their own GO sequence.
+
+## CI note (2026-08-07)
+
+Workflow file is present and actionlint-clean. Local gates are green.
+
+GitHub Actions on `WIZNEOAI/*` **private** repos currently ends in `startup_failure` with **0 jobs**
+(account-wide: depadoc-app, elderhermit, gnosixweb, Manychat-MCP). Even an echo-only workflow fails.
+
+This is **not** a repo YAML bug. Fix path is account/billing/Actions entitlement for private runners
+(GitHub Settings → Billing / Actions minutes / spending limit), then re-run `ci.yml`.
+
+Until then: treat **local** `pnpm lint && pnpm test && pnpm build` as the release gate.
