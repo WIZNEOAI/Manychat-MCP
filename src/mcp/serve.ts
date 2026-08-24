@@ -179,9 +179,16 @@ async function startHttp(config: HttpRuntimeConfig) {
       return { credential: { apiKey: headerKey, source: "x-manychat-api-key" } };
     }
 
-    const envKey = process.env.MANYCHAT_API_KEY?.trim();
-    if (envKey) {
-      return { credential: { apiKey: envKey, source: "MANYCHAT_API_KEY" } };
+    // Only `manychat_header` is single-tenant, so only it may fall back to the
+    // operator's own key. In the token modes that fallback would hand an
+    // anonymous caller the operator's ManyChat account with no token, no quota
+    // and no audit trail — silently, because the request never reaches the
+    // authorization branch below.
+    if (config.authMode === "manychat_header") {
+      const envKey = process.env.MANYCHAT_API_KEY?.trim();
+      if (envKey) {
+        return { credential: { apiKey: envKey, source: "MANYCHAT_API_KEY" } };
+      }
     }
 
     if (config.authMode === "oauth") {
