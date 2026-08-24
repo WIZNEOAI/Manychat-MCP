@@ -24,7 +24,7 @@ node dist/mcp/http-entry.js
 
 ## 2. Header mode deployment
 
-This is the recommended Phase 0 self-host setup.
+This is the recommended self-host setup.
 
 ### Option A: one ManyChat API key at the server level
 
@@ -63,7 +63,8 @@ X-ManyChat-API-Key: mc_...
 
 Use this only when you really need remote OAuth-style login.
 
-Phase 0 requires Redis in production for OAuth token and authorization-code state.
+Production OAuth requires Redis for token and authorization-code state; the server
+refuses to start otherwise.
 
 ### Create a dedicated Docker network
 
@@ -154,32 +155,36 @@ docker run -d \
   manychat-mcp:latest
 ```
 
-The same secret must be set on Vercel as `MCP_INTERNAL_SHARED_SECRET`. See [mcp-gateway-vps.md](./mcp-gateway-vps.md) and [production-beta.md](./production-beta.md).
+The same secret must be set on the control plane as `MCP_INTERNAL_SHARED_SECRET`. See
+[mcp-gateway-vps.md](./mcp-gateway-vps.md) and
+[the control-plane contract](../control-plane-contract.md).
 
 You can also use root [docker-compose.yml](../../docker-compose.yml) and uncomment the hosted env lines.
 
 ## 6. Production warnings
 
-### MCP sessions are still process-local
+### There are no MCP sessions to lose
 
-Phase 0 does **not** persist live MCP HTTP sessions in Redis yet.
+MCP revision `2026-07-28` removed protocol sessions. Every request builds its own server
+from the credential resolved for that request, so:
 
-So:
+- run as many replicas as you like
+- no sticky routing, no `Mcp-Session-Id`, no reconnect after a restart
+- `GET /mcp` and `DELETE /mcp` answer `405` by design
 
-- run one replica
-- expect reconnect after restart
-- do not place this behind non-sticky multi-instance balancing
+`tests/stateless-multi-instance.test.ts` drives a full MCP flow across three processes
+behind round-robin routing to keep this true.
 
-### Redis is required only for production OAuth in Phase 0
+### Redis is required only for production OAuth
 
-Redis currently hardens:
+Redis hardens:
 
 - OAuth clients
 - authorization codes
 - access tokens
 - refresh tokens
 
-It does **not** yet make active MCP HTTP sessions durable across restarts.
+Nothing else in the gateway needs it.
 
 ### Keep ManyChat API key handling simple
 

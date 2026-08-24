@@ -20,7 +20,8 @@ Or use [docker-compose.yml](../../docker-compose.yml) at the repo root with a `.
 
 ## Hosted multi-tenant gateway (hosted_token)
 
-The gateway does **not** store ManyChat keys; it calls your Vercel app:
+The gateway does **not** store ManyChat keys; it resolves each request against your
+control plane (see [the contract](../control-plane-contract.md)):
 
 ```bash
 docker run -d \

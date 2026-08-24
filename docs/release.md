@@ -2,16 +2,16 @@
 
 ## Prerequisites
 
-- Green CI for `lint`, `test`, `build`
-- Railway project configured
-- Redis available when production auth mode is OAuth
+- Green gate for `lint`, `test`, `build`
+- Gateway host configured (see [docs/deploy/](./deploy/))
+- Redis available when the production auth mode is OAuth
 - `smithery.yaml` present and valid
 
 ## Release steps
 
 1. Merge to main
 2. Tag version (`vX.Y.Z`)
-3. Deploy to Railway
+3. Deploy the gateway
 4. Validate:
    - `/health`
    - MCP initialize call on `/mcp`
@@ -24,13 +24,14 @@
 
 ## Runtime contract
 
-Railway should start the HTTP MCP server explicitly with:
+Start the HTTP MCP server explicitly:
 
 ```bash
-npm run start:mcp:http
+pnpm run start:mcp:http
 ```
 
-Do not rely on `node dist/index.js` alone for production HTTP MCP deploys.
+Do not rely on `node dist/index.js` alone for production HTTP MCP deploys — that is the
+CLI entrypoint, not `dist/mcp/http-entry.js`.
 
 ## Rollback
 

@@ -1,23 +1,24 @@
 # Skills usage
 
-This repo ships one operational skill:
+This repo ships six agent skills under [`skills/`](../skills/). See
+[`skills/README.md`](../skills/README.md) for what each one covers and the recommended load
+order, and [`connect/agent-skills.md`](./connect/agent-skills.md) for how to install them.
 
-- `skills/manychat-mcp-ops`
+`manychat-mcp-ops` is the operational one: gateway, auth, rate-limit and runtime
+diagnostics. It carries the smoke script below.
 
-## Install/sync into local Codex skills directory
+## Smoke-test a running HTTP gateway
 
-PowerShell example:
-
-```powershell
-$target = "$env:CODEX_HOME\skills\manychat-mcp-ops"
-Remove-Item -Recurse -Force $target -ErrorAction SilentlyContinue
-Copy-Item -Recurse -Force ".\skills\manychat-mcp-ops" $target
+```bash
+export MCP_BASE_URL="https://mcp.example.com"
+export MANYCHAT_API_KEY="your_manychat_api_key"
+node skills/manychat-mcp-ops/scripts/smoke_http_mcp.mjs
 ```
 
-## Validate smoke script
+PowerShell:
 
 ```powershell
-$env:MCP_BASE_URL="https://your-app.up.railway.app"
+$env:MCP_BASE_URL="https://mcp.example.com"
 $env:MANYCHAT_API_KEY="your_manychat_api_key"
 node .\skills\manychat-mcp-ops\scripts\smoke_http_mcp.mjs
 ```
