@@ -10,7 +10,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL_v3-2DE2C0.svg" alt="Licencia: AGPL v3"></a>
   <a href="docs/deploy/vps-docker.md"><img src="https://img.shields.io/badge/Docker-self--host-ready-2496ED" alt="Docker self-host listo"></a>
   <img src="https://img.shields.io/badge/MCP-2026--07--28-0C0D0F" alt="Protocolo MCP 2026-07-28">
-  <img src="https://img.shields.io/badge/tests-108-2DE2C0" alt="108 tests">
+  <img src="https://img.shields.io/badge/tests-110-2DE2C0" alt="110 tests">
 </p>
 
 <p align="center"><a href="README.md">English</a> · 🌐 <strong>Español</strong> · <a href="NOTICE.md">Aviso de licencia</a></p>
@@ -21,21 +21,7 @@ Lo que lo hace distinto: una **capa de validación de política de Meta** integr
 
 ---
 
-## El camino más rápido: el control plane hosted
-
-Sin instalar nada, sin servidor que mantener, sin la key sentada en un archivo de config:
-
-### **→ [manychat.wizneo.org](https://manychat.wizneo.org/sign-up)**
-
-Creás cuenta, pegás tu key de ManyChat una vez (queda cifrada, no se vuelve a mostrar),
-emitís un token MCP revocable, y apuntás cualquier agente ahí. Hay **tier gratis** para probar.
-
-¿Preferís correrlo vos? Todo lo de abajo hace exactamente eso, para siempre, sin ninguna
-feature retenida. **El runtime OSS nunca es un demo capado.**
-
----
-
-## Self-host en 60 segundos
+## Corrélo en 60 segundos
 
 ```bash
 npx mcp-manychat connect
@@ -53,6 +39,17 @@ cd Manychat-MCP
 pnpm install && pnpm build
 node dist/index.js connect
 ```
+
+### ¿No querés mantener un servidor?
+
+[manychat.wizneo.org](https://manychat.wizneo.org) hostea el mismo runtime: conectás tu key
+de ManyChat una vez, queda cifrada, y obtenés un token MCP revocable para apuntar cualquier
+agente. Hay tier gratis.
+
+Es una comodidad, no una versión mejor. Cada tool, cada prompt y el guard de política están
+acá, bajo AGPL, para siempre. **El runtime OSS nunca es un demo capado.**
+
+---
 
 ### Paso 1 — conseguí tu API key de ManyChat
 
@@ -208,7 +205,7 @@ Para un MCP remoto multi-tenant persistente, deployá el gateway (`src/`, Docker
 pnpm install
 pnpm run lint     # tsc --noEmit
 pnpm run build    # tsc
-pnpm test         # vitest — 108
+pnpm test         # vitest — 110
 ```
 
 Los tres tienen que pasar antes de un commit. CI también los corre en pull requests y pushes a `main`. Ver [`CONTRIBUTING.md`](CONTRIBUTING.md) para qué miramos en un cambio, más [`CLAUDE.md`](CLAUDE.md) y [`AGENTS.md`](AGENTS.md).

@@ -114,7 +114,7 @@ this repo imports it; the only coupling is the HTTP contract, and only under
 - ManyChatClient tests verify retry logic and error classification
 - OAuth tests cover full PKCE flow lifecycle
 - CLI tests mock API and verify stdout JSON output
-- **The full gate must pass before any commit**: `pnpm run lint` + `pnpm test` (108) + `pnpm run build`. There is no CI on PRs — see [CONTRIBUTING.md](CONTRIBUTING.md)
+- **The full gate must pass before any commit**: `pnpm run lint` + `pnpm test` (110) + `pnpm run build`. There is no CI on PRs — see [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## What NOT to do
 

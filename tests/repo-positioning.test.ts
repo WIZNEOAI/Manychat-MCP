@@ -101,18 +101,30 @@ describe("repo positioning docs", () => {
     }
   });
 
-  // The funnel only works if it is read before the install instructions — that is
-  // why it sits above them. A reorder that buries it is a silent regression, not
-  // a style change.
-  it("puts the hosted call to action above the self-host instructions", () => {
+  // This repo is the product; the hosted plane is the convenience. A reader who
+  // wants to run it themselves must reach the one command before they are sold
+  // anything — and the hosted link still has to be above the long onboarding,
+  // or the people who never wanted a server read the whole key-management
+  // section to find out they did not need it.
+  //
+  // Reversed on 2026-08-24: this test used to assert the opposite order.
+  it("puts the run-it-yourself command above the hosted call to action", () => {
     for (const file of ["README.md", "README.es.md"]) {
       const text = readRepoFile(file);
-      const hosted = text.indexOf("manychat.wizneo.org/sign-up");
-      const selfHost = text.search(/^## Self-host/m);
+      const runCommand = text.indexOf("npx mcp-manychat connect");
+      const hosted = text.indexOf("manychat.wizneo.org");
+      const onboarding = text.search(/^### (Step 1|Paso 1)/m);
 
-      expect(hosted, `${file} must link the hosted sign-up`).toBeGreaterThan(-1);
-      expect(selfHost, `${file} must keep a self-host section`).toBeGreaterThan(-1);
-      expect(hosted, `${file} buries the hosted CTA`).toBeLessThan(selfHost);
+      expect(runCommand, `${file} must show the run command`).toBeGreaterThan(-1);
+      expect(hosted, `${file} must keep linking the hosted plane`).toBeGreaterThan(-1);
+      expect(onboarding, `${file} must keep the onboarding steps`).toBeGreaterThan(-1);
+
+      expect(runCommand, `${file} buries the OSS command below the funnel`).toBeLessThan(
+        hosted,
+      );
+      expect(hosted, `${file} buries the hosted CTA below onboarding`).toBeLessThan(
+        onboarding,
+      );
     }
   });
 

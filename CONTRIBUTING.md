@@ -55,7 +55,7 @@ pnpm test         # vitest run
 pnpm run build    # tsc
 ```
 
-`pnpm test` is **108** as of this commit. A PR should raise that number, never lower it.
+`pnpm test` is **110** as of this commit. A PR should raise that number, never lower it.
 If it drops, say so in the PR body and explain which test you deleted and why.
 
 ## Rules that PRs may not break

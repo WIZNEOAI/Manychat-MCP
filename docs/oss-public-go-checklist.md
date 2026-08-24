@@ -4,7 +4,7 @@ Local prep for making the OSS runtime public. **Do not execute side-effect steps
 
 ## Already done locally (prep)
 
-- [x] Badge + docs test count aligned to **108**
+- [x] Badge + docs test count aligned to **110**
 - [x] `package.json` `homepage` → `https://manychat.wizneo.org`
 - [x] GitHub Actions CI: lint / test / build on `main` + PRs
 - [x] CONTRIBUTING reflects CI + local gate

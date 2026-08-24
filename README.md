@@ -10,7 +10,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL_v3-2DE2C0.svg" alt="License: AGPL v3"></a>
   <a href="docs/deploy/vps-docker.md"><img src="https://img.shields.io/badge/Docker-self--host-ready-2496ED" alt="Docker self-host ready"></a>
   <img src="https://img.shields.io/badge/MCP-2026--07--28-0C0D0F" alt="MCP protocol 2026-07-28">
-  <img src="https://img.shields.io/badge/tests-108-2DE2C0" alt="108 tests">
+  <img src="https://img.shields.io/badge/tests-110-2DE2C0" alt="110 tests">
 </p>
 
 <p align="center">🌐 <strong>English</strong> · <a href="README.es.md">Español</a> · <a href="NOTICE.md">Licence notice</a></p>
@@ -21,21 +21,7 @@ What makes it different: a built-in **Meta policy-validation layer**. Before an 
 
 ---
 
-## Fastest path: the hosted control plane
-
-No installation, no server to run, no key sitting in a config file:
-
-### **→ [manychat.wizneo.org](https://manychat.wizneo.org/sign-up)**
-
-Sign up, paste your ManyChat key once (stored encrypted, never shown again), issue a
-revocable MCP token, and point any agent at it. There is a **free tier** for evaluation.
-
-Prefer to run it yourself? Everything below does that, forever, with no feature held back.
-**The OSS runtime is never a gated demo.**
-
----
-
-## Self-host in 60 seconds
+## Run it in 60 seconds
 
 ```bash
 npx mcp-manychat connect
@@ -53,6 +39,17 @@ cd Manychat-MCP
 pnpm install && pnpm build
 node dist/index.js connect
 ```
+
+### Don't want to run a server?
+
+[manychat.wizneo.org](https://manychat.wizneo.org) hosts the same runtime: you connect your
+ManyChat key once, it is stored encrypted, and you get a revocable MCP token to point any
+agent at. There is a free tier.
+
+It is a convenience, not a better version. Every tool, prompt and the policy guard are
+here, under AGPL, forever. **The OSS runtime is never a gated demo.**
+
+---
 
 ### Step 1 — get your ManyChat API key
 
@@ -208,7 +205,7 @@ For a persistent multi-tenant remote MCP, deploy the gateway (`src/`, Dockerfile
 pnpm install
 pnpm run lint     # tsc --noEmit
 pnpm run build    # tsc
-pnpm test         # vitest — 108
+pnpm test         # vitest — 110
 ```
 
 All three must pass before a commit. CI also runs them on pull requests and pushes to `main`. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for what we look for in a change, plus [`CLAUDE.md`](CLAUDE.md) and [`AGENTS.md`](AGENTS.md).
