@@ -10,7 +10,6 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL_v3-2DE2C0.svg" alt="Licencia: AGPL v3"></a>
   <a href="docs/deploy/vps-docker.md"><img src="https://img.shields.io/badge/Docker-self--host-ready-2496ED" alt="Docker self-host listo"></a>
   <img src="https://img.shields.io/badge/MCP-2026--07--28-0C0D0F" alt="Protocolo MCP 2026-07-28">
-  <img src="https://img.shields.io/badge/tests-110-2DE2C0" alt="110 tests">
 </p>
 
 <p align="center"><a href="README.md">English</a> · 🌐 <strong>Español</strong> · <a href="NOTICE.md">Aviso de licencia</a></p>
@@ -34,8 +33,7 @@ npx mcp-manychat connect
 ```
 
 `connect` te imprime dónde generar una API key de ManyChat, cómo guardarla, y un bloque de
-config listo para pegar en tu agente. Con `--open` te abre en el navegador la página de
-registro del servicio hosted.
+config listo para pegar en tu agente.
 
 Si preferís trabajar desde el código:
 
@@ -48,12 +46,14 @@ node dist/index.js connect
 
 ### ¿No querés mantener un servidor?
 
-[mc-mcp.wizneo.org](https://mc-mcp.wizneo.org) corre este mismo código por vos: conectás
-tu key de ManyChat una vez, queda cifrada, y obtenés un token MCP revocable para apuntar
-cualquier agente. Hay tier gratis.
+Se está construyendo una versión hosted: conectás tu key de ManyChat una vez, queda cifrada,
+y obtenés un token MCP revocable para apuntar cualquier agente.
 
-Es una comodidad, no una versión mejor. Cada tool, cada prompt y el guard de política están
-acá, bajo AGPL. **El runtime OSS nunca es un demo capado.**
+**Todavía no está abierta.** [mc-mcp.wizneo.org](https://mc-mcp.wizneo.org) la describe y lo
+dice sin vueltas; hoy no hay registro al cual mandarte. Esta línea cambia cuando lo haya.
+
+Va a ser una comodidad, no una versión mejor. Cada tool, cada prompt y el guard de política
+están acá, bajo AGPL. **El runtime OSS nunca es un demo capado.**
 
 ---
 
@@ -202,7 +202,7 @@ cada una, y [`docs/connect/agent-skills.md`](docs/connect/agent-skills.md) para 
 La CLI es la fuente de verdad; MCP reusa la misma capa de ejecución.
 
 ```
-manychat connect [--open]      # empezá acá
+manychat connect               # empezá acá
 manychat doctor
 manychat page info
 manychat tags list|create
@@ -219,7 +219,8 @@ Contrato de salida: JSON en `stdout`, diagnósticos en `stderr`. Exit codes: `0`
 
 ## Hosted (Revenue Operator)
 
-Qué agrega la capa de pago encima de este runtime: una **bóveda cifrada de credenciales**,
+**Todavía no está abierta.** Esto es lo que la capa de pago va a agregar encima de este
+runtime, y nada de eso hace falta para usar todo lo de arriba: una **bóveda cifrada de credenciales**,
 para pegar la key de ManyChat una vez y que no se vuelva a mostrar; **tokens MCP revocables**
 emitidos por agente en vez de repartir la key cruda; **usage y audit** por workspace; y
 límites de plan aplicados de verdad.
@@ -251,11 +252,12 @@ réplicas detrás de un balanceador round-robin común, sin routing pegajoso.
 pnpm install
 pnpm run lint     # tsc --noEmit
 pnpm run build    # tsc
-pnpm test         # vitest — 110
+pnpm test         # vitest
 ```
 
-Los tres tienen que pasar antes de un commit. CI corre los mismos tres en pull requests y
-pushes a `main`. Ver [`CONTRIBUTING.md`](CONTRIBUTING.md) para qué miramos en un cambio, más
+Los tres tienen que pasar antes de un commit. **Este repositorio no tiene CI**: el gate es
+local y lo corre cada quien. Un pull request que dice que el gate está verde se toma por
+cierto, así que por favor hacelo cierto. Ver [`CONTRIBUTING.md`](CONTRIBUTING.md) para qué miramos en un cambio, más
 [`CLAUDE.md`](CLAUDE.md) y [`AGENTS.md`](AGENTS.md).
 
 ## Seguridad

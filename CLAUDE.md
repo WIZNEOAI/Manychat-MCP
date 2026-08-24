@@ -114,7 +114,7 @@ this repo imports it; the only coupling is the HTTP contract, and only under
 - ManyChatClient tests verify retry logic and error classification
 - OAuth tests cover full PKCE flow lifecycle
 - CLI tests mock API and verify stdout JSON output
-- **The full gate must pass before any commit**: `pnpm run lint` + `pnpm test` (110) + `pnpm run build`. `.github/workflows/ci.yml` runs the same three on PRs and pushes to `main`; it does not replace the local gate — see [CONTRIBUTING.md](CONTRIBUTING.md)
+- **The full gate must pass before any commit**: `pnpm run lint` + `pnpm test` (110) + `pnpm run build`. There is no CI: Actions runs on this repo fail before they start, so the workflow was removed rather than left showing a permanent red cross. The local gate is the only gate — see [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## What NOT to do
 

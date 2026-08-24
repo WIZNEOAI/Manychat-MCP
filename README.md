@@ -10,7 +10,6 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL_v3-2DE2C0.svg" alt="License: AGPL v3"></a>
   <a href="docs/deploy/vps-docker.md"><img src="https://img.shields.io/badge/Docker-self--host-ready-2496ED" alt="Docker self-host ready"></a>
   <img src="https://img.shields.io/badge/MCP-2026--07--28-0C0D0F" alt="MCP protocol 2026-07-28">
-  <img src="https://img.shields.io/badge/tests-110-2DE2C0" alt="110 tests">
 </p>
 
 <p align="center">🌐 <strong>English</strong> · <a href="README.es.md">Español</a> · <a href="NOTICE.md">Licence notice</a></p>
@@ -33,7 +32,7 @@ npx mcp-manychat connect
 ```
 
 `connect` prints where to generate a ManyChat API key, how to store it, and a config block
-you can paste into your agent. Add `--open` to open the hosted sign-up page in a browser.
+you can paste into your agent.
 
 Working from source instead:
 
@@ -46,12 +45,14 @@ node dist/index.js connect
 
 ### Don't want to run a server?
 
-[mc-mcp.wizneo.org](https://mc-mcp.wizneo.org) runs this same code for you: you connect
-your ManyChat key once, it is stored encrypted, and you get a revocable MCP token to point an
-agent at. There is a free tier.
+A hosted version is being built: you will connect your ManyChat key once, it is stored
+encrypted, and you get a revocable MCP token to point an agent at.
 
-It is a convenience, not a better version. Every tool, every prompt and the policy guard are
-here, under AGPL. **The OSS runtime is never a gated demo.**
+**It is not open yet.** [mc-mcp.wizneo.org](https://mc-mcp.wizneo.org) describes it and says
+so plainly; there is no sign-up to send you to today. This line will change when there is.
+
+It will be a convenience, not a better version. Every tool, every prompt and the policy guard
+are here, under AGPL. **The OSS runtime is never a gated demo.**
 
 ---
 
@@ -199,7 +200,7 @@ install them.
 The CLI is the source of truth; MCP reuses the same execution layer.
 
 ```
-manychat connect [--open]      # start here
+manychat connect               # start here
 manychat doctor
 manychat page info
 manychat tags list|create
@@ -216,7 +217,8 @@ Output contract: JSON on `stdout`, diagnostics on `stderr`. Exit codes: `0` ok �
 
 ## Hosted (Revenue Operator)
 
-What the paid layer adds on top of this runtime: an **encrypted credential vault**, so a
+**Not open yet.** What follows is what the paid layer will add on top of this runtime, and
+none of it is required to use anything above: an **encrypted credential vault**, so a
 ManyChat key is pasted once and never shown again; **revocable MCP tokens** issued per agent
 instead of handing out the raw key; **usage and audit** per workspace; and enforced plan
 ceilings.
@@ -248,11 +250,12 @@ behind a plain round-robin load balancer with no sticky routing.
 pnpm install
 pnpm run lint     # tsc --noEmit
 pnpm run build    # tsc
-pnpm test         # vitest — 110
+pnpm test         # vitest
 ```
 
-All three must pass before a commit. CI runs the same three on pull requests and pushes to
-`main`. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for what we look for in a change, plus
+All three must pass before a commit. **There is no CI on this repository**: the gate is
+local, and every contributor runs it. A pull request that says the gate is green is taken at
+its word, so please make that true. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for what we look for in a change, plus
 [`CLAUDE.md`](CLAUDE.md) and [`AGENTS.md`](AGENTS.md).
 
 ## Safety
