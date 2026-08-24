@@ -112,7 +112,7 @@ describe("repo positioning docs", () => {
     for (const file of ["README.md", "README.es.md"]) {
       const text = readRepoFile(file);
       const runCommand = text.indexOf("npx mcp-manychat connect");
-      const hosted = text.indexOf("manychat.wizneo.org");
+      const hosted = text.indexOf("mc-mcp.wizneo.org");
       const onboarding = text.search(/^### (Step 1|Paso 1)/m);
 
       expect(runCommand, `${file} must show the run command`).toBeGreaterThan(-1);

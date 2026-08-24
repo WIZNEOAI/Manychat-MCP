@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/cover.png" alt="ManyChat MCP — una terminal corriendo manychat connect y manychat mcp serve, junto a canales de chat, email y comentarios converge en un chequeo de seguridad" width="100%">
+  <img src="docs/assets/cover.jpg" alt="ManyChat MCP. Conecta agentes a ManyChat con CLI y MCP: mensajería segura, flujos y automatización en un runtime open source" width="100%">
 </p>
 
 <h1 align="center">ManyChat MCP</h1>
@@ -48,7 +48,7 @@ node dist/index.js connect
 
 ### ¿No querés mantener un servidor?
 
-[manychat.wizneo.org](https://manychat.wizneo.org) corre este mismo código por vos: conectás
+[mc-mcp.wizneo.org](https://mc-mcp.wizneo.org) corre este mismo código por vos: conectás
 tu key de ManyChat una vez, queda cifrada, y obtenés un token MCP revocable para apuntar
 cualquier agente. Hay tier gratis.
 
