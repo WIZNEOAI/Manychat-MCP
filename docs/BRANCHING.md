@@ -37,13 +37,13 @@ Todos los branches corren CI al abrir PR contra `main`:
 
 ```yaml
 checks:
-  - root lint (tsc --noEmit)
-  - root test (vitest)
-  - root build (tsc)
-  - web lint (eslint)
-  - web test (vitest)
-  - web build (next build --webpack)
+  - lint (tsc --noEmit)
+  - test (vitest)
+  - build (tsc)
 ```
+
+El dashboard salio a su propio repositorio privado el 2026-07-29, asi que ya no hay checks
+de `web` aca.
 
 Regla: **NO mergear sin CI verde** y sin review de al menos 1 persona.
 
@@ -72,16 +72,17 @@ git tag -a v0.1.0 -m "Beta launch: hosted MCP gateway + dashboard + encrypted va
 git push origin v0.1.0
 ```
 
-Los tags disparan:
-- GitHub Release con changelog
-- Notificacion al canal #shipping en Discord/Slack
+Despues del tag, a mano: crear el GitHub Release con el changelog y publicar en npm si la
+version cambio. No hay workflow que lo dispare.
 
 ## Deploy environments
 
-| Entorno | Web (Vercel) | Backend | MCP Gateway |
-|---------|-------------|---------|-------------|
-| Production | `main` branch | Convex prod deployment | Railway / VPS |
-| Preview | PR branches (Vercel preview) | Convex preview deploy | N/A |
+| Entorno | MCP Gateway |
+|---------|-------------|
+| Production | `main`, deployado al host de contenedores (ver `docs/deploy/`) |
+| Preview | ninguno: se valida con el gate local y el smoke script |
+
+El control plane hosted tiene sus propios entornos, en su repositorio.
 
 ## Commit conventions
 
@@ -89,13 +90,13 @@ Los tags disparan:
 type(scope): mensaje en ingles, imperativo, lowercase
 
 tipos: feat, fix, chore, docs, test, refactor, security
-scope: cli, mcp, web, convex, gateway, vault, billing, docs
+scope: cli, mcp, gateway, policy, skills, deps, docs
 
 ejemplos:
-  feat(web): add connection test button to dashboard
-  fix(gateway): resolve session leak on transport close
-  security(vault): rotate key now revokes all workspace tokens
-  chore(deps): bump @modelcontextprotocol/sdk to 1.28
+  feat(cli): add connect --open flag
+  fix(gateway): stop a server key from satisfying token auth modes
+  security(policy): block promotional content under a non-promotional tag
+  chore(deps): bump @modelcontextprotocol/server to 2.0.0
 ```
 
 ## Ship checklist
