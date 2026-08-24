@@ -104,7 +104,7 @@ this repo imports it; the only coupling is the HTTP contract, and only under
 ## Deployment
 
 - **Dockerfile**: multi-stage (Node 22-alpine, pnpm), exposes :3000
-- **Gateway host**: EasyPanel/VPS (persistent, multi-tenant; Railway retired). Start `pnpm run start:mcp:http`, health `GET /health`.
+- **Gateway host**: EasyPanel/VPS (persistent, multi-tenant; Railway retired for our own gateway, still documented as a self-host option). Start `pnpm run start:mcp:http`, health `GET /health`.
 - **Hosted control plane**: separate repo (Vercel + Convex + Clerk + Stripe).
 - **Smithery**: schema with baseUrl, useOAuth, manychatApiKey
 
@@ -114,7 +114,7 @@ this repo imports it; the only coupling is the HTTP contract, and only under
 - ManyChatClient tests verify retry logic and error classification
 - OAuth tests cover full PKCE flow lifecycle
 - CLI tests mock API and verify stdout JSON output
-- **The full gate must pass before any commit**: `pnpm run lint` + `pnpm test` (110) + `pnpm run build`. There is no CI on PRs — see [CONTRIBUTING.md](CONTRIBUTING.md)
+- **The full gate must pass before any commit**: `pnpm run lint` + `pnpm test` (110) + `pnpm run build`. `.github/workflows/ci.yml` runs the same three on PRs and pushes to `main`; it does not replace the local gate — see [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## What NOT to do
 
