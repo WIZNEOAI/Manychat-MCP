@@ -1,16 +1,16 @@
 # Deploy on Railway
 
-This guide is for the **remote MCP HTTP** surface.
-
-The CLI remains the primary product, but Railway is the quickest way to self-host
-the MCP compatibility layer behind HTTPS.
+This guide is for the **remote MCP HTTP** surface. The CLI stays the primary product;
+Railway is one of the shorter paths to putting the MCP gateway behind HTTPS. The same
+variables work on any container platform — see [vps-docker.md](./vps-docker.md) for the
+Docker route and [mcp-gateway-vps.md](./mcp-gateway-vps.md) for a VM.
 
 ## What Railway runs
 
-Phase 0 makes Railway use a single explicit production command:
+Set the start command explicitly:
 
 ```bash
-npm run start:mcp:http
+pnpm run start:mcp:http
 ```
 
 That command starts:
@@ -29,7 +29,7 @@ Choose **one** auth mode before deploy:
 | --- | --- | --- | --- |
 | Header / direct ManyChat key | `manychat_header` | simple self-host, agencies, single workspace | no |
 | OAuth / MCP token | `oauth` | Claude Desktop remote connectors, hosted-style UX | yes |
-| Hosted control plane | `hosted_token` | Vercel dashboard + Convex + Railway gateway | no |
+| Hosted control plane | `hosted_token` | a gateway in front of your own control plane | no |
 
 ## Minimal environment for header mode
 
@@ -83,39 +83,27 @@ Important:
 
 ## Environment for hosted_token mode
 
-Hosted mode keeps ManyChat API keys off the MCP client and moves vaulting +
-authorization into the web control plane.
-
-Set these Railway variables:
+Hosted mode keeps ManyChat API keys off the MCP client: the gateway resolves a bearer
+token against a control plane that holds the vault. Ours is a separate proprietary
+codebase, so this mode is only useful if you run a control plane of your own that speaks
+[the documented contract](../control-plane-contract.md).
 
 ```env
 NODE_ENV=production
 MCP_REMOTE_AUTH=hosted_token
-HOSTED_CONTROL_PLANE_URL=https://your-app.vercel.app
+HOSTED_CONTROL_PLANE_URL=https://your-control-plane.example.com
 HOSTED_CONTROL_PLANE_SECRET=replace-with-a-long-random-shared-secret
 ```
 
-Set the matching secret on the Vercel app:
-
-```env
-MCP_INTERNAL_SHARED_SECRET=replace-with-the-same-shared-secret
-VAULT_MASTER_KEY=replace-with-a-long-random-vault-key
-VAULT_KEY_VERSION=v1
-NEXT_PUBLIC_CONVEX_URL=https://...
-```
-
-Hosted mode flow:
+The control plane must set the same value as `MCP_INTERNAL_SHARED_SECRET`. Flow:
 
 1. the MCP client sends `Authorization: Bearer mcp_live_...`
-2. Railway calls `POST /api/internal/mcp/resolve` on the web control plane
-3. the control plane verifies the token hash, checks plan limits, decrypts the ManyChat key, and returns the execution credential
-4. Railway injects that key into the MCP runtime without exposing it to the client
+2. the gateway calls `POST /api/internal/mcp/resolve` on the control plane
+3. the control plane verifies the token hash, applies its own limits, decrypts the ManyChat key, and returns the execution credential
+4. the gateway uses that key for the request without exposing it to the client
 
-Important:
-
-- `HOSTED_CONTROL_PLANE_SECRET` on Railway and `MCP_INTERNAL_SHARED_SECRET` on Vercel must match
-- `VAULT_MASTER_KEY` exists only on the control plane; do not put it on Railway
-- hosted request quotas are enforced during token resolution and recorded back into the control plane
+The vault master key lives only on the control plane; the gateway keeps no plan table and
+no credential store of its own.
 
 ## Deploy commands
 
@@ -143,17 +131,14 @@ railway up
 
 If you prefer the Railway dashboard, the same variables apply there.
 
-## Cloudflare in front of Railway
+## A CDN or WAF in front
 
-For the hosted SaaS deployment, place Cloudflare in front of the Railway public URL.
+Optional, and worth it once the gateway is public. A reasonable baseline:
 
-Recommended baseline:
-
-- proxy the Railway hostname through Cloudflare
+- proxy the Railway hostname through Cloudflare or an equivalent
 - enable WAF managed rules
-- add rate limits on `POST /mcp`, `GET /health`, and the auth helper routes
-- restrict burst traffic per IP before it hits Railway
-- keep Vercel for the dashboard/docs domain and Railway for the MCP gateway domain
+- rate-limit `POST /mcp`, `GET /health`, and the auth helper routes
+- cap burst traffic per IP before it reaches the gateway
 
 ## Health check
 
@@ -189,20 +174,16 @@ For a real smoke test, use an MCP client from `docs/connect/mcp-clients.md`.
 
 ## Production warnings
 
-### 1. Railway must stay single-replica
+### 1. Replicas are fine; sticky routing is not needed
 
-Phase 0 keeps MCP HTTP sessions in process memory.
-
-That means:
-
-- keep `numReplicas = 1`
-- clients must reconnect after restarts
-- do not expect cross-replica session sharing yet
+MCP revision `2026-07-28` removed protocol sessions, so any request may land on any
+instance. Scale `numReplicas` freely. `tests/stateless-multi-instance.test.ts` drives a
+full MCP flow across three processes behind round-robin routing.
 
 ### 2. OAuth without Redis is not production-safe
 
-Authorization codes, refresh tokens, and access tokens must survive process
-restarts. Phase 0 enforces Redis for this mode.
+Authorization codes, refresh tokens, and access tokens must survive process restarts, so
+the server refuses to start production OAuth without Redis.
 
 ### 3. Header mode is simpler than OAuth
 
@@ -212,15 +193,10 @@ If you do not need Claude Desktop remote connectors or hosted-style login, use:
 MCP_REMOTE_AUTH=manychat_header
 ```
 
-This is the cleanest open-source self-host path for Phase 0.
+That is the cleanest open-source self-host path.
 
-### 4. hosted_token is the SaaS path, not the OSS path
+### 4. hosted_token needs a control plane
 
-Use hosted mode only when you have the web control plane deployed with:
-
-- Clerk auth
-- Convex workspace data
-- encrypted ManyChat vault
-- MCP product token issuance
-
-If you only need a single-team deployment, `manychat_header` remains the simpler option.
+Use hosted mode only if you run a control plane that implements
+[the contract](../control-plane-contract.md): token verification, a credential vault, and
+usage recording. For a single team, `manychat_header` is simpler and needs none of it.

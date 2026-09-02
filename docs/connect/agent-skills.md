@@ -1,29 +1,44 @@
-# Agent skills — give your AI agent ManyChat superpowers
+# Agent skills
 
-This MCP ships two first-party Claude **agent skills** that make any agent operate ManyChat like a pro instead of poking raw tools:
+The repo ships six agent skills in [`skills/`](../../skills/). They are playbooks that tell
+an agent how to use the MCP tools in order, not extra permissions: every send still goes
+through `validate_message`.
 
-- **`manychat-operator`** — discovery-before-mutation, the Meta-compliant safe-send protocol (always validate before sending), segmentation, and flow execution.
-- **`manychat-growth-engine`** — social lead growth: comment-to-DM / keyword capture, qualification, nurture sequences, and compliant cold-lead re-engagement.
+| Skill | Covers |
+|---|---|
+| `manychat-operator` | Read before write, the safe-send protocol, segmentation, flow execution |
+| `manychat-lead-reply` | First replies, tone, in-thread qualification, handoff |
+| `manychat-followup-os` | Sequences, reminders, cold recovery, stop rules |
+| `manychat-growth-engine` | Comment-to-DM and keyword capture, qualification, nurture, re-engagement |
+| `manychat-setup-coach` | Tag and field taxonomy, keywords, account hygiene |
+| `manychat-mcp-ops` | Gateway, auth, rate-limit and runtime diagnostics |
 
-They live in [`skills/`](../../skills/). Install them, or just paste the system prompt below — your agent will use the MCP correctly either way.
+[`skills/README.md`](../../skills/README.md) has the load order and what each one depends on.
+Start with `manychat-operator` and add the others when you need them.
 
-## Install the skills (copy-paste)
+## Install them
 
 **Claude Code** (per-user):
 
 ```bash
 git clone https://github.com/WIZNEOAI/Manychat-MCP.git /tmp/manychat-mcp \
-  && cp -r /tmp/manychat-mcp/skills/manychat-operator /tmp/manychat-mcp/skills/manychat-growth-engine ~/.claude/skills/ \
+  && cp -r /tmp/manychat-mcp/skills/manychat-* ~/.claude/skills/ \
   && rm -rf /tmp/manychat-mcp
 ```
 
-**Cursor / Codex / other agents**: copy the same two folders into that agent's skills directory (e.g. `~/.agents/skills/`, `~/.codex/skills/`). The skills are plain `SKILL.md` + reference markdown — no install step, no dependencies.
+**Cursor / Codex / other agents**: copy the same folders into that agent's skills directory
+(`~/.agents/skills/`, `~/.codex/skills/`). They are plain `SKILL.md` plus reference markdown,
+with no install step and no dependencies. They also ship inside the npm package, so
+`node_modules/mcp-manychat/skills/` works as a source too.
 
-After installing, the skills auto-trigger from their `description` when you ask the agent to operate or grow your ManyChat.
+Once installed, each skill triggers from its own `description`.
 
-## Or: paste this system prompt (no install)
+If you would rather not install anything, the system prompt below covers the same rules.
 
-Drop this into your agent's system prompt / Claude Project instructions. It primes the agent to use the MCP safely without the skill files.
+## Or paste this system prompt
+
+Drop this into your agent's system prompt or Claude Project instructions instead of
+installing the skill files.
 
 ```text
 You operate a live ManyChat account through the ManyChat MCP. It drives real revenue — a non-compliant send can get the Meta page flagged. Rules:
@@ -35,7 +50,3 @@ You operate a live ManyChat account through the ManyChat MCP. It drives real rev
 5. Change one thing at a time, then re-read to verify. For bulk work, canary 1–3 first and stop on 429.
 6. Execute tools without commentary; respond after the tools complete.
 ```
-
-## Why this matters
-
-Every other ManyChat integration hands an agent raw API tools and hopes. These skills + the `validate_message` guard encode Meta's policy so your agent is *structurally* prevented from the mistake that gets accounts flagged. That safety layer is the point.

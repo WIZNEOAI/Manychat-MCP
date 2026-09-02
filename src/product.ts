@@ -17,7 +17,7 @@ export const MANYCHAT_LINKS = {
     "https://help.manychat.com/hc/en-us/articles/14959510331420-How-to-generate-a-token-for-the-Manychat-API-and-where-to-get-parameters",
 
   /** Hosted control plane: sign-up, dashboard, MCP token issuance. */
-  hostedBaseUrl: process.env.MANYCHAT_HOSTED_URL ?? "https://manychat.wizneo.org",
+  hostedBaseUrl: process.env.MANYCHAT_HOSTED_URL ?? "https://mc-mcp.wizneo.org",
 
   /** Hosted remote MCP endpoint. */
   hostedMcpUrl: process.env.MANYCHAT_HOSTED_MCP_URL ?? "https://mcp.wizneo.org/mcp",

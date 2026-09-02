@@ -1,51 +1,40 @@
 <p align="center">
-  <img src="docs/assets/cover.png" alt="ManyChat MCP — a terminal running manychat connect and manychat mcp serve, beside chat, email and comment channels converging on a safety check" width="100%">
+  <img src="docs/assets/cover.jpg" alt="ManyChat MCP. Connect agents to ManyChat with CLI and MCP: safe messaging, flows and automation in one open-source runtime" width="100%">
 </p>
 
 <h1 align="center">ManyChat MCP</h1>
 
-<p align="center"><strong>Give your AI agents ManyChat superpowers — without getting the account flagged.</strong></p>
+<p align="center"><strong>Run ManyChat from an AI agent. Every send is checked against Meta's messaging rules first.</strong></p>
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL_v3-2DE2C0.svg" alt="License: AGPL v3"></a>
   <a href="docs/deploy/vps-docker.md"><img src="https://img.shields.io/badge/Docker-self--host-ready-2496ED" alt="Docker self-host ready"></a>
   <img src="https://img.shields.io/badge/MCP-2026--07--28-0C0D0F" alt="MCP protocol 2026-07-28">
-  <img src="https://img.shields.io/badge/tests-108-2DE2C0" alt="108 tests">
 </p>
 
 <p align="center">🌐 <strong>English</strong> · <a href="README.es.md">Español</a> · <a href="NOTICE.md">Licence notice</a></p>
 
-A CLI + Model Context Protocol server that lets AI agents — Claude, Cursor, Codex, OpenCode — **operate ManyChat**: read and segment subscribers, manage tags and custom fields, send flows and messages, and inspect a page.
+A CLI and a Model Context Protocol server for the ManyChat Account Public API. Claude, Cursor,
+Codex and any other MCP client get 28 tools to read and segment subscribers, manage tags and
+custom fields, send flows and messages, and inspect a page.
 
-What makes it different: a built-in **Meta policy-validation layer**. Before an agent sends anything, `validate_message` checks it against ManyChat's 24-hour / messaging-window rules — so your agent can't get the account restricted. **No other ManyChat MCP encodes that policy.**
-
----
-
-## Fastest path: the hosted control plane
-
-No installation, no server to run, no key sitting in a config file:
-
-### **→ [manychat.wizneo.org](https://manychat.wizneo.org/sign-up)**
-
-Sign up, paste your ManyChat key once (stored encrypted, never shown again), issue a
-revocable MCP token, and point any agent at it. There is a **free tier** for evaluation.
-
-Prefer to run it yourself? Everything below does that, forever, with no feature held back.
-**The OSS runtime is never a gated demo.**
+The part you cannot get from a thin API wrapper is `validate_message`. It reads a proposed
+send against Meta's 24-hour window, message tags and opt-in state, and returns a verdict.
+`send_text_message` and `send_content` run the same check and refuse a blocked send. See
+[The policy wedge](#the-policy-wedge).
 
 ---
 
-## Self-host in 60 seconds
+## Run it
 
 ```bash
 npx mcp-manychat connect
 ```
 
-That one command tells you where to get your ManyChat API key, how to store it so you don't
-lose it, and prints a ready-to-paste config for your agent. Add `--open` and it opens the
-sign-up page too.
+`connect` prints where to generate a ManyChat API key, how to store it, and a config block
+you can paste into your agent.
 
-Prefer to work from source?
+Working from source instead:
 
 ```bash
 git clone https://github.com/WIZNEOAI/Manychat-MCP.git
@@ -54,6 +43,19 @@ pnpm install && pnpm build
 node dist/index.js connect
 ```
 
+### Don't want to run a server?
+
+A hosted version is being built: you will connect your ManyChat key once, it is stored
+encrypted, and you get a revocable MCP token to point an agent at.
+
+**It is not open yet.** [mc-mcp.wizneo.org](https://mc-mcp.wizneo.org) describes it and says
+so plainly; there is no sign-up to send you to today. This line will change when there is.
+
+It will be a convenience, not a better version. Every tool, every prompt and the policy guard
+are here, under AGPL. **The OSS runtime is never a gated demo.**
+
+---
+
 ### Step 1 — get your ManyChat API key
 
 In ManyChat: **Settings → API → Generate your API Key**. Requires a ManyChat **Pro**
@@ -61,7 +63,7 @@ account. ([Official instructions](https://help.manychat.com/hc/en-us/articles/14
 
 > **The key is shown once.** Copy it before you close that screen. If you lose it you have
 > to generate a new one, which invalidates the old one and breaks anything using it. The
-> key grants full access to the page it belongs to — treat it like a password.
+> key grants full access to the page it belongs to, so treat it like a password.
 
 ### Step 2 — store it as an environment variable
 
@@ -127,15 +129,15 @@ env = { MANYCHAT_API_KEY = "mc_..." }
 ```
 
 Working from a clone instead of npm? Swap `command`/`args` for
-`"node"` and `["/absolute/path/to/dist/index.js", "mcp", "serve", "--transport", "stdio"]`
-— the path must be absolute, because MCP clients resolve it from their own working
+`"node"` and `["/absolute/path/to/dist/index.js", "mcp", "serve", "--transport", "stdio"]`.
+The path must be absolute, because MCP clients resolve it from their own working
 directory.
 
 Remote (HTTP) and hosted-token modes are documented in [`docs/connect/mcp-clients.md`](docs/connect/mcp-clients.md).
 
 ## What your agent gets
 
-**28 tools** — the full operating surface:
+**28 tools**:
 
 | Group | Tools |
 |---|---|
@@ -146,36 +148,59 @@ Remote (HTTP) and hosted-token modes are documented in [`docs/connect/mcp-client
 | Flows | `list_flows`, `send_flow` |
 | Messaging | `send_content`, `send_text_message` |
 
-**6 prompts** (ready-made agent playbooks): `onboard_subscriber`, `recover_lead`, `send_campaign`, `analyze_subscriber`, `segment_audience`, `diagnose_automation`.
+**6 prompts**, each a multi-step playbook the agent can run: `onboard_subscriber`,
+`recover_lead`, `send_campaign`, `analyze_subscriber`, `segment_audience`,
+`diagnose_automation`.
 
-**8 resources** (live context): `page-info`, `tag-catalog`, `custom-fields-catalog`, `bot-fields`, `flow-catalog`, `otn-topics`, `subscriber-schema`, `api-limits`.
+**8 resources** the agent can read without spending a tool call: `page-info`, `tag-catalog`,
+`custom-fields-catalog`, `bot-fields`, `flow-catalog`, `otn-topics`, `subscriber-schema`,
+`api-limits`.
 
 ## The policy wedge
 
-Meta enforces strict messaging windows (24-hour rule, message-tag limits). An agent that sends blindly will get the account restricted. Before any send, call:
+Meta enforces messaging windows (the 24-hour rule, message-tag limits, WhatsApp templates).
+An agent that sends blindly gets the page restricted. Before a send, call:
 
 ```jsonc
-validate_message({ subscriberId, channel, payload })
-// → { allowed: boolean, reason, window, suggestion }
+validate_message({ channel: "messenger", hours_since_last_interaction: 30, promotional: true })
+// → {
+//   "level": "block",
+//   "allowed": false,
+//   "findings": [{
+//     "code": "OUTSIDE_WINDOW_NO_TAG",
+//     "level": "block",
+//     "rule": "24h-window",
+//     "message": "Outside the 24h window with no message tag. Re-engage the subscriber or use a valid tag."
+//   }]
+// }
 ```
 
-It checks the subscriber's last-interaction window and the channel's policy and tells the agent whether the send is safe — and if not, what to do instead. This guard is the core differentiator and stays in the OSS layer.
+You supply the window (`hours_since_last_interaction`); the tool does not go and fetch it,
+so an unknown window is treated as outside. The rules live in
+[`src/policy/`](src/policy/) and cover opt-in, the valid message tags, the `HUMAN_AGENT`
+7-day window, promotional content under a non-promotional tag, and the WhatsApp template
+requirement. `send_text_message` and `send_content` run the same verdict and refuse a
+blocked send unless you pass `override_policy`, which is per-call and logged.
+
+This guard stays in the OSS layer.
 
 ## Agent skills
 
-Two installable skills wrap common operator workflows:
+Six installable skills wrap common operator workflows: `manychat-operator`,
+`manychat-lead-reply`, `manychat-followup-os`, `manychat-growth-engine`,
+`manychat-setup-coach` and `manychat-mcp-ops`. They are playbooks, not extra permissions —
+every send still goes through the policy guard.
 
-- **`manychat-operator`** — day-to-day account operation
-- **`manychat-growth-engine`** — lead capture → nurture → recovery loops
-
-See [`docs/connect/agent-skills.md`](docs/connect/agent-skills.md). The skills live in [`skills/`](skills/).
+They live in [`skills/`](skills/); see [`skills/README.md`](skills/README.md) for what each
+one is for, and [`docs/connect/agent-skills.md`](docs/connect/agent-skills.md) for how to
+install them.
 
 ## CLI
 
 The CLI is the source of truth; MCP reuses the same execution layer.
 
 ```
-manychat connect [--open]      # start here
+manychat connect               # start here
 manychat doctor
 manychat page info
 manychat tags list|create
@@ -192,15 +217,32 @@ Output contract: JSON on `stdout`, diagnostics on `stderr`. Exit codes: `0` ok �
 
 ## Hosted (Revenue Operator)
 
-What the paid layer adds on top of this runtime: an **encrypted credential vault** so a ManyChat key is pasted once and never shown again, **revocable MCP tokens** issued per agent instead of handing out the raw key, **usage and audit** per workspace, and enforced plan ceilings.
+**Not open yet.** What follows is what the paid layer will add on top of this runtime, and
+none of it is required to use anything above: an **encrypted credential vault**, so a
+ManyChat key is pasted once and never shown again; **revocable MCP tokens** issued per agent
+instead of handing out the raw key; **usage and audit** per workspace; and enforced plan
+ceilings.
 
-Three tiers — **Free** for evaluation, **Supporter** for builders running agents daily, **Pro** for agencies and multi-brand operators. Prices and per-tier limits live on the product page, which is the single source of truth for them; this README deliberately does not restate numbers it cannot enforce.
+Three tiers — **Free** for evaluation, **Supporter** for builders running agents daily,
+**Pro** for agencies and multi-brand operators. Prices and per-tier limits live on the
+product page, which is the single source of truth for them; this README deliberately does
+not restate numbers it cannot enforce.
 
-The control plane is a separate, proprietary codebase. Nothing here depends on it: the gateway talks to it over the three endpoints in [`docs/control-plane-contract.md`](docs/control-plane-contract.md), and only when you set `MCP_REMOTE_AUTH=hosted_token`. Every other mode runs standalone.
+The control plane is a separate, proprietary codebase. Nothing here depends on it: the
+gateway talks to it over the three endpoints in
+[`docs/control-plane-contract.md`](docs/control-plane-contract.md), and only when you set
+`MCP_REMOTE_AUTH=hosted_token`. Every other mode runs standalone.
 
 ## Self-host the gateway
 
-For a persistent multi-tenant remote MCP, deploy the gateway (`src/`, Dockerfile, `GET /health`) to a stable host — **EasyPanel/VPS** or any container platform. See [`docs/deploy/mcp-gateway-vps.md`](docs/deploy/mcp-gateway-vps.md) and [`docs/deploy/vps-docker.md`](docs/deploy/vps-docker.md).
+For a persistent multi-tenant remote MCP, deploy the gateway (`src/`, Dockerfile,
+`GET /health`) to any container host. Guides:
+[Docker on a VM](docs/deploy/vps-docker.md) ·
+[gateway on a VPS](docs/deploy/mcp-gateway-vps.md) ·
+[Railway](docs/deploy/railway.md).
+
+The server is stateless per MCP revision `2026-07-28`, so you can run several replicas
+behind a plain round-robin load balancer with no sticky routing.
 
 ## Development
 
@@ -208,10 +250,13 @@ For a persistent multi-tenant remote MCP, deploy the gateway (`src/`, Dockerfile
 pnpm install
 pnpm run lint     # tsc --noEmit
 pnpm run build    # tsc
-pnpm test         # vitest — 108
+pnpm test         # vitest
 ```
 
-All three must pass before a commit. CI also runs them on pull requests and pushes to `main`. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for what we look for in a change, plus [`CLAUDE.md`](CLAUDE.md) and [`AGENTS.md`](AGENTS.md).
+All three must pass before a commit. **There is no CI on this repository**: the gate is
+local, and every contributor runs it. A pull request that says the gate is green is taken at
+its word, so please make that true. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for what we look for in a change, plus
+[`CLAUDE.md`](CLAUDE.md) and [`AGENTS.md`](AGENTS.md).
 
 ## Safety
 

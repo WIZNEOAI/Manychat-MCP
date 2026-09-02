@@ -47,7 +47,12 @@ Do not delete it; the Dockerfile copies it too.
 
 ## The gate
 
-There is a GitHub Actions workflow (`.github/workflows/ci.yml`) that runs `lint`, `test`, and `build` on pull requests and pushes to `main`. **That does not replace the local gate** — you still run it before opening a PR:
+**There is no CI on this repository, on purpose.** GitHub Actions runs here fail before
+they start, and a workflow that can only ever produce a red cross with no logs is worse than
+none: it reads as an abandoned project to anyone who opens a pull request. The file was
+removed rather than left to fail.
+
+So the gate is local, and it is the only gate. Run all three before opening a PR:
 
 ```bash
 pnpm run lint     # tsc --noEmit
@@ -55,8 +60,9 @@ pnpm test         # vitest run
 pnpm run build    # tsc
 ```
 
-`pnpm test` is **108** as of this commit. A PR should raise that number, never lower it.
-If it drops, say so in the PR body and explain which test you deleted and why.
+`pnpm test` is **110** as of this commit. A PR should raise that number, never lower it.
+If it drops, say so in the PR body and explain which test you deleted and why. Nothing checks
+this automatically, which is exactly why it is written down.
 
 ## Rules that PRs may not break
 

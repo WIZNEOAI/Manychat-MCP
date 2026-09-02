@@ -4,7 +4,7 @@ This repository exposes ManyChat in three ways:
 
 1. **CLI** — primary product
 2. **local MCP over stdio** — local compatibility mode
-3. **remote MCP over HTTP** — self-hosted or future hosted access layer
+3. **remote MCP over HTTP** — self-hosted, or the hosted gateway
 
 This document covers **remote MCP over HTTP**.
 
@@ -12,7 +12,7 @@ This document covers **remote MCP over HTTP**.
 
 ### Pattern A: direct ManyChat API key
 
-Best for Phase 0 self-host.
+Best for self-hosting.
 
 Use one of:
 
@@ -37,7 +37,7 @@ Important:
 
 - OAuth is the **client access layer**
 - the ManyChat API key is still the **execution credential**
-- production OAuth requires Redis in Phase 0
+- production OAuth requires Redis
 
 ## Shared values used below
 
@@ -201,7 +201,7 @@ That means:
 - add the remote server through **Claude / claude.ai Settings > Connectors**
 - Claude Desktop syncs those remote connectors
 
-### Recommended Phase 0 path for Claude Desktop
+### Recommended path for Claude Desktop
 
 Use **OAuth mode** on the server for remote connector UX, or use a hosted bearer
 token flow if your Claude environment can attach custom headers.
@@ -252,7 +252,7 @@ auth layer.
 
 ## Which mode should you choose?
 
-| Client | Recommended Phase 0 mode |
+| Client | Recommended mode |
 | --- | --- |
 | Claude Code | header mode, hosted bearer token, or OAuth |
 | Cursor | header mode or hosted bearer token |
@@ -262,7 +262,7 @@ auth layer.
 ## Production reminders
 
 - keep HTTPS in front of remote MCP
-- keep Railway/VPS single-replica in Phase 0
+- the gateway is stateless, so replicas need no sticky routing
 - do not treat OAuth as the core product identity
 - ManyChat API key remains the upstream execution credential
 - for hosted mode, prefer MCP bearer tokens over sharing raw ManyChat keys with clients
