@@ -2,6 +2,19 @@ import type { CapabilityBundle } from "./types.js";
 
 export interface ToolRegistrationOptions {
   isToolAllowed?: (toolName: string) => boolean;
+  /**
+   * Gateway request id for this one `McpServer` instance. Tools echo it in
+   * `_meta.requestId` so a tool result can be joined to the gateway log line and
+   * to the control plane's audit record.
+   */
+  requestId?: string;
+  /**
+   * When true, `override_policy` on a send is refused unless the call also
+   * carries `approval_ref`: a human-approval handle minted outside the gateway.
+   * Set for the `messaging_safe` bundle — the one that sends on someone else's
+   * behalf.
+   */
+  requireApprovalForOverride?: boolean;
 }
 
 const TOOL_MATRIX: Record<CapabilityBundle, Set<string>> = {

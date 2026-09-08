@@ -3,6 +3,11 @@
 Two halves. **Revenue Operator** is the paid hosted product; the **OSS self-host runtime**
 in this repository stays usable on its own for CLI and MCP users.
 
+## Shipped since the last cut
+
+- Request id end to end (log → control plane → tool `_meta`), `record` telemetry, approval-gated
+  `override_policy` under delegated tokens, per-credential gateway rate limit (memory or Redis)
+
 ## In progress / beta
 
 - OSS runtime: CLI, MCP local/remote, and self-host deployment guides stay broadly usable
@@ -12,7 +17,6 @@ in this repository stays usable on its own for CLI and MCP users.
 
 ## Next
 
-- Durable or Redis-backed rate limits for the gateway's internal routes
 - More channels in the policy wedge, and tighter WhatsApp template handling
 - n8n webhook nodes and playbook templates
 - Supabase / external CRM sync for leads (hosted pipeline)

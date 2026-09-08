@@ -15,6 +15,12 @@ import {
 } from "../hosted/control-plane-client.js";
 import type { HostedResolvedSession } from "../hosted/types.js";
 import type { McpCacheProfile } from "./cache-hints.js";
+import {
+  createRateLimiter,
+  rateLimitKeyFor,
+  resolveRateLimitConfig,
+  type RateLimitConfig,
+} from "./rate-limit.js";
 
 /**
  * JSON-RPC error codes this gateway emits itself.
@@ -33,6 +39,8 @@ const JSON_RPC_INTERNAL_ERROR = -32603;
 const MCP_UNAUTHORIZED = -31001;
 /** Gateway-specific: the hosted control plane refused the request (plan limits, revoked token). */
 const MCP_REQUEST_NOT_AUTHORIZED = -31002;
+/** Gateway-specific: this credential exceeded the gateway's per-minute request ceiling. */
+const MCP_RATE_LIMITED = -31003;
 
 export async function startLegacyMcpServer(args: string[] = []) {
   const transportFlag = getFlagValue(args, "--transport");
@@ -70,6 +78,7 @@ interface HttpRuntimeConfig {
   baseUrl: string;
   authMode: HttpMcpAuthMode;
   nodeEnv: string;
+  rateLimit: RateLimitConfig;
 }
 
 export function resolveHttpRuntimeConfig(
@@ -108,6 +117,7 @@ export function resolveHttpRuntimeConfig(
     baseUrl,
     authMode,
     nodeEnv,
+    rateLimit: resolveRateLimitConfig(env),
   };
 }
 
@@ -123,15 +133,24 @@ interface McpAuthExtra {
   manychatApiKey: string;
   credentialSource: string;
   hostedSession?: HostedResolvedSession;
+  requestId: string;
 }
+
+/** Where the per-request id lives on the Express request. */
+type RequestWithId = express.Request & { requestId?: string };
 
 async function startHttp(config: HttpRuntimeConfig) {
   const app = express();
   app.disable("x-powered-by");
   app.use(express.json({ limit: "32kb" }));
 
-  app.use((req, _res, next) => {
+  // One id per HTTP request. It travels: log line → control plane authorize /
+  // record → tool results (`_meta.requestId`) → response header. That is the
+  // join key between a gateway log, an audit row and what the agent saw.
+  app.use((req: RequestWithId, res, next) => {
     const requestId = randomUUID().slice(0, 8);
+    req.requestId = requestId;
+    res.setHeader("x-request-id", requestId);
     log.info("request", {
       requestId,
       method: req.method,
@@ -139,6 +158,8 @@ async function startHttp(config: HttpRuntimeConfig) {
     });
     next();
   });
+
+  const rateLimiter = createRateLimiter(config.rateLimit);
 
   app.get("/health", (_req, res) => {
     res.json({
@@ -262,6 +283,7 @@ async function startHttp(config: HttpRuntimeConfig) {
       return createServer(extra?.manychatApiKey, {
         capabilityBundle: extra?.hostedSession?.capabilityBundle ?? "admin",
         cacheProfile,
+        requestId: extra?.requestId,
       });
     },
     {
@@ -273,7 +295,7 @@ async function startHttp(config: HttpRuntimeConfig) {
     onerror: (error) => log.error("mcp_node_adapter_error", { error: error.message }),
   });
 
-  app.all("/mcp", async (req, res) => {
+  app.all("/mcp", async (req: RequestWithId, res) => {
     // GET and DELETE were the 2025 session operations. There is no session to
     // resume or terminate any more, so the handler answers them with 405 and we
     // do not demand a credential first.
@@ -281,6 +303,8 @@ async function startHttp(config: HttpRuntimeConfig) {
       await nodeHandler(req, res);
       return;
     }
+
+    const requestId = req.requestId ?? randomUUID().slice(0, 8);
 
     try {
       const resolved = await resolveExecutionApiKey(req);
@@ -296,12 +320,40 @@ async function startHttp(config: HttpRuntimeConfig) {
 
       const { credential } = resolved;
 
+      if (rateLimiter) {
+        const verdict = await rateLimiter.hit(
+          rateLimitKeyFor({
+            tokenId: credential.hostedSession?.tokenId,
+            apiKey: credential.apiKey,
+            ip: req.ip,
+          }),
+        );
+        res.setHeader("x-ratelimit-limit", String(verdict.limit));
+        res.setHeader("x-ratelimit-remaining", String(verdict.remaining));
+        if (!verdict.allowed) {
+          res.setHeader("retry-after", String(verdict.retryAfterSec));
+          log.warn("rate_limited", {
+            requestId,
+            tokenId: credential.hostedSession?.tokenId,
+            source: credential.source,
+          });
+          writeJsonRpcError(res, {
+            statusCode: 429,
+            code: MCP_RATE_LIMITED,
+            id: requestIdFromBody(req.body),
+            message: `Too many requests for this credential. Retry in ${verdict.retryAfterSec}s.`,
+          });
+          return;
+        }
+      }
+
       if (credential.hostedSession && hostedControlPlaneClient) {
         try {
           await hostedControlPlaneClient.authorizeRequest({
             workspaceId: credential.hostedSession.workspaceId,
             tokenId: credential.hostedSession.tokenId,
             accountId: credential.hostedSession.accountId,
+            requestId,
           });
         } catch (error) {
           writeJsonRpcError(res, {
@@ -324,6 +376,7 @@ async function startHttp(config: HttpRuntimeConfig) {
         manychatApiKey: credential.apiKey,
         credentialSource: credential.source,
         hostedSession: credential.hostedSession,
+        requestId,
       };
       (req as express.Request & { auth?: unknown }).auth = {
         token: "",
@@ -333,8 +386,26 @@ async function startHttp(config: HttpRuntimeConfig) {
       };
 
       await nodeHandler(req, res, req.body);
+
+      if (credential.hostedSession && hostedControlPlaneClient) {
+        // Fire-and-forget telemetry: the audit row lives control-plane side,
+        // keyed by the same requestId the tool results carry.
+        void hostedControlPlaneClient.recordEvent({
+          tokenId: credential.hostedSession.tokenId,
+          workspaceId: credential.hostedSession.workspaceId,
+          accountId: credential.hostedSession.accountId,
+          type: "request",
+          requestCount: 1,
+          metadata: {
+            requestId,
+            method: jsonRpcMethod(req.body),
+            status: res.statusCode,
+          },
+        });
+      }
     } catch (error) {
       log.error("mcp_http_request_failed", {
+        requestId,
         path: req.path,
         method: req.method,
         error: error instanceof Error ? error.message : String(error),
@@ -490,6 +561,15 @@ function headerValue(rawHeader: string | string[] | undefined): string | undefin
 
   const trimmed = rawHeader.trim();
   return trimmed.length > 0 ? trimmed : undefined;
+}
+
+/** JSON-RPC method name of a request body, for telemetry. Never the params. */
+function jsonRpcMethod(body: unknown): string | undefined {
+  if (body && typeof body === "object" && "method" in body) {
+    const m = (body as { method?: unknown }).method;
+    return typeof m === "string" ? m : undefined;
+  }
+  return undefined;
 }
 
 function requestIdFromBody(body: unknown): unknown {

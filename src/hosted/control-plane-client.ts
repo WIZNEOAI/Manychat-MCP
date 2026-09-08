@@ -80,6 +80,8 @@ export class HostedControlPlaneClient {
     workspaceId: string;
     tokenId: string;
     accountId?: string | null;
+    /** Gateway request id; the control plane stores it on the usage row. Additive. */
+    requestId?: string;
   }): Promise<void> {
     const res = await fetch(`${this.options.baseUrl}/api/internal/mcp/authorize`, {
       method: "POST",

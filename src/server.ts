@@ -16,6 +16,8 @@ import { resolveCacheHints, type McpCacheProfile } from "./mcp/cache-hints.js";
 
 interface CreateServerOptions {
   capabilityBundle?: CapabilityBundle;
+  /** Gateway request id, echoed by tools in `_meta.requestId`. */
+  requestId?: string;
   /** Drives `cacheScope` on the 2026-07-28 cacheable results. Defaults to the safe multi-tenant profile. */
   cacheProfile?: McpCacheProfile;
 }
@@ -39,7 +41,15 @@ retries 429 and 5xx responses up to three times with exponential backoff.`;
 
 export function createServer(apiKey?: string, options: CreateServerOptions = {}): McpServer {
   const client = new ManyChatClient(apiKey);
-  const isToolAllowed = createToolAllowance(options.capabilityBundle ?? "admin");
+  const bundle = options.capabilityBundle ?? "admin";
+  const isToolAllowed = createToolAllowance(bundle);
+  const toolOptions = {
+    isToolAllowed,
+    requestId: options.requestId,
+    // Only messaging_safe sends on a tenant's behalf under a delegated token,
+    // so only there does a policy override need a human approval handle.
+    requireApprovalForOverride: bundle === "messaging_safe",
+  };
 
   const server = new McpServer(
     {
@@ -55,13 +65,13 @@ export function createServer(apiKey?: string, options: CreateServerOptions = {})
   // Registration order is the order `tools/list` reports (the SDK preserves
   // insertion order), which is what keeps the listing deterministic per the
   // 2026-07-28 SHOULD. Never make it depend on request state.
-  registerSubscriberTools(server, client, { isToolAllowed });
-  registerTagTools(server, client, { isToolAllowed });
-  registerCustomFieldTools(server, client, { isToolAllowed });
-  registerFlowTools(server, client, { isToolAllowed });
-  registerMessagingTools(server, client, { isToolAllowed });
-  registerPageTools(server, client, { isToolAllowed });
-  registerPolicyTools(server, { isToolAllowed });
+  registerSubscriberTools(server, client, toolOptions);
+  registerTagTools(server, client, toolOptions);
+  registerCustomFieldTools(server, client, toolOptions);
+  registerFlowTools(server, client, toolOptions);
+  registerMessagingTools(server, client, toolOptions);
+  registerPageTools(server, client, toolOptions);
+  registerPolicyTools(server, toolOptions);
   registerResources(server, client);
   registerPrompts(server);
 

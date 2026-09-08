@@ -38,7 +38,8 @@ src/
 │   ├── oauth-routes.ts     # Express: .well-known, /register, /authorize, /token, /revoke
 │   └── oauth-store.ts      # MemoryOAuthStore + RedisOAuthStore
 ├── mcp/
-│   ├── serve.ts            # Express + createMcpHandler (stateless), per-request credential resolution
+│   ├── serve.ts            # Express + createMcpHandler (stateless), per-request credential resolution, requestId, rate limit
+│   ├── rate-limit.ts       # Per-credential fixed window (memory | redis), abuse protection only
 │   ├── cache-hints.ts      # ttlMs/cacheScope per cacheable method (SEP-2549)
 │   └── http-entry.ts       # Production HTTP entry
 ├── tools/                  # MCP tool groups
@@ -98,6 +99,8 @@ this repo imports it; the only coupling is the HTTP contract, and only under
 | `PORT` | HTTP server port | 3000 |
 | `OAUTH_STORE` | memory or redis | memory |
 | `REDIS_URL` | Redis connection | — |
+| `MCP_RATE_LIMIT_PER_MINUTE` | Per-credential ceiling on `POST /mcp`, `0` disables | 120 |
+| `MCP_RATE_LIMIT_STORE` | memory or redis (shared across replicas) | memory |
 | `LOG_LEVEL` | debug/info/warn/error | info |
 | `RAILWAY_PUBLIC_DOMAIN` | Railway deployment URL | — |
 
@@ -114,7 +117,7 @@ this repo imports it; the only coupling is the HTTP contract, and only under
 - ManyChatClient tests verify retry logic and error classification
 - OAuth tests cover full PKCE flow lifecycle
 - CLI tests mock API and verify stdout JSON output
-- **The full gate must pass before any commit**: `pnpm run lint` + `pnpm test` (110) + `pnpm run build`. There is no CI: Actions runs on this repo fail before they start, so the workflow was removed rather than left showing a permanent red cross. The local gate is the only gate — see [CONTRIBUTING.md](CONTRIBUTING.md)
+- **The full gate must pass before any commit**: `pnpm run lint` + `pnpm test` (116) + `pnpm run build`. There is no CI: Actions runs on this repo fail before they start, so the workflow was removed rather than left showing a permanent red cross. The local gate is the only gate — see [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## What NOT to do
 

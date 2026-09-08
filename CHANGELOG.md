@@ -8,6 +8,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Request id end to end.** Every HTTP request gets an 8-char `requestId`: logged, returned as
+  `x-request-id`, sent to the control plane on `authorize` and `record`, handed to the
+  per-request `McpServer`, and echoed by the send tools in `_meta.requestId`. One key joins a
+  gateway log line, a control-plane audit row and what the agent saw.
+- **`record` telemetry actually fires.** After each hosted request the gateway posts a
+  fire-and-forget `request` event carrying `requestId`, JSON-RPC method and HTTP status.
+- **Approval-gated overrides.** `send_content` / `send_text_message` accept `approval_ref`.
+  Under the `messaging_safe` bundle (delegated tokens) `override_policy` without it is refused
+  with `_meta.code = "approval_required"`; with it, the send goes out, `_meta.policy` is
+  `"overridden"` and a `policy_override` warn line records tool, subscriber, approval and
+  request id. Plain blocks now carry `_meta.code = "policy_blocked"`.
+- **Gateway rate limit.** Per-credential fixed window on `POST /mcp` (default 120/min,
+  `MCP_RATE_LIMIT_PER_MINUTE`, `0` disables). Memory per process by default; `MCP_RATE_LIMIT_STORE=redis`
+  shares the counter across replicas via `REDIS_URL` and fails open if Redis is down. Over the
+  ceiling answers HTTP 429, JSON-RPC `-31003`, `retry-after`. This is abuse protection, not a
+  plan limit — ceilings stay control-plane side.
+
 - ManyChat API key validation via `GET /page/getInfo` before saving or rotating keys in the dashboard
 - Convex fields for validation metadata (`manychatPageName`, `keyValidationStatus`, `keyValidatedAt`)
 - Dashboard: disconnect ManyChat account (revokes all workspace MCP tokens), revoke all tokens action, hosted MCP connection test

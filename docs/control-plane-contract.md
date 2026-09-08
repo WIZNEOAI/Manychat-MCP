@@ -95,8 +95,12 @@ MCP client, so it must be safe to show a customer.
 Called per request to charge the request against quota before doing work.
 
 ```json
-{ "workspaceId": "…", "tokenId": "…", "accountId": "… | null" }
+{ "workspaceId": "…", "tokenId": "…", "accountId": "… | null", "requestId": "8 chars" }
 ```
+
+`requestId` is additive (a control plane that ignores it keeps working). It is the same id
+the gateway logs, returns as `x-request-id`, sends on `record`, and that the send tools echo
+in `_meta.requestId` — store it on the usage row so an audit can be joined end to end.
 
 `200` → `{ "ok": true, "usage": { … } }`. The gateway ignores the body and treats
 any `2xx` as permission granted.
