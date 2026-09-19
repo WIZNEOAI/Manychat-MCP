@@ -44,16 +44,19 @@ pnpm install && pnpm build
 node dist/index.js connect
 ```
 
-### ¿No querés mantener un servidor?
+### ¿No querés mantener un proceso local?
 
-Se está construyendo una versión hosted: conectás tu key de ManyChat una vez, queda cifrada,
-y obtenés un token MCP revocable para apuntar cualquier agente.
+Dos cosas distintas, no las mezcles:
 
-**Todavía no está abierta.** [mc-mcp.wizneo.org](https://mc-mcp.wizneo.org) la describe y lo
-dice sin vueltas; hoy no hay registro al cual mandarte. Esta línea cambia cuando lo haya.
+1. **Gateway HTTP público** — ya está en [mcp.wizneo.org](https://mcp.wizneo.org).
+   Mandás tu propia key de ManyChat en `X-ManyChat-API-Key`. No la guardamos. Sirve para
+   probar el transporte remoto. En producción, corré Docker vos.
+2. **Control plane hosted** — vault + tokens MCP revocables. **Todavía no está abierto.**
+   [mc-mcp.wizneo.org](https://mc-mcp.wizneo.org) lo describe y lo dice sin vueltas; hoy no
+   hay registro al cual mandarte.
 
-Va a ser una comodidad, no una versión mejor. Cada tool, cada prompt y el guard de política
-están acá, bajo AGPL. **El runtime OSS nunca es un demo capado.**
+El control plane va a ser una comodidad, no una versión mejor. Cada tool, cada prompt y el
+guard de política están acá, bajo AGPL. **El runtime OSS nunca es un demo capado.**
 
 ---
 
