@@ -6,7 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Note
+
+- Dashboard / Convex / Clerk bullets below are **history from before this repo became OSS-only**.
+  The control plane lives in a private repository. This file keeps the record; it is not a
+  current feature list.
+
 ### Added
+
+- `manychat-connect` agent skill: local stdio wiring, key in the client config file, no public BYOK gateway
 
 - ManyChat API key validation via `GET /page/getInfo` before saving or rotating keys in the dashboard
 - Convex fields for validation metadata (`manychatPageName`, `keyValidationStatus`, `keyValidatedAt`)

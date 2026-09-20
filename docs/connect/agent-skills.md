@@ -1,11 +1,12 @@
 # Agent skills
 
-The repo ships six agent skills in [`skills/`](../../skills/). They are playbooks that tell
+The repo ships seven agent skills in [`skills/`](../../skills/). They are playbooks that tell
 an agent how to use the MCP tools in order, not extra permissions: every send still goes
 through `validate_message`.
 
 | Skill | Covers |
 |---|---|
+| `manychat-connect` | Local stdio install, API key in the client config file, verify tools |
 | `manychat-operator` | Read before write, the safe-send protocol, segmentation, flow execution |
 | `manychat-lead-reply` | First replies, tone, in-thread qualification, handoff |
 | `manychat-followup-os` | Sequences, reminders, cold recovery, stop rules |
@@ -14,7 +15,7 @@ through `validate_message`.
 | `manychat-mcp-ops` | Gateway, auth, rate-limit and runtime diagnostics |
 
 [`skills/README.md`](../../skills/README.md) has the load order and what each one depends on.
-Start with `manychat-operator` and add the others when you need them.
+Start with `manychat-connect` if the server is not wired, then `manychat-operator`.
 
 ## Install them
 

@@ -18,6 +18,8 @@ A CLI and a Model Context Protocol server for the ManyChat Account Public API. C
 Codex and any other MCP client get 28 tools to read and segment subscribers, manage tags and
 custom fields, send flows and messages, and inspect a page.
 
+**Unofficial third-party runtime.** Not affiliated with, endorsed by, or sponsored by ManyChat, Inc.
+
 The part you cannot get from a thin API wrapper is `validate_message`. It reads a proposed
 send against Meta's 24-hour window, message tags and opt-in state, and returns a verdict.
 `send_text_message` and `send_content` run the same check and refuse a blocked send. See
@@ -43,19 +45,16 @@ pnpm install && pnpm build
 node dist/index.js connect
 ```
 
-### Don't want to run a local process?
+### Don't want a long-lived local process?
 
-Two different things, do not mix them:
+Self-host the HTTP transport with Docker. That is still **your** key on **your** box.
+See [VPS / Docker](docs/deploy/vps-docker.md). There is no public “paste your key at
+our gateway and go” door on this project.
 
-1. **Public HTTP gateway** — already live at [mcp.wizneo.org](https://mcp.wizneo.org).
-   Bring your own ManyChat key on `X-ManyChat-API-Key`. We do not store it. Fine for trying
-   the remote transport. For production, run Docker yourself.
-2. **Hosted control plane** — vault + revocable MCP tokens. **Not open yet.**
-   [mc-mcp.wizneo.org](https://mc-mcp.wizneo.org) describes it and says so plainly; there is
-   no sign-up to send you to today.
+The paste-to-agent landing is [mc-mcp.wizneo.org](https://mc-mcp.wizneo.org). No sign-up.
 
-The hosted plane will be a convenience, not a better version. Every tool, every prompt and
-the policy guard are here, under AGPL. **The OSS runtime is never a gated demo.**
+Every tool, every prompt and the policy guard are here, under AGPL. **The OSS runtime
+is never a gated demo.**
 
 ---
 
@@ -189,8 +188,8 @@ This guard stays in the OSS layer.
 
 ## Agent skills
 
-Six installable skills wrap common operator workflows: `manychat-operator`,
-`manychat-lead-reply`, `manychat-followup-os`, `manychat-growth-engine`,
+Seven installable skills wrap common operator workflows: `manychat-connect`,
+`manychat-operator`, `manychat-lead-reply`, `manychat-followup-os`, `manychat-growth-engine`,
 `manychat-setup-coach` and `manychat-mcp-ops`. They are playbooks, not extra permissions —
 every send still goes through the policy guard.
 
@@ -220,11 +219,13 @@ Output contract: JSON on `stdout`, diagnostics on `stderr`. Exit codes: `0` ok �
 
 ## Hosted (Revenue Operator)
 
-**Not open yet.** What follows is what the paid layer will add on top of this runtime, and
-none of it is required to use anything above: an **encrypted credential vault**, so a
-ManyChat key is pasted once and never shown again; **revocable MCP tokens** issued per agent
-instead of handing out the raw key; **usage and audit** per workspace; and enforced plan
-ceilings.
+**Not open yet.** The public site for this runtime is [mc-mcp.wizneo.org](https://mc-mcp.wizneo.org)
+(paste-to-agent, self-host). There is no sign-up door there today.
+
+What follows is what the paid layer will add on top of this runtime, and none of it is
+required to use anything above: an **encrypted credential vault**, so a ManyChat key is
+pasted once and never shown again; **revocable MCP tokens** issued per agent instead of
+handing out the raw key; **usage and audit** per workspace; and enforced plan ceilings.
 
 Three tiers — **Free** for evaluation, **Supporter** for builders running agents daily,
 **Pro** for agencies and multi-brand operators. Prices and per-tier limits live on the

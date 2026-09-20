@@ -19,7 +19,7 @@ We welcome improvements to the OSS runtime, docs, deployment guides, agent skill
 | `src/` | CLI, MCP server, ManyChat client, tools, prompts, resources, policy wedge |
 | `tests/` | Vitest suites for everything under `src/` |
 | `docs/` | Deployment guides, CLI spec, product context, runbooks |
-| `skills/` | Agent playbooks: operator, growth, lead-reply, follow-up, setup-coach, mcp-ops |
+| `skills/` | Agent playbooks: connect, operator, growth, lead-reply, follow-up, setup-coach, mcp-ops |
 
 Marketing/ops skills are welcome when they teach **safe** ManyChat usage (funnels, replies, hygiene) and never bypass the policy wedge. See [`skills/README.md`](skills/README.md).
 

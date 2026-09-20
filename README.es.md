@@ -19,6 +19,8 @@ Cursor, Codex y cualquier otro cliente MCP reciben 28 tools para leer y segmenta
 suscriptores, manejar tags y custom fields, enviar flows y mensajes, e inspeccionar una
 página.
 
+**Runtime de terceros, no oficial.** No está afiliado, respaldado ni patrocinado por ManyChat, Inc.
+
 Lo que no sale de un wrapper fino de la API es `validate_message`. Lee el envío propuesto
 contra la ventana de 24 h de Meta, los message tags y el estado de opt-in, y devuelve un
 veredicto. `send_text_message` y `send_content` corren el mismo chequeo y rechazan un envío
@@ -44,19 +46,16 @@ pnpm install && pnpm build
 node dist/index.js connect
 ```
 
-### ¿No querés mantener un proceso local?
+### ¿No querés un proceso local permanente?
 
-Dos cosas distintas, no las mezcles:
+Self-hosteá el transporte HTTP con Docker. Sigue siendo **tu** key en **tu** máquina.
+Ver [VPS / Docker](docs/deploy/vps-docker.md). En este proyecto no hay una puerta pública
+de “pegá la key en nuestro gateway y listo”.
 
-1. **Gateway HTTP público** — ya está en [mcp.wizneo.org](https://mcp.wizneo.org).
-   Mandás tu propia key de ManyChat en `X-ManyChat-API-Key`. No la guardamos. Sirve para
-   probar el transporte remoto. En producción, corré Docker vos.
-2. **Control plane hosted** — vault + tokens MCP revocables. **Todavía no está abierto.**
-   [mc-mcp.wizneo.org](https://mc-mcp.wizneo.org) lo describe y lo dice sin vueltas; hoy no
-   hay registro al cual mandarte.
+La landing paste-to-agent es [mc-mcp.wizneo.org](https://mc-mcp.wizneo.org). Sin registro.
 
-El control plane va a ser una comodidad, no una versión mejor. Cada tool, cada prompt y el
-guard de política están acá, bajo AGPL. **El runtime OSS nunca es un demo capado.**
+Cada tool, cada prompt y el guard de política están acá, bajo AGPL. **El runtime OSS
+nunca es un demo capado.**
 
 ---
 
@@ -192,8 +191,8 @@ Este guard se queda en la capa OSS.
 
 ## Agent skills
 
-Seis skills instalables que envuelven workflows comunes de operador: `manychat-operator`,
-`manychat-lead-reply`, `manychat-followup-os`, `manychat-growth-engine`,
+Siete skills instalables que envuelven workflows comunes de operador: `manychat-connect`,
+`manychat-operator`, `manychat-lead-reply`, `manychat-followup-os`, `manychat-growth-engine`,
 `manychat-setup-coach` y `manychat-mcp-ops`. Son playbooks, no permisos extra — cada envío
 sigue pasando por el guard de política.
 
@@ -222,11 +221,15 @@ Contrato de salida: JSON en `stdout`, diagnósticos en `stderr`. Exit codes: `0`
 
 ## Hosted (Revenue Operator)
 
-**Todavía no está abierta.** Esto es lo que la capa de pago va a agregar encima de este
-runtime, y nada de eso hace falta para usar todo lo de arriba: una **bóveda cifrada de credenciales**,
-para pegar la key de ManyChat una vez y que no se vuelva a mostrar; **tokens MCP revocables**
-emitidos por agente en vez de repartir la key cruda; **usage y audit** por workspace; y
-límites de plan aplicados de verdad.
+**Todavía no está abierta.** El sitio público de este runtime es
+[mc-mcp.wizneo.org](https://mc-mcp.wizneo.org) (pegar el prompt, self-host). Hoy no hay
+puerta de registro ahí.
+
+Esto es lo que la capa de pago va a agregar encima de este runtime, y nada de eso hace falta
+para usar todo lo de arriba: una **bóveda cifrada de credenciales**, para pegar la key de
+ManyChat una vez y que no se vuelva a mostrar; **tokens MCP revocables** emitidos por agente
+en vez de repartir la key cruda; **usage y audit** por workspace; y límites de plan aplicados
+de verdad.
 
 Tres tiers: **Free** para evaluar, **Supporter** para builders que corren agentes a diario, y
 **Pro** para agencias y operadores multi-marca. Los precios y los límites por tier viven en

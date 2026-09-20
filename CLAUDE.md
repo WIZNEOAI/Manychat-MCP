@@ -63,7 +63,7 @@ tests/
 
 docs/context/               # Product specs (read order in AGENTS.md)
 docs/control-plane-contract.md  # The HTTP seam to the hosted control plane
-skills/                     # Codex skills (manychat-mcp-ops)
+skills/                     # Agent playbooks (connect, operator, …)
 ```
 
 The hosted control plane (dashboard, vault, billing, plan limits) lived here as

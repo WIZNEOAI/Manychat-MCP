@@ -30,7 +30,7 @@ describe("repo positioning docs", () => {
 
     // The OSS runtime stays free and self-hostable — not a gated demo.
     expect(readme).toMatch(/self-host/i);
-    expect(readme).toContain("The OSS runtime is never a gated demo.");
+    expect(readProse("README.md")).toContain("The OSS runtime is never a gated demo.");
     expect(readme).toContain("## Self-host the gateway");
 
     // The differentiator we actually defend.

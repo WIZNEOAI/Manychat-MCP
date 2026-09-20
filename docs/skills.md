@@ -1,6 +1,6 @@
 # Skills usage
 
-This repo ships six agent skills under [`skills/`](../skills/). See
+This repo ships seven agent skills under [`skills/`](../skills/). See
 [`skills/README.md`](../skills/README.md) for what each one covers and the recommended load
 order, and [`connect/agent-skills.md`](./connect/agent-skills.md) for how to install them.
 

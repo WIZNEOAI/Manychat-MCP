@@ -8,6 +8,11 @@ This repository exposes ManyChat in three ways:
 
 This document covers **remote MCP over HTTP**.
 
+For a first install, use **local stdio** (`npx -y mcp-manychat mcp serve --transport stdio`)
+and the [`manychat-connect`](../../skills/manychat-connect/SKILL.md) skill. Do not paste a
+ManyChat API key into `https://mcp.wizneo.org` — that is not a public BYOK product.
+`mcp.example.com` below is a placeholder for **your** self-hosted gateway.
+
 ## Choose your auth pattern first
 
 ### Pattern A: direct ManyChat API key

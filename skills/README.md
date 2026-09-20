@@ -1,4 +1,4 @@
-# Agent skills (official pack)
+# Agent skills (WIZNEO pack)
 
 These skills ship with the npm package under `skills/`. Load them into Claude Code,
 Cursor, Codex, or any agent that can read skill folders.
@@ -10,6 +10,7 @@ the MCP tools and the Meta policy guard (`validate_message`).
 
 | Skill | Use when | Depends on |
 |---|---|---|
+| [`manychat-connect`](./manychat-connect/SKILL.md) | Wire stdio MCP + API key into this agent | nothing |
 | [`manychat-operator`](./manychat-operator/SKILL.md) | Read/write subscribers, tags, fields, flows, sends | MCP connected |
 | [`manychat-growth-engine`](./manychat-growth-engine/SKILL.md) | Design capture → qualify → nurture → convert → recover | operator |
 | [`manychat-lead-reply`](./manychat-lead-reply/SKILL.md) | First replies, tone, in-thread qualification, handoff | operator |
@@ -19,10 +20,11 @@ the MCP tools and the Meta policy guard (`validate_message`).
 
 ## Recommended load order for a marketing agent
 
-1. `manychat-setup-coach` — if the page is messy or new  
-2. `manychat-operator` — always  
-3. `manychat-lead-reply` + `manychat-followup-os` — revenue conversations  
-4. `manychat-growth-engine` — when designing new capture mechanics  
+1. `manychat-connect` — if ManyChat tools are not in this session  
+2. `manychat-setup-coach` — if the page is messy or new  
+3. `manychat-operator` — always, before any send  
+4. `manychat-lead-reply` + `manychat-followup-os` — revenue conversations  
+5. `manychat-growth-engine` — when designing new capture mechanics  
 
 ## Hard rules across all skills
 
