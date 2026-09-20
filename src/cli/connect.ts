@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { homedir, platform } from "node:os";
 import { join } from "node:path";
-import { MANYCHAT_LINKS, hostedSignUpUrl } from "../product.js";
+import { MANYCHAT_LINKS } from "../product.js";
 
 /**
  * `manychat connect` — the first command a new user runs.
@@ -16,7 +16,7 @@ import { MANYCHAT_LINKS, hostedSignUpUrl } from "../product.js";
  */
 
 export interface ConnectOptions {
-  /** Open the hosted sign-up page in a browser. */
+  /** Open the OSS landing (paste-to-agent) in a browser. */
   open: boolean;
   /** Absolute path to the built CLI entry, for the config snippets. */
   entryPath: string;
@@ -142,15 +142,15 @@ export function buildConnectReport(entryPath: string): ConnectReport {
       },
       hosted: {
         note:
-          "No server to run. Paste your ManyChat key once, it is stored encrypted, and you " +
-          "connect agents with a revocable token instead of the raw key.",
-        signUp: hostedSignUpUrl(),
-        mcpUrl: MANYCHAT_LINKS.hostedMcpUrl,
+          "Not a public paste-your-key door. Local stdio (above) is the complete product. " +
+          "A hosted vault + revocable tokens is a separate app, not open on the OSS landing.",
+        signUp: MANYCHAT_LINKS.hostedBaseUrl,
+        mcpUrl: "https://mcp.example.com/mcp",
         steps: [
-          `Create an account: ${hostedSignUpUrl()}`,
-          "Add your ManyChat key in the dashboard — it is encrypted at rest and never shown again.",
-          "Issue an MCP token (shown once, revocable at any time).",
-          `Point your agent at ${MANYCHAT_LINKS.hostedMcpUrl} with that token as a bearer credential.`,
+          `Copy the agent prompt on ${MANYCHAT_LINKS.hostedBaseUrl} (Install → pick your agent).`,
+          "Wire local stdio. The ManyChat key goes in the client config env, never in chat.",
+          "Do not point a client at a WIZNEO HTTP gateway with X-ManyChat-API-Key.",
+          "Self-host HTTP only if you already run a gateway — use your origin, not a public BYOK URL.",
         ],
       },
     },
@@ -214,9 +214,10 @@ export function renderConnectHints(report: ConnectReport): string {
 
   lines.push(
     "",
-    "  Don't want to run a server? The hosted control plane stores your key",
-    "  encrypted and gives your agents a revocable token instead:",
+    "  Don't want to paste JSON by hand? Copy the agent prompt on",
     `       ${report.connect.hosted.signUp}`,
+    "     Local stdio. The key goes in the config file. Hosted vault/tokens are not",
+    "     a public door on that site.",
     "",
     "  Full details, as JSON, are on stdout.",
     "",

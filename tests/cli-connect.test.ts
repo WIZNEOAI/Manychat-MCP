@@ -67,13 +67,17 @@ describe("manychat connect", () => {
     expect(payload.data.apiKey).toEqual({ detected: true, source: "env" });
   });
 
-  it("points at the hosted sign-up and the live gateway", async () => {
+  it("does not send users to a public HTTP gateway as the connect door", async () => {
     const io = newIo();
     await runCli(["connect"], io);
+    const blob = io.stdout.join("") + io.stderr.join("");
     const hosted = JSON.parse(io.stdout.join("")).data.connect.hosted;
 
-    expect(hosted.signUp).toMatch(/\/sign-up$/);
-    expect(hosted.mcpUrl).toMatch(/^https:\/\//);
+    expect(blob).not.toContain("https://mcp.wizneo.org");
+    expect(hosted.signUp).toMatch(/mc-mcp\.wizneo\.org/);
+    expect(hosted.signUp).not.toMatch(/\/sign-up$/);
+    expect(hosted.mcpUrl).toContain("mcp.example.com");
+    expect(hosted.note).toMatch(/not a public paste-your-key door/i);
     expect(hosted.steps.length).toBeGreaterThanOrEqual(3);
   });
 
