@@ -21,12 +21,12 @@ describe("repo positioning docs", () => {
   // Guards the positioning, not the wording. Assert the claims the README has to
   // keep making; leave the copy free to change. The earlier version pinned exact
   // sentences and went stale the first time the README was rewritten.
-  it("describes the repo as OSS runtime plus paid Revenue Operator", () => {
+  it("describes the repo as an OSS runtime with a separate hosted product that is not open", () => {
     const readme = readRepoFile("README.md");
 
-    // The paid product exists and is named.
-    expect(readme).toContain("Revenue Operator");
-    expect(readme).toContain("## Hosted (Revenue Operator)");
+    expect(readme).toContain("## Hosted product");
+    expect(readProse("README.md")).toMatch(/not this repository/i);
+    expect(readProse("README.md")).toMatch(/not open to the public/i);
 
     // The OSS runtime stays free and self-hostable — not a gated demo.
     expect(readme).toMatch(/self-host/i);
@@ -36,6 +36,7 @@ describe("repo positioning docs", () => {
     // The differentiator we actually defend.
     expect(readme).toContain("## The policy wedge");
     expect(readme).toMatch(/validate_message/);
+    expect(readProse("README.md")).toMatch(/no `recover_lead` tool or prompt/);
   });
 
   // Same principle as above: assert the claims, not the sentences. This block used to
@@ -69,23 +70,36 @@ describe("repo positioning docs", () => {
       expect(text, `${file} must not quote a quota`).not.toMatch(
         /\d[\d.,]*\s*(req|requests)\s*\/?\s*(mo|month|día|day|mes)/i,
       );
-      // The tiers may still be named — that is positioning, not an enforceable claim.
-      expect(text).toMatch(/Supporter/);
-      expect(text).toMatch(/Pro\b/);
+      // Unsold hosted plan names are not public. "ManyChat Pro account" is a
+      // real ManyChat requirement and may stay.
+      expect(text, `${file} must not name unsold hosted tiers`).not.toMatch(
+        /\bSupporter\b/,
+      );
+      expect(text, `${file} must not sell a hosted product page`).not.toMatch(
+        /Hosted \(Revenue Operator\)/,
+      );
     }
   });
 
-  it("frames the roadmap as OSS core plus paid system", () => {
+  it("frames the roadmap as OSS runtime, hosted product out of this repo", () => {
     const roadmap = readRepoFile("ROADMAP.md");
 
-    expect(roadmap).toContain("Revenue Operator");
     expect(roadmap).toContain("OSS self-host runtime");
-    expect(roadmap).toContain("operator product framing");
+    expect(roadmap).toMatch(/not open/i);
+    expect(roadmap).not.toContain("operator product framing");
   });
 
   // The documented install command and the published package name are the same
   // fact stored in two files. A rename touching only one ships a README whose
   // very first command fails.
+  it("does not document a public WIZNEO BYOK MCP URL", () => {
+    expect(readRepoFile("docs/connect/mcp-clients.md")).not.toContain(
+      "https://mcp.wizneo.org/mcp",
+    );
+    expect(readRepoFile("src/product.ts")).not.toContain("https://mcp.wizneo.org");
+    expect(readRepoFile("src/product.ts")).toContain("https://mcp.example.com/mcp");
+  });
+
   it("documents an install command that matches the package name", () => {
     const pkg = JSON.parse(readRepoFile("package.json")) as {
       name: string;
@@ -101,28 +115,26 @@ describe("repo positioning docs", () => {
     }
   });
 
-  // This repo is the product; the hosted plane is the convenience. A reader who
-  // wants to run it themselves must reach the one command before they are sold
-  // anything — and the hosted link still has to be above the long onboarding,
-  // or the people who never wanted a server read the whole key-management
-  // section to find out they did not need it.
-  //
-  // Reversed on 2026-08-24: this test used to assert the opposite order.
-  it("puts the run-it-yourself command above the hosted call to action", () => {
+  // This repo is the product; the landing is paste-to-agent. A reader who
+  // wants to run it themselves must reach the one command before they are sent
+  // to the landing — and the landing link still has to be above the long
+  // onboarding, or the people who never wanted a server read the whole
+  // key-management section to find out they did not need it.
+  it("puts the run-it-yourself command above the public landing link", () => {
     for (const file of ["README.md", "README.es.md"]) {
       const text = readRepoFile(file);
       const runCommand = text.indexOf("npx mcp-manychat connect");
-      const hosted = text.indexOf("mc-mcp.wizneo.org");
+      const landing = text.indexOf("mc-mcp.wizneo.org");
       const onboarding = text.search(/^### (Step 1|Paso 1)/m);
 
       expect(runCommand, `${file} must show the run command`).toBeGreaterThan(-1);
-      expect(hosted, `${file} must keep linking the hosted plane`).toBeGreaterThan(-1);
+      expect(landing, `${file} must keep linking the public landing`).toBeGreaterThan(-1);
       expect(onboarding, `${file} must keep the onboarding steps`).toBeGreaterThan(-1);
 
       expect(runCommand, `${file} buries the OSS command below the funnel`).toBeLessThan(
-        hosted,
+        landing,
       );
-      expect(hosted, `${file} buries the hosted CTA below onboarding`).toBeLessThan(
+      expect(landing, `${file} buries the landing below onboarding`).toBeLessThan(
         onboarding,
       );
     }

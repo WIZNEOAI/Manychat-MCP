@@ -150,9 +150,10 @@ Remote (HTTP) and hosted-token modes are documented in [`docs/connect/mcp-client
 | Flows | `list_flows`, `send_flow` |
 | Messaging | `send_content`, `send_text_message` |
 
-**6 prompts**, each a multi-step playbook the agent can run: `onboard_subscriber`,
-`recover_lead`, `send_campaign`, `analyze_subscriber`, `segment_audience`,
-`diagnose_automation`.
+**5 prompts**, each a multi-step playbook the agent can run: `onboard_subscriber`,
+`send_campaign`, `analyze_subscriber`, `segment_audience`, `diagnose_automation`.
+There is no `recover_lead` tool or prompt — cold recovery is tag the lead, wait
+for a fresh 24-hour window, then `send_flow` or `send_text_message`.
 
 **8 resources** the agent can read without spending a tool call: `page-info`, `tag-catalog`,
 `custom-fields-catalog`, `bot-fields`, `flow-catalog`, `otn-topics`, `subscriber-schema`,
@@ -217,25 +218,19 @@ manychat mcp serve
 
 Output contract: JSON on `stdout`, diagnostics on `stderr`. Exit codes: `0` ok · `2` bad input · `3` auth/config · `4` API error · `5` rate limit.
 
-## Hosted (Revenue Operator)
+## Hosted product
 
-**Not open yet.** The public site for this runtime is [mc-mcp.wizneo.org](https://mc-mcp.wizneo.org)
-(paste-to-agent, self-host). There is no sign-up door there today.
+**Not this repository, and not open to the public.** The site for this runtime is
+[mc-mcp.wizneo.org](https://mc-mcp.wizneo.org) (paste-to-agent, self-host). There is no
+sign-up there.
 
-What follows is what the paid layer will add on top of this runtime, and none of it is
-required to use anything above: an **encrypted credential vault**, so a ManyChat key is
-pasted once and never shown again; **revocable MCP tokens** issued per agent instead of
-handing out the raw key; **usage and audit** per workspace; and enforced plan ceilings.
+A separate private app may later host a credential vault and revocable tokens. Nothing
+above depends on it. If you need HTTP, self-host the gateway and point clients at **your**
+origin — not a public WIZNEO URL with `X-ManyChat-API-Key`.
 
-Three tiers — **Free** for evaluation, **Supporter** for builders running agents daily,
-**Pro** for agencies and multi-brand operators. Prices and per-tier limits live on the
-product page, which is the single source of truth for them; this README deliberately does
-not restate numbers it cannot enforce.
-
-The control plane is a separate, proprietary codebase. Nothing here depends on it: the
-gateway talks to it over the three endpoints in
-[`docs/control-plane-contract.md`](docs/control-plane-contract.md), and only when you set
-`MCP_REMOTE_AUTH=hosted_token`. Every other mode runs standalone.
+The HTTP seam for `MCP_REMOTE_AUTH=hosted_token` is
+[`docs/control-plane-contract.md`](docs/control-plane-contract.md). Every other mode runs
+standalone.
 
 ## Self-host the gateway
 

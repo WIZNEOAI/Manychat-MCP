@@ -16,15 +16,14 @@ export const MANYCHAT_LINKS = {
   manychatApiKeyDocs:
     "https://help.manychat.com/hc/en-us/articles/14959510331420-How-to-generate-a-token-for-the-Manychat-API-and-where-to-get-parameters",
 
-  /** Hosted control plane: sign-up, dashboard, MCP token issuance. */
+  /** Public paste-to-agent landing. No sign-up. */
   hostedBaseUrl: process.env.MANYCHAT_HOSTED_URL ?? "https://mc-mcp.wizneo.org",
 
-  /** Hosted remote MCP endpoint. */
-  hostedMcpUrl: process.env.MANYCHAT_HOSTED_MCP_URL ?? "https://mcp.wizneo.org/mcp",
+  /**
+   * Placeholder for a self-hosted (or private) remote MCP origin.
+   * There is no public WIZNEO BYOK URL. Override only if you run a gateway.
+   */
+  hostedMcpUrl: process.env.MANYCHAT_HOSTED_MCP_URL ?? "https://mcp.example.com/mcp",
 
   repo: "https://github.com/WIZNEOAI/Manychat-MCP",
 } as const;
-
-export function hostedSignUpUrl(): string {
-  return `${MANYCHAT_LINKS.hostedBaseUrl.replace(/\/+$/, "")}/sign-up`;
-}

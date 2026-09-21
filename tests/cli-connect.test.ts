@@ -77,6 +77,7 @@ describe("manychat connect", () => {
     expect(hosted.signUp).toMatch(/mc-mcp\.wizneo\.org/);
     expect(hosted.signUp).not.toMatch(/\/sign-up$/);
     expect(hosted.mcpUrl).toContain("mcp.example.com");
+    expect(hosted.mcpUrl).not.toContain("mcp.wizneo.org");
     expect(hosted.note).toMatch(/not a public paste-your-key door/i);
     expect(hosted.steps.length).toBeGreaterThanOrEqual(3);
   });

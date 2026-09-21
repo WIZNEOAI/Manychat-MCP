@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Removed
+
+- MCP prompt `recover_lead`. Cold recovery is tag + wait for a fresh 24-hour window,
+  then `send_flow` or `send_text_message`. The connect skill already said there was no
+  such tool; the server no longer registers a prompt of that name either.
+- Default `hostedMcpUrl` pointing at `https://mcp.wizneo.org/mcp` and the unused
+  `hostedSignUpUrl()` helper that 404s on the public landing.
+- README / ROADMAP copy that described a public Revenue Operator product page,
+  Free/Supporter/Pro tiers, and a hosted MCP URL that is not a public product.
+
+### Changed
+
+- Public docs and `manychat connect` only reference [mc-mcp.wizneo.org](https://mc-mcp.wizneo.org)
+  (paste-to-agent) and `mcp.example.com` as the self-host placeholder.
+
 ### Note
 
 - Dashboard / Convex / Clerk bullets below are **history from before this repo became OSS-only**.

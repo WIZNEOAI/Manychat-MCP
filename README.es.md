@@ -151,9 +151,10 @@ Los modos remoto (HTTP) y hosted-token están en [`docs/connect/mcp-clients.md`]
 | Flows | `list_flows`, `send_flow` |
 | Mensajería | `send_content`, `send_text_message` |
 
-**6 prompts**, cada uno un playbook de varios pasos que el agente puede correr:
-`onboard_subscriber`, `recover_lead`, `send_campaign`, `analyze_subscriber`,
-`segment_audience`, `diagnose_automation`.
+**5 prompts**, cada uno un playbook de varios pasos que el agente puede correr:
+`onboard_subscriber`, `send_campaign`, `analyze_subscriber`, `segment_audience`,
+`diagnose_automation`. No hay tool ni prompt `recover_lead`: un lead frío se taguea,
+se espera una ventana de 24 h nueva, y después `send_flow` o `send_text_message`.
 
 **8 resources** que el agente puede leer sin gastar una llamada a tool: `page-info`,
 `tag-catalog`, `custom-fields-catalog`, `bot-fields`, `flow-catalog`, `otn-topics`,
@@ -219,27 +220,20 @@ manychat mcp serve
 
 Contrato de salida: JSON en `stdout`, diagnósticos en `stderr`. Exit codes: `0` ok · `2` input inválido · `3` auth/config · `4` error de API · `5` rate limit.
 
-## Hosted (Revenue Operator)
+## Producto hosted
 
-**Todavía no está abierta.** El sitio público de este runtime es
-[mc-mcp.wizneo.org](https://mc-mcp.wizneo.org) (pegar el prompt, self-host). Hoy no hay
-puerta de registro ahí.
+**No es este repositorio, y no está abierto al público.** El sitio de este runtime es
+[mc-mcp.wizneo.org](https://mc-mcp.wizneo.org) (pegar el prompt, self-host). No hay
+registro ahí.
 
-Esto es lo que la capa de pago va a agregar encima de este runtime, y nada de eso hace falta
-para usar todo lo de arriba: una **bóveda cifrada de credenciales**, para pegar la key de
-ManyChat una vez y que no se vuelva a mostrar; **tokens MCP revocables** emitidos por agente
-en vez de repartir la key cruda; **usage y audit** por workspace; y límites de plan aplicados
-de verdad.
+Una app privada aparte puede más adelante hospedar una bóveda de credenciales y tokens
+revocables. Nada de lo de arriba depende de eso. Si necesitás HTTP, self-hosteá el gateway
+y apuntá los clientes a **tu** origen — no a una URL pública de WIZNEO con
+`X-ManyChat-API-Key`.
 
-Tres tiers: **Free** para evaluar, **Supporter** para builders que corren agentes a diario, y
-**Pro** para agencias y operadores multi-marca. Los precios y los límites por tier viven en
-la página del producto, que es la única fuente de verdad; este README a propósito no repite
-números que no puede hacer cumplir.
-
-El control plane es un codebase separado y propietario. Nada de acá depende de él: el gateway
-le habla por los tres endpoints de
-[`docs/control-plane-contract.md`](docs/control-plane-contract.md), y sólo si seteás
-`MCP_REMOTE_AUTH=hosted_token`. Todos los demás modos corren solos.
+El contrato HTTP para `MCP_REMOTE_AUTH=hosted_token` está en
+[`docs/control-plane-contract.md`](docs/control-plane-contract.md). Todos los demás modos
+corren solos.
 
 ## Self-host del gateway
 
