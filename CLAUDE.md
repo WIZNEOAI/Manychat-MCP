@@ -2,7 +2,7 @@
 
 ## Project Identity
 
-CLI-first ManyChat toolkit for agents and operators. Wraps the ManyChat Account Public API with a CLI, an MCP server (local stdio + remote HTTP), and a web control plane.
+CLI-first ManyChat toolkit for agents and operators. Wraps the ManyChat Account Public API with a CLI and an MCP server (local stdio + remote HTTP). The hosted control plane is a separate private repository, not this one.
 
 - **Binaries**: `manychat`, `manychat-mcp` → both point to `dist/index.js`
 - **Version**: 0.1.0 (defined in `src/product.ts`)
@@ -29,7 +29,7 @@ so removing it breaks the container build too.
 ```
 src/
 ├── index.ts              # CLI entry (shebang), routes "mcp serve" to HTTP
-├── server.ts             # MCP server factory: 28 tools (incl. validate_message wedge) + 6 prompts + 8 resources
+├── server.ts             # MCP server factory: 28 tools (incl. validate_message wedge) + 5 prompts + 8 resources
 ├── product.ts            # Version constant
 ├── cli/app.ts            # CLI router (1,254 lines): doctor|page|tags|fields|flows|subscribers|send|raw
 ├── auth/
@@ -49,7 +49,7 @@ src/
 │   ├── messaging.ts        # send content (Dynamic Content v2), send text
 │   └── page.ts             # page info, bot fields, growth tools, OTN topics, health
 ├── resources/index.ts      # 8 MCP resources: page-info, tags, custom-fields, bot-fields, flows, otn-topics, subscriber-schema, api-limits
-├── prompts/index.ts        # 6 agent prompts: onboard_subscriber, recover_lead, send_campaign, analyze_subscriber, segment_audience, diagnose_automation
+├── prompts/index.ts        # 5 agent prompts: onboard_subscriber, send_campaign, analyze_subscriber, segment_audience, diagnose_automation (no recover_lead)
 ├── types/manychat.ts       # TS interfaces: Page, Subscriber, Tag, CustomField, Flow, etc.
 └── lib/logger.ts           # Structured JSON logging, secret redaction
 

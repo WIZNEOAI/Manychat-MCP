@@ -28,8 +28,9 @@ describe("skills pack", () => {
     expect(blob).toContain("https://mc-mcp.wizneo.org");
     expect(clients).not.toContain("https://mcp.wizneo.org");
     expect(skill).toMatch(/Do \*\*not\*\* send the user to `https:\/\/mcp\.wizneo\.org`/);
-    expect(skill).toMatch(/There is \*\*no\*\* `recover_lead` tool/);
+    expect(skill).toMatch(/There is \*\*no\*\* `recover_lead` tool or prompt/);
     expect(clients).not.toContain("recover_lead");
+    expect(read("src/prompts/index.ts")).not.toContain("recover_lead");
     for (const client of ["Claude Code", "Cursor", "Codex", "OpenCode", "Claude Desktop", "Hermes"]) {
       expect(clients, client).toContain(client);
     }

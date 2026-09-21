@@ -30,7 +30,7 @@ Get this agent talking to a live ManyChat page. **Local stdio is the product.** 
 
 `find_subscriber_by_email`, `find_subscriber_by_phone`, `find_subscriber_by_name`, `get_subscriber`, `add_tag_to_subscriber`, `set_custom_field`, `set_custom_fields_bulk` (max 20 fields), `send_flow`, `send_text_message`, `send_content`, `validate_message`.
 
-There is **no** `recover_lead` tool. Cold recovery is tag + wait for a fresh 24-hour window, then `send_flow` or `send_text_message` through `manychat-operator`.
+There is **no** `recover_lead` tool or prompt. Cold recovery is tag + wait for a fresh 24-hour window, then `send_flow` or `send_text_message` through `manychat-operator`.
 
 ## Hard rules
 

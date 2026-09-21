@@ -10,9 +10,6 @@ const SCHEMA = {
       .optional()
       .describe("Additional context about the lead (source, interests, etc.)"),
   }),
-  recover_lead: z.object({
-    subscriber_id: z.string().describe("The subscriber ID to recover"),
-  }),
   send_campaign: z.object({
     campaign_description: z.string().describe("Description of the campaign and its goal"),
     target_tag: z.string().optional().describe("Tag name to target (if targeting by tag)"),
@@ -55,35 +52,6 @@ export function registerPrompts(server: McpServer) {
 5. Summarize what was done
 
 Be methodical — fetch data before making changes.`,
-          },
-        },
-      ],
-    }),
-  );
-
-  server.registerPrompt(
-    "recover_lead",
-    {
-      description: "Reactivate an inactive subscriber with personalized re-engagement strategy",
-      argsSchema: SCHEMA.recover_lead,
-    },
-    ({ subscriber_id }) => ({
-      messages: [
-        {
-          role: "user" as const,
-          content: {
-            type: "text" as const,
-            text: `You are a lead recovery specialist. Re-engage subscriber ${subscriber_id}:
-
-1. Use get_subscriber to check their profile, last interaction, and tags
-2. Analyze how long they've been inactive and what channels they're opted into
-3. Determine the best re-engagement approach:
-   - If within 24h window: send a personalized text message
-   - If outside 24h: check for applicable message tags or OTN topics
-   - Consider triggering a re-engagement flow
-4. Tag them appropriately (e.g., "re-engagement-attempt", date tag)
-5. Update relevant custom fields (e.g., "last_recovery_attempt")
-6. Execute the plan and report results`,
           },
         },
       ],

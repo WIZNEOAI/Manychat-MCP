@@ -52,13 +52,11 @@ MANYCHAT_API_KEY=mc_...
 MANYCHAT_MCP_TOKEN=your-issued-bearer-token
 ```
 
-> **Hosted (Revenue Operator):** use `MANYCHAT_MCP_URL=https://mcp.wizneo.org/mcp` and the
-> `MANYCHAT_MCP_TOKEN` you issue from the dashboard. `mcp.example.com` is the generic
-> placeholder for **self-hosted** gateways — replace it with your own domain.
+`mcp.example.com` is a placeholder for **your** self-hosted gateway. Replace it with
+your own domain. There is no public WIZNEO BYOK URL to paste a ManyChat key into.
 
-For the hosted SaaS path, `MANYCHAT_MCP_TOKEN` is the main client credential.
-The ManyChat API key stays in the hosted vault and is never pasted into Claude,
-Cursor, or Codex.
+When you run the gateway yourself with bearer tokens, `MANYCHAT_MCP_TOKEN` is the
+client credential and the ManyChat API key stays on the server.
 
 ## Claude Code
 
