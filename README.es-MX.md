@@ -2,126 +2,101 @@
 
 ![ManyChat MCP](docs/assets/cover.jpg)
 
-Servidor MCP y CLI de código abierto para consultar datos de ManyChat y solicitar acciones de mensajería sujetas a políticas.
+Servidor MCP y CLI de código abierto para consultar tu propia cuenta de ManyChat y explorar el CRM.
 
-> **La versión 0.2.0 permite consultar datos y explorar el CRM (búsquedas, etiquetas y campos). Los mensajes y las escrituras protegidas del CRM están bloqueados.** ManyChat no proporciona evidencia confiable del canal de la interacción y el guard falla de forma segura, incluso si no hay un proveedor de evidencia configurado. Esta versión no es un producto de automatización de mensajería. Los envíos y escrituras protegidas requieren una integración futura con evidencia (objetivo 0.3.0; aún no incluida).
+> **0.2.0 ya está publicada.** Permite lecturas y consulta del CRM (búsquedas de suscriptores, etiquetas, campos y datos de la página). **Los envíos, la ejecución de flows y las escrituras protegidas se bloquean.** ManyChat no proporciona evidencia confiable del canal de interacción y esta versión no incluye un proveedor de evidencia. No es un producto operativo de automatización de mensajes: una interacción reciente o el opt-in no habilitan envíos. Una integración futura no forma parte de esta versión.
 
-## Cómo funciona
+## Instalar localmente
+
+Paquete publicado: [`mcp-manychat@0.2.0`](https://www.npmjs.com/package/mcp-manychat/v/0.2.0). Release de GitHub: [`v0.2.0`](https://github.com/WIZNEOAI/manychat-mcp/releases/tag/v0.2.0). Requiere **Node 22+** y un plan de ManyChat adecuado para acceder a su API. El software es gratuito bajo AGPL-3.0-or-later; el plan de la plataforma es aparte.
+
+```sh
+npx -y mcp-manychat --help
+npx -y mcp-manychat mcp serve --transport stdio
+```
+
+El segundo comando inicia un servidor MCP local para tu cliente, no un chat interactivo. Configura **tú mismo**, fuera del chat con el agente, `MANYCHAT_API_KEY` en tu entorno de arranque o gestor de secretos del sistema. Consulta [configuración segura por cliente](docs/connect.md). El paquete incluye `manychat` y `manychat-mcp`; no hace falta clonar código. Para fijar esta versión, usa `npx -y mcp-manychat@0.2.0` con los mismos argumentos.
+
+**No se ofrece un gateway público de WIZNEO ni registro hosted.** Usa stdio local o [aloja tu propio servidor remoto](docs/self-host.md). El despliegue Docker/HTTP está documentado pero **sin verificar**; necesitas tu propia infraestructura y validación de seguridad.
+
+## Configuración segura para cada cliente
+
+Nunca pegues una API key en el chat, prompts, código fuente, valores literales del config ni argumentos del CLI. No le pidas al agente leer archivos de secretos ni volcar el entorno. Tú preparas el secreto localmente; el agente configura solo comandos/argumentos y referencias o paso de variables por nombre. Si compartes una key por error, rótala sin repetirla.
+
+| Cliente | Configuración sin secretos literales |
+|---|---|
+| Claude Code | [Registro de usuario; entorno heredado](docs/clients/claude-code.md) |
+| Claude Desktop | [Config sin keys; entorno de arranque gráfico preparado](docs/clients/claude-desktop.md) |
+| Cursor | [Config de usuario; entorno heredado](docs/clients/cursor.md) |
+| Codex | [Paso explícito de la variable por nombre](docs/clients/codex.md) |
+| OpenCode | [Servidor local; entorno heredado](docs/clients/opencode.md) |
+| Hermes | [Referencia de variable, nunca un valor literal](docs/clients/hermes.md) |
+| VS Code | [Config MCP de usuario; entorno heredado](docs/clients/vscode.md) |
+| n8n | [Tu endpoint HTTP; almacén de credenciales de n8n](docs/clients/n8n.md) |
+
+Las apps gráficas no necesariamente heredan un `export` de tu terminal, especialmente si ya están abiertas. Usa un lanzador conectado al gestor de secretos o reinicia desde el entorno preparado. Si el cliente filtra variables del subproceso, consulta su guía para referencias/paso de entorno; no copies la key al config como solución.
+
+### Pégale este texto sin secretos a tu agente
+
+```text
+Configura ManyChat MCP para mi cliente usando docs/connect.md y su guía específica. Pídeme preparar MANYCHAT_API_KEY en mi entorno de arranque o gestor de secretos fuera de este chat, y espera confirmación sin solicitar el valor. Nunca me pidas pegar la key, leer/copiar su valor, abrir archivos de secretos, volcar el entorno ni colocar credenciales en configs literales o argumentos del CLI. Configura solo npx con argumentos ["-y", "mcp-manychat", "mcp", "serve", "--transport", "stdio"], heredando el entorno o usando referencias documentadas. Con mi autorización, verifica solo get_page_info ({}). 0.2.0 está publicada para lecturas/consulta del CRM; los envíos y escrituras protegidas se bloquean. No envíes ni modifiques datos como prueba. Para un remoto, usa docs/self-host.md en mi propia infraestructura; no crees ni despliegues nada sin autorización separada. No se ofrece un gateway público de WIZNEO.
+```
+
+Para n8n, configura tu propio endpoint HTTPS `/mcp` y la credencial `X-ManyChat-API-Key` administrada por n8n. Las peticiones HTTP con header **nunca** toman una key del entorno del servidor. OAuth es otro modo de autenticación, excluyente con el header; consulta la guía.
+
+## Qué hace 0.2.0
 
 ```mermaid
 flowchart LR
-  A[Agente o CLI] -->|stdio o HTTP| M[ManyChat MCP]
-  M --> G[Guard de políticas de Meta]
-  G -->|lecturas y acciones permitidas| API[ManyChat Page API]
-  G -->|evidencia ausente o riesgosa| B[Bloqueo con explicación]
+  A[Tu cliente: stdio o tu propio HTTP] --> M[ManyChat MCP]
+  M --> R[Consulta de datos ManyChat]
+  M --> G[Guard compartido]
+  G -->|sin evidencia confiable del canal| B[Bloquea envíos y escrituras protegidas]
 ```
 
-## Instalar
-
-`0.2.0` es la versión del paquete; su publicación está planeada, no afirmamos que ya esté disponible. Cuando se publique, ejecuta el paquete con `npx -y mcp-manychat`. Incluye los comandos `manychat` y `manychat-mcp`. Requiere Node 22 o posterior.
+Ejemplos de solo lectura, una vez preparado tu entorno:
 
 ```sh
-npx -y mcp-manychat --version
 npx -y mcp-manychat page info
+npx -y mcp-manychat tags list
+npx -y mcp-manychat subscribers get ID
+npx -y mcp-manychat validate ID
 ```
 
-Consulta [configuración por cliente](docs/connect.md). No hace falta clonar el código, cambiar de rama ni indicar rutas absolutas.
+Consulta solo contactos autorizados. `validate_message` / `validate ID` leen contexto, no envían mensajes. Espera `CHANNEL_UNKNOWN` si falta evidencia confiable del canal. Un bloqueo **no** etiqueta automáticamente al lead ni avisa a una persona. Cambiar etiquetas/campos puede disparar automatizaciones: las escrituras protegidas también se bloquean. No se promete recuperación ni derivación automática.
 
-## Pégale esto a tu agente
+### Canales y límites
 
-Los textos usan marcadores de posición. Guarda la API key en tu entorno local o gestor de secretos. Nunca la pegues en el chat, un prompt, el código fuente ni una configuración compartida. Para HTTP, el servidor no toma una key del entorno: cada petición a `/mcp` debe incluir `X-ManyChat-API-Key`.
+| Canal | Qué se puede afirmar |
+|---|---|
+| WhatsApp | Los datos pueden exponer identificadores y opt-in. No se prometen envíos operativos; la interacción actual no prueba el canal. `sendContent` no envía plantillas aprobadas de WhatsApp fuera de la ventana estándar. |
+| Instagram / Messenger | Los datos pueden exponer identificadores. No se prometen envíos operativos. Se bloquean message tags obsoletos; HUMAN_AGENT es atención humana, no automatización, y requiere la aprobación aplicable de Meta. |
+| TikTok / Telegram / SMS / Email | No se prometen envíos. Conectar la cuenta no demuestra compatibilidad de sus canales. |
 
-### Claude Code
-```text
-Configura ManyChat MCP en este espacio de trabajo con las instrucciones oficiales del proyecto. Usa stdio y lee MANYCHAT_API_KEY desde mi entorno local. No me pidas pegar la key en el chat ni la guardes en un archivo versionado. Comprueba la conexión con una consulta de solo lectura a page info. No envíes mensajes salvo que te lo pida de forma explícita y el guard de políticas lo permita. Registra el comando `npx` con argumentos `["-y", "mcp-manychat", "mcp", "serve", "--transport", "stdio"]` usando la configuración de Claude Code en docs/connect.md.
-```
-### Claude Desktop
-```text
-Configura ManyChat MCP para Claude Desktop con el comando stdio documentado. Obtén MANYCHAT_API_KEY del entorno del sistema o de un gestor local de secretos; no incluyas su valor en este chat ni en archivos versionados. Prueba solo con page info. No envíes mensajes sin mi autorización explícita y una validación aprobada. Registra el comando `npx` con argumentos `["-y", "mcp-manychat", "mcp", "serve", "--transport", "stdio"]` usando la configuración de Claude Desktop en docs/connect.md.
-```
-### Cursor
-```text
-Agrega el servidor ManyChat MCP stdio documentado a la configuración local de Cursor. Mantén MANYCHAT_API_KEY fuera del repositorio. No me pidas compartirla por chat. Comprueba con page info solamente. Pide mi autorización antes de enviar y respeta cualquier bloqueo del guard. Registra el comando `npx` con argumentos `["-y", "mcp-manychat", "mcp", "serve", "--transport", "stdio"]` usando la configuración de Cursor en docs/connect.md.
-```
-### Codex
-```text
-Configura ManyChat MCP con el método stdio documentado para Codex. Lee MANYCHAT_API_KEY de una fuente local de secretos; no la muestres, solicites por chat ni guardes en el repositorio. Verifica con page info, en modo de solo lectura. No envíes sin mi autorización explícita y la aprobación del guard. Registra el comando `npx` con argumentos `["-y", "mcp-manychat", "mcp", "serve", "--transport", "stdio"]` usando la configuración de Codex en docs/connect.md.
-```
-### OpenCode
-```text
-Configura la conexión stdio documentada de ManyChat MCP en OpenCode. Guarda MANYCHAT_API_KEY en el entorno local o un gestor de secretos, nunca en este prompt ni en archivos versionados. Prueba con page info. Pide autorización antes de enviar y considera definitivo cualquier rechazo del guard. Registra el comando `npx` con argumentos `["-y", "mcp-manychat", "mcp", "serve", "--transport", "stdio"]` usando la configuración de OpenCode en docs/connect.md.
-```
-### Hermes
-```text
-Configura ManyChat MCP por stdio según la documentación. Obtén MANYCHAT_API_KEY de un gestor local de secretos; nunca la incluyas en el chat ni en archivos del repositorio. Verifica con page info solamente. No envíes mensajes sin mi solicitud explícita y la aprobación del guard. Registra el comando `npx` con argumentos `["-y", "mcp-manychat", "mcp", "serve", "--transport", "stdio"]` usando la configuración de Hermes en docs/connect.md.
-```
-### n8n (HTTP)
-```text
-Crea una conexión HTTP MCP de n8n al endpoint ManyChat MCP configurado, en /mcp. Adjunta X-ManyChat-API-Key desde las credenciales de n8n en cada petición. No pongas la key en texto de nodos, exportaciones ni logs. Verifica con page info. No envíes sin mi autorización explícita y la aprobación del guard. El servidor no usa una key del entorno para HTTP. Configura MCP Client con Streamable HTTP, URL https://TU-SERVIDOR/mcp y credencial Header Auth con nombre X-ManyChat-API-Key; consulta docs/connect.md. No crees ni despliegues un servidor sin autorización.
-```
-### VS Code
-```text
-Configura el servidor ManyChat MCP stdio documentado para VS Code. Guarda MANYCHAT_API_KEY en el entorno local o en un gestor de secretos, nunca en este prompt ni en archivos versionados del espacio. Verifica solo con page info. Pide autorización antes de enviar y respeta los bloqueos del guard. Registra el comando `npx` con argumentos `["-y", "mcp-manychat", "mcp", "serve", "--transport", "stdio"]` usando la configuración de VS Code en docs/connect.md.
-```
+Una marca de tiempo de 24 horas, opt-in o supuesto origen publicitario no sustituye evidencia confiable del canal. Consulta [política y fuentes oficiales](docs/policy.md).
 
-## CLI
+### Herramientas anunciadas no equivalen a mutaciones habilitadas
 
-```sh
-manychat --version
-manychat mcp serve --transport stdio
-manychat mcp serve --transport http
-manychat page info
-manychat tags list
-manychat subscribers get ID
-manychat validate ID
-manychat call TOOL_NAME JSON
-manychat send text ID TEXT
-manychat send content ID JSON
-manychat send flow ID FLOW
-```
-
-El CLI también ofrece `validate ID` y `call TOOL_NAME JSON`. La versión 0.2.0 permite lecturas/operaciones CRM; las operaciones de etiquetas y campos que podrían iniciar mensajes están protegidas y se bloquean sin evidencia verificada. Todos los envíos del CLI pasan por el mismo guard que los envíos MCP. Si falta evidencia confiable del canal, el guard bloquea. HTTP publica MCP en `/mcp` y requiere `X-ManyChat-API-Key` en cada petición. No usa una API key del entorno.
-
-## Canales y límites
-
-| Canal | Lectura / conexión | Envíos |
-|---|---|---|
-| WhatsApp | ManyChat puede exponer identificadores y opt-in | No prometemos envíos operativos. La ventana estándar es de 24 horas, pero el esquema oficial actual no prueba el canal de la interacción. Fuera de 24 horas, la API de ManyChat no envía plantillas aprobadas con `sendContent`. |
-| Instagram | Los datos pueden incluir identificadores de Instagram | No prometemos envíos sin evidencia del canal. Se bloquean etiquetas de mensaje obsoletas; HUMAN_AGENT es para atención humana, no automatización. |
-| Messenger | Los datos pueden incluir identificadores de Messenger | No prometemos envíos sin evidencia del canal. HUMAN_AGENT exige una persona, App Review y verificación del negocio; no autoriza automatizaciones. |
-| TikTok | No confirmamos capacidad de envío | No prometemos envíos. |
-| Telegram | Fuera del alcance de políticas de Meta | No prometemos envíos. |
-| SMS | Fuera del alcance de políticas de Meta | No prometemos envíos. |
-| Email | Fuera del alcance de políticas de Meta | No prometemos envíos. |
-
-Las conversaciones originadas en anuncios pueden calificar para una ventana de siete días según las reglas de Meta. El servidor exige evidencia confiable y verificada del origen; no acepta declaraciones del agente. Consulta [política y fuentes](docs/policy.md).
-
-## Herramientas
-
-El servidor anuncia estas 28 herramientas (incluye `validate_message`):
+El servidor anuncia 28 herramientas, incluidas acciones de envío/escritura que permanecen protegidas/bloqueadas:
 
 `get_subscriber`, `find_subscriber_by_email`, `find_subscriber_by_phone`, `find_subscriber_by_name`, `create_subscriber`, `update_subscriber`, `list_tags`, `create_tag`, `add_tag_to_subscriber`, `add_tag_to_subscriber_by_name`, `remove_tag_from_subscriber`, `remove_tag_from_subscriber_by_name`, `list_custom_fields`, `create_custom_field`, `set_custom_field`, `set_custom_field_by_name`, `set_custom_fields_bulk`, `list_flows`, `send_flow`, `send_text_message`, `send_content`, `validate_message`, `get_page_info`, `list_bot_fields`, `set_bot_field`, `list_growth_tools`, `list_otn_topics`, `health_check`.
 
-## Seguridad
+## Servidor propio y límites de seguridad
 
-- El guard usa datos del suscriptor obtenidos del servidor y evidencia confiable de proveedores. No acepta un canal o ventana declarados por el agente.
-- `getInfo` de ManyChat expone `last_interaction`, pero no identifica el canal de esa interacción. Sin evidencia confiable adicional, los envíos se bloquean.
-- La API de ManyChat no envía plantillas de WhatsApp mediante `sendContent`. Un flow no omite el guard.
-- Los modos OAuth heredados pueden usar memoria local o Redis. La memoria se pierde al reiniciar y no se comparte entre instancias; para varias instancias se necesita almacenamiento compartido.
-- En HTTP, el cliente administra las credenciales en headers. Nunca registres las keys ni las pegues en prompts.
-- Conectar una cuenta no demuestra que todos sus canales estén soportados.
+Consulta [self-host](docs/self-host.md), [arquitectura](docs/architecture.md) y [clientes](docs/connect.md).
 
-Consulta [arquitectura](docs/architecture.md), [política y fuentes](docs/policy.md) y [releases](docs/releasing.md). El proyecto conserva la licencia y atribución de origen: [LICENSE](LICENSE).
+- Docker, Render y OAuth con Redis real **no se han verificado** en despliegue. La guía no es una garantía de despliegue.
+- HTTP en producción exige contadores Redis compartidos y configuración de proxies confiables. La memoria es solo para desarrollo. Usa HTTPS, Redis con TLS/ACL y orígenes exactos; nunca registres headers de credenciales.
+- OAuth con Redis exige además `OAUTH_STORE=redis`, `MCP_BASE_URL` HTTPS y `OAUTH_ENC_KEY` (64 caracteres hexadecimales / 32 bytes aleatorios), guardados en el gestor de secretos del servidor, no en configs de clientes. Los registros usan AES-256-GCM y los identificadores SHA-256. OAuth en memoria no sobrevive reinicios ni se comparte entre instancias.
+- HTTP: 120 peticiones/IP/minuto, 60/hash de key/minuto, body de 32 KB y timeout de upstream de 20 s. `/health` no tiene límite de peticiones. MCP no usa sesiones ni afinidad de instancia.
+- `MCP_REMOTE_AUTH` elige `manychat_header` (predeterminado) u `oauth`, excluyentes. `PORT=3000`, `HOST=0.0.0.0`; `LOG_LEVEL`: `debug`, `info`, `warn`, `error` (predeterminado `info`). Producción exige `TRUST_PROXY_CIDRS` o `TRUST_PROXY_HOPS` (1–16), nunca ambos. Confiar por saltos solo es seguro si la entrada es exclusiva y bloquea rutas directas o más cortas.
+- `MANYCHAT_ALLOW_HUMAN_AGENT=1` es una opción exclusiva del servidor, apagada por defecto; no demuestra autoría humana ni aprobación de Meta ni aporta evidencia del canal. Ninguna herramienta acepta `human_agent`.
+- `send_content` modela texto/imagen/video/audio, no cards/botones/acciones de Dynamic Content. Un flow es opaco: el guard no inspecciona mensajes posteriores. No hay reintentos de POST ni idempotencia; `promotional` no clasifica texto. Estos detalles de esquema no habilitan envíos.
 
-## Operación y pruebas
+## Pruebas y releases
 
-`pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build` y `pnpm test:mutation` no requieren una cuenta de ManyChat. Los tests permiten sockets locales, pero bloquean fetch hacia servicios externos. El smoke real es opcional: `MANYCHAT_API_KEY` y `MANYCHAT_SMOKE_SUBSCRIBER_NAME` deben existir en el entorno antes de `pnpm smoke:readonly`. Solo hace tres GET y no imprime datos de contactos.
+`pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build` y `pnpm test:mutation` no necesitan una cuenta ManyChat. Permiten sockets locales pero bloquean fetch externo. El smoke opcional `pnpm smoke:readonly` usa `MANYCHAT_API_KEY` y `MANYCHAT_SMOKE_SUBSCRIBER_NAME` preparados localmente; realiza tres GET sin imprimir datos de contactos. Requiere autorización del dueño de la cuenta.
 
-**Estado de despliegue:** Docker, Render y OAuth con Redis no se han verificado en un despliegue real. HTTP aplica límites de 120 peticiones por IP/minuto y 60 por hash de key/minuto, body de 32 KB, timeout de upstream de 20 s y timeouts de socket. Producción exige `REDIS_URL` para compartir contadores; OAuth exige además `OAUTH_STORE=redis` y `MCP_BASE_URL` HTTPS. No hay sesiones MCP ni afinidad de instancia. La memoria sirve solo para desarrollo. Configura `TRUST_PROXY_CIDRS` solo con proxies confiables y `MCP_ALLOWED_ORIGINS` con orígenes exactos. Usa TLS en la entrada y Redis con TLS/ACL.
+Consulta [releases](docs/releasing.md) para versiones futuras. Este cambio documental no cambia la versión ni publica npm. Las firmas del registro no son procedencia de build: no la afirmes sin verificar una atestación del release exacto.
 
-`send_content` acepta texto, imagen, video y audio; esta versión no acepta cards, botones ni acciones de Dynamic Content. Un flow es opaco: el guard comprueba su inicio, no inspecciona mensajes futuros dentro de ManyChat. El remitente debe revisar el flow. No hay reintentos automáticos de POST ni garantía de entrega idempotente. El flag `promotional` no es un clasificador de texto; quien envía debe declarar la intención correctamente.
-
-
-## Configuración del servidor
-
-`MCP_REMOTE_AUTH` elige `manychat_header` (predeterminado) u `oauth`; son modos excluyentes. `PORT` usa `3000` por defecto y `HOST`, `0.0.0.0`. `LOG_LEVEL` acepta `debug`, `info`, `warn` o `error` (predeterminado: `info`). Producción exige `TRUST_PROXY_CIDRS` para los proxies de entrada conocidos o `TRUST_PROXY_HOPS` (entero de 1 a 16), nunca ambos. Render usa `TRUST_PROXY_HOPS=1`; confiar por saltos solo es seguro si todas las peticiones llegan por ese proxy y se bloquean las rutas directas o más cortas. `/health` queda fuera del límite de peticiones. `MANYCHAT_ALLOW_HUMAN_AGENT=1` es una opción exclusiva del servidor, apagada por defecto, para soporte operado por humanos; las herramientas no pueden declararse humanas. No demuestra autoría humana ni aprobación de Meta. Todo almacén OAuth en Redis exige `OAUTH_ENC_KEY`: exactamente 64 caracteres hexadecimales (32 bytes aleatorios), compartida de forma segura entre instancias. Los registros OAuth usan AES-256-GCM y las claves de credenciales usan identificadores SHA-256. Consulta [arquitectura](docs/architecture.md) para las cuotas de registro y los límites de rotación de la clave.
+La licencia sigue siendo **AGPL-3.0-or-later**. Se conserva la atribución en [NOTICE.md](NOTICE.md) y [LICENSE](LICENSE). Proyecto no oficial, sin afiliación con ManyChat, Inc.
