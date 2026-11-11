@@ -1,122 +1,57 @@
-# Client setup
+# Safe client setup
 
-Run the npm package with `npx -y mcp-manychat mcp serve --transport stdio`; no source checkout, branch, or absolute path is required. The package provides `manychat` and `manychat-mcp` binaries.
+**0.2.0 is published** as [`mcp-manychat`](https://www.npmjs.com/package/mcp-manychat/v/0.2.0), with [GitHub release v0.2.0](https://github.com/WIZNEOAI/manychat-mcp/releases/tag/v0.2.0). Node 22+ is required. Reads and CRM inspection work; sends, flow dispatch and guarded writes fail closed because no trusted interaction-channel evidence provider is shipped.
 
-The local `MANYCHAT_API_KEY` environment variable must reach the **client process and its MCP child**. GUI clients do not necessarily inherit your terminal's environment; configure their launch environment or use a local secret-manager launcher. Never write a literal key into these examples, source control or agent chat. These configurations describe client setup; automated tests cover the server wire protocol, not every third-party client's UI/version.
+Use your own ManyChat account and a suitable paid API plan. No public WIZNEO gateway or hosted signup is offered. Choose **local stdio** or [self-host your own remote](self-host.md); remote deployment remains unverified.
 
-## Claude Code
+## Prepare the secret yourself — outside agent chat
 
-With the local environment prepared:
+1. Generate the key in ManyChat Settings → API. Treat it as a sensitive page credential.
+2. Set `MANYCHAT_API_KEY` in your local launch environment or OS keychain/secret store **yourself**, not through an agent. Never type a key into chat, prompts, CLI arguments, client config literals or tracked files. Never ask the agent to read secret files, inspect its value or dump the environment.
+3. Launch/restart the client so its MCP child receives the variable. GUI apps often do not inherit terminal exports. Use a local secret-manager launcher or the client's documented reference/passthrough mechanism. A config containing `${MANYCHAT_API_KEY}` is a reference only when that particular client supports it; JSON does not expand variables itself.
+4. Tell the agent only that local preparation is complete. If you accidentally share a key, rotate it without repeating it.
 
-```sh
-claude mcp add --transport stdio manychat -- npx -y mcp-manychat mcp serve --transport stdio
-```
-
-## Claude Desktop
-
-Merge this into the local `claude_desktop_config.json`, then restart the client with the secret available in its launch environment:
-
-```json
-{
-  "mcpServers": {
-    "manychat": {
-      "command": "npx",
-      "args": ["-y", "mcp-manychat", "mcp", "serve", "--transport", "stdio"]
-    }
-  }
-}
-```
-
-## Cursor
-
-Use the same `mcpServers` JSON in your **user-level** `~/.cursor/mcp.json`. Do not put keys in workspace files. Restart Cursor from the prepared environment.
-
-## Codex
+For Bash users only, the **human** can run this in a private terminal outside the agent to avoid shell-history/argv exposure:
 
 ```sh
-codex mcp add manychat -- npx -y mcp-manychat mcp serve --transport stdio
+IFS= read -r -s -p 'ManyChat API key (hidden): ' MANYCHAT_API_KEY
+export MANYCHAT_API_KEY
+printf '\n'
 ```
 
-Check the Codex MCP configuration to ensure `MANYCHAT_API_KEY` is inherited. If the client filters subprocess variables, its local server entry can set `env_vars = ["MANYCHAT_API_KEY"]`; this names the variable without copying its value.
+The value is read interactively without echo, not included in the command. This is not a universal shell/GUI launcher. On Windows/macOS GUI clients use the OS secret-manager/launch mechanism appropriate to your installed client. Environment variables are still sensitive process data, not a substitute for a secure local account.
 
-## OpenCode
+## Client guides
 
-Merge into the user-level OpenCode config:
+| Client | Guide |
+|---|---|
+| Claude Code | [User-level registration, inherited environment](clients/claude-code.md) |
+| Claude Desktop | [Secret-free JSON, GUI launch environment](clients/claude-desktop.md) |
+| Cursor | [User-level JSON, inherited environment](clients/cursor.md) |
+| Codex | [Variable-name passthrough](clients/codex.md) |
+| OpenCode | [Local MCP config, inherited environment](clients/opencode.md) |
+| Hermes | [Variable reference for filtered environments](clients/hermes.md) |
+| VS Code | [User MCP config, inherited environment](clients/vscode.md) |
+| n8n | [Own HTTP server, credentials managed by n8n](clients/n8n.md) |
 
-```json
-{
-  "mcp": {
-    "manychat": {
-      "type": "local",
-      "command": ["npx", "-y", "mcp-manychat", "mcp", "serve", "--transport", "stdio"],
-      "enabled": true
-    }
-  }
-}
+The published stdio command is:
+
+```sh
+npx -y mcp-manychat mcp serve --transport stdio
 ```
 
-## Hermes
-
-Use the MCP setup interface to register a custom stdio server with command `npx` and these arguments:
-
-```json
-["-y", "mcp-manychat", "mcp", "serve", "--transport", "stdio"]
-```
-
-The corresponding local configuration shape is:
-
-```yaml
-mcp_servers:
-  manychat:
-    command: npx
-    args: [-y, mcp-manychat, mcp, serve, --transport, stdio]
-```
-
-Keep the key in the local environment/secret manager. Consult the [Hermes MCP guide](https://hermes-agent.nousresearch.com/docs/user-guide/features/mcp) for the installed client's secret-environment support. Restart/reload MCP after changing configuration. Do not modify another profile.
-
-## n8n (HTTP)
-
-In an **MCP Client** or **MCP Client Tool** node:
-
-- Transport: Streamable HTTP.
-- Endpoint: `https://YOUR-SERVER/mcp` (a server you control, not a claimed hosted service).
-- Authentication: Header Auth credential.
-- Header name: `X-ManyChat-API-Key`; put the value in n8n's credential store, not node text or an exported expression.
-- First tool: `get_page_info`, with `{}`.
-
-The server needs shared Redis in production. Provisioning or deploying the endpoint is a separate owner-approved step. Use `manychat_header` mode for this header setup. OAuth mode accepts only its own bearer tokens and cannot be bypassed with this header.
-
-## VS Code
-
-In the user MCP configuration (or `.vscode/mcp.json` with **no secrets**), use:
-
-```json
-{
-  "servers": {
-    "manychat": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "mcp-manychat", "mcp", "serve", "--transport", "stdio"]
-    }
-  }
-}
-```
-
-Launch VS Code with the local environment prepared. Never use a literal key as an argument.
+The package also provides `manychat` and `manychat-mcp` binaries. To pin 0.2.0, replace the package argument with `mcp-manychat@0.2.0`. Guides are configuration examples, **not claims of live testing every client/version**. If a client's environment is filtered, consult its official installed-version documentation; never fix it by copying the literal key into config.
 
 ## Verify without sending
 
-1. Call `get_page_info` with `{}`; it performs a GET.
-2. List tools and compare with the README inventory.
-3. Call `validate_message` with a real `subscriber_id` only when authorized to read that contact. It performs a GET, not a send.
-4. Expect `CHANNEL_UNKNOWN` when ManyChat provides no verified interaction-channel evidence. A successful connection does not unlock sending.
+- `npx -y mcp-manychat --help` needs no key and does not contact ManyChat.
+- With account-owner permission, call `get_page_info` with `{}`; it performs a GET. Never print the credential or account data into a public report.
+- Compare advertised tools with the README. Presence of a send/write tool does not mean the action is enabled.
+- `validate_message` with an authorized subscriber ID reads context, not sends. Expect `CHANNEL_UNKNOWN` without trusted evidence; a fresh interaction does not establish channel.
+- Do not send messages or mutate tags/fields as a setup test. A block does not tag or notify a human automatically.
 
-`manychat validate ID` checks one subscriber; `manychat call TOOL_NAME JSON` invokes a named tool. Sending and potentially message-triggering CRM writes remain blocked without trusted evidence; no evidence provider is shipped. The flow guard covers dispatch eligibility only: it does not inspect delayed steps or later messages/channels inside a ManyChat flow. An allowlist of approved flows is a possible future control, not implemented. Docker, Render, and OAuth with Redis have not been verified in a real deployment.
+## Your own HTTP endpoint
 
-`LOG_LEVEL` supports `debug`, `info`, `warn`, and `error` (default `info`).
+See [self-host.md](self-host.md) for Docker/HTTP, TLS, Redis and proxy/origin requirements. In `manychat_header` mode every `/mcp` request needs `X-ManyChat-API-Key`, supplied through the client's credential/secret store. HTTP does not fall back to `MANYCHAT_API_KEY` on the server. OAuth is an exclusive alternative and requires separate configuration; it is not bypassed by the header.
 
-ManyChat API access requires a suitable paid ManyChat plan. The MCP software is free under AGPL; third-party platform usage is separate.
-
-## Server environment
-
-`MCP_REMOTE_AUTH` (`manychat_header` default or `oauth`), `PORT` (default `3000`), `HOST` (default `0.0.0.0`), and `LOG_LEVEL` configure the runtime. Production requires either `TRUST_PROXY_CIDRS` or `TRUST_PROXY_HOPS` (1–16), not both. Use `TRUST_PROXY_HOPS=1` only behind an exclusive single-proxy ingress such as Render, with direct/shorter paths blocked. `/health` is not rate-limited. OAuth with Redis requires `OAUTH_ENC_KEY` as exactly 64 hexadecimal characters, provided through the secret manager and identical across instances; never copy its value into client configuration. HUMAN_AGENT requires server-side `MANYCHAT_ALLOW_HUMAN_AGENT=1` and actual human support. No tool accepts `human_agent`.
+Provisioning is always a separate owner-approved step. Docker, Render and OAuth with real Redis are unverified in a real deployment. No guide or client setup unlocks the blocked sends/guarded writes.
